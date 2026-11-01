@@ -514,6 +514,7 @@ export const fr = {
     offlineScanning: 'Lecture hors connexion',
     offlineScanningDetail: 'Les codes sont conservés ; la recherche s’effectue au retour du réseau',
     myData: 'Mes données',
+    privacy: 'Règles de confidentialité',
     places: 'Pièces et étagères',
     labels: 'Étiquettes QR à imprimer',
     exportCsv: 'Exporter (CSV, Excel)',

@@ -363,6 +363,12 @@ export function SettingsScreen() {
             <dd class="card__value">{STORAGE_TEXTS[storage]}</dd>
           </div>
         </dl>
+        <div class="card">
+          <a class="link-row" href="./confidentialite.html">
+            {fr.settings.privacy}
+            <ChevronRightIcon size={18} />
+          </a>
+        </div>
       </section>
     </Screen>
   );
