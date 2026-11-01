@@ -30,6 +30,13 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - [ ] Relecture complète des textes (vouvoiement, français soutenu)
 - [ ] Essai réel : une étagère entière scannée sur téléphone
 
+### Reprise du lot 1 (1er novembre 2026)
+- Lectures d'une session : table `scanEntries` (schéma version 2), qui sert aussi de file d'attente des recherches (`src/scan/session.ts`, `src/scan/lookups.ts`, lancée au démarrage dans `main.tsx`).
+- Pièces et étagères : `src/places/places.ts` (création, renommage, suppression si vide, `indexPlaces` pour les libellés « Salon · Étagère 2 »).
+- Composants réutilisables : `Sheet` (fenêtre en bas d'écran), `CoverImage` et `useBlobUrl`, `useCamera` et `captureFrame`/`compressImage` (`src/scan/camera.ts`) pour les photographies de l'écran 3, 4 et 6 ; styles partagés dans `src/styles/components.css`, écrans dans `src/styles/screens.css`.
+- Routes prévues dans `src/router.ts` mais pas encore branchées dans `app.tsx` : `entry` (écran 4), `book` (écran 6), `places`, `labels`.
+- Prochaines étapes, dans l'ordre : écran 3 et 4, bibliothèque et fiche, paramètres (avec pièces et étiquettes QR via `uqr`, déjà installé), CSV.
+
 ## Lot 2 — Lecture et sauvegarde
 - [ ] Note sur 5 et avis
 - [ ] Étiquettes libres avec suggestions
