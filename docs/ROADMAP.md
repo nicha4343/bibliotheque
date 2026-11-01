@@ -2,7 +2,7 @@
 
 Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est terminé qu'après un essai sur un vrai téléphone. Le détail de chaque écran est dans [SPEC.md](SPEC.md).
 
-**Lot en cours : 0 — Socle**
+**Lot en cours : 1 — Version 1 : scanner et retrouver** (lot 0 terminé le 1er novembre 2026)
 
 ## Lot 0 — Socle
 - [x] Projet Vite + TypeScript strict + Preact, ESLint, Vitest
