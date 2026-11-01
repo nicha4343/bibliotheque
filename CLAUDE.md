@@ -42,7 +42,7 @@ Application web installable sur téléphone (PWA) pour cataloguer une bibliothè
 - **Vite + TypeScript (strict) + Preact.**
 - **Données locales** dans IndexedDB via Dexie ; photographies stockées en Blob JPEG compressé. Sauvegarde : export/import CSV, puis Google Drive (lot 2).
 - **Lecture des codes** : API native `BarcodeDetector` quand elle existe, sinon la bibliothèque `barcode-detector` (fondée sur zxing-wasm). Formats : EAN-13 (ISBN 978/979) et QR (étagères).
-- **Métadonnées**, interrogées **en parallèle** (la première réponse complète l'emporte, les autres complètent les champs vides) : Google Books, Open Library, BnF (SRU). Mise en cache locale. L'appel direct à la BnF depuis le navigateur (CORS) **reste à vérifier** ; à défaut, petit relais gratuit (Cloudflare Worker).
+- **Métadonnées**, interrogées **en parallèle** (la première réponse complète l'emporte, les autres complètent les champs vides) : Google Books, Open Library, BnF (SRU). Mise en cache locale. La BnF accepte l'appel direct depuis le navigateur (CORS vérifié au lot 1) : aucun relais nécessaire.
 - **Couvertures** : Open Library Covers, Google Books ; photographie prise sur le flux vidéo du scan lui-même (pas de sélecteur de fichier pour la prise de vue).
 - Signal sonore via Web Audio ; vibration via `navigator.vibrate` (absente sur iPhone : ne pas en dépendre).
 

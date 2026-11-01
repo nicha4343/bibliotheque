@@ -28,8 +28,10 @@ Un livre (notice) peut avoir plusieurs exemplaires, chacun avec son propre empla
 
 - **ISBN** : accepter EAN-13 commençant par 978 ou 979 et ISBN-10 ; valider la clé de contrôle ; tout stocker en ISBN-13. Ignorer les autres codes-barres (prix, add-on à 5 chiffres).
 - **Anti-double lecture** : un même code lu à moins de 2,5 s d'intervalle est ignoré.
-- **Recherche des métadonnées** : Google Books, Open Library et BnF interrogées en parallèle, délai maximal 8 s ; la première réponse exploitable crée la notice, les suivantes complètent les champs vides. Résultat mis en cache.
-- **Hors connexion** : le code est conservé avec l'état « Recherche… » ; la recherche reprend au retour du réseau.
+- **Recherche des métadonnées** : Google Books, Open Library et BnF interrogées en parallèle, délai maximal 8 s ; la première réponse exploitable crée la notice, les suivantes complètent les champs vides. Résultat mis en cache. La BnF accepte l'appel direct depuis le navigateur (vérifié au lot 1, aucun relais nécessaire) ; elle est interrogée avec l'ISBN-13 et l'ISBN-10, les ouvrages antérieurs à 2007 n'y étant catalogués qu'en ISBN-10. Google Books, sans clé, épuise souvent son quota quotidien : l'application n'en dépend pas.
+- **Hors connexion** : le code est conservé avec l'état « Recherche… » ; la recherche reprend au retour du réseau, même après la fermeture de l'application. Si l'option « Lecture hors connexion » est désactivée, un code lu sans réseau n'est pas enregistré et un bandeau le signale.
+- **Ouvrage déjà possédé** : détecté dès la lecture, sans réseau. Si l'option « Signaler les ouvrages déjà possédés » est désactivée, un exemplaire supplémentaire est ajouté directement.
+- **Zone de visée** : seuls les codes situés dans le cadre sont lus, pour ignorer ceux des ouvrages voisins.
 - **Couverture** : recherchée automatiquement ; une photographie de l'utilisateur la remplace toujours et n'est jamais écrasée par une couverture automatique.
 
 ## Écrans
@@ -103,6 +105,5 @@ Un livre (notice) peut avoir plusieurs exemplaires, chacun avec son propre empla
 
 ## Questions ouvertes
 
-- Accès direct à la BnF depuis le navigateur (CORS) : à vérifier au lot 1.
 - Reconnaissance de texte sur les couvertures (lot 6) : Tesseract.js (gratuit, approximatif) ou IA de vision (fiable, payante à l'usage).
 - À décider par l'utilisateur : lecture par photographie de l'ISBN imprimé des livres anciens ; dictée du titre et de l'auteur.
