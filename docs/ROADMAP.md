@@ -1,0 +1,66 @@
+# Feuille de route
+
+Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est terminé qu'après un essai sur un vrai téléphone. Le détail de chaque écran est dans [SPEC.md](SPEC.md).
+
+**Lot en cours : 0 — Socle**
+
+## Lot 0 — Socle
+- [ ] Projet Vite + TypeScript strict + Preact, ESLint, Vitest
+- [ ] PWA : manifeste, icônes, service worker (fonctionnement hors connexion)
+- [ ] Base IndexedDB (Dexie) avec le modèle de données de SPEC.md
+- [ ] Fichier unique des textes `src/textes/fr.ts`
+- [ ] Jetons de design (couleurs, polices, espacements) repris de la maquette ; barre de navigation
+- [ ] Déploiement HTTPS gratuit et ouverture sur le téléphone
+- [ ] Section « Commandes » de CLAUDE.md complétée
+
+## Lot 1 — Version 1 : scanner et retrouver
+- [ ] Lecture des codes (BarcodeDetector ou zxing-wasm) : EAN-13/ISBN et QR ; anti-double lecture ; validation ISBN (tests)
+- [ ] Recherche parallèle Google Books, Open Library, BnF ; fusion (tests) ; cache ; file d'attente hors connexion ; vérification CORS de la BnF
+- [ ] Écran 1 : scan en rafale, liste « Cette session », signal sonore, vibration, annulation
+- [ ] Fenêtre « Ouvrage déjà possédé » (réponse explicite obligatoire)
+- [ ] Pièces et étagères : sélecteur, création, renommage ; codes QR d'étagère (lecture et impression des étiquettes)
+- [ ] Couvertures automatiques ; capture sur le flux vidéo ; galerie ; priorité à la photographie de l'utilisateur
+- [ ] « Sans code-barres » et boîte « À compléter » (écran 3)
+- [ ] Saisie en série (écran 4), sans reconnaissance de texte
+- [ ] Bilan de fin d'étagère (écran 2) et « Étagère suivante »
+- [ ] Bibliothèque (écran 5) : recherche, filtres statut, pièce, étagère
+- [ ] Fiche ouvrage (écran 6) : informations, couverture, exemplaires, statut lu / à lire
+- [ ] Paramètres (écran 7) de la version 1
+- [ ] Export CSV ; import CSV, y compris une exportation Libib
+- [ ] Relecture complète des textes (vouvoiement, français soutenu)
+- [ ] Essai réel : une étagère entière scannée sur téléphone
+
+## Lot 2 — Lecture et sauvegarde
+- [ ] Note sur 5 et avis
+- [ ] Étiquettes libres avec suggestions
+- [ ] Citations photographiées
+- [ ] Sauvegarde automatique sur Google Drive (nécessite la création d'un identifiant Google par l'utilisateur, à guider pas à pas)
+
+## Lot 3 — Étagères
+- [ ] Option « Mémoriser l'ordre sur l'étagère »
+- [ ] Vue étagère (écran 8) et « Où se trouve … ? »
+- [ ] Vérification d'étagère
+
+## Lot 4 — Prêts
+- [ ] Prêter en scannant, emprunteurs, durées, rappels (écran 10)
+- [ ] Restitution par bouton ou par nouveau scan ; historique
+- [ ] Filtre « Prêtés » et bouton « Prêter » sur la fiche
+
+## Lot 5 — Séries et listes
+- [ ] Séries et tomes manquants ; page auteur (écran 9)
+- [ ] Liste de souhaits partageable ; vérification en librairie (écran 11)
+- [ ] Doublons à donner
+- [ ] Inventaire PDF pour l'assurance
+
+## Lot 6 — Reconnaissance de texte
+- [ ] Choix de la technique (Tesseract.js gratuit ou IA de vision payante) avec l'utilisateur
+- [ ] Suggestions titre et auteur dans « À compléter » et pastilles dans la saisie en série
+
+## Plus tard
+- Synchronisation entre appareils (piste : Google Drive)
+- Photographie d'une étagère entière : lecture des tranches par IA
+- Bibliothèque partagée en famille
+
+## À décider par l'utilisateur
+- Lecture par photographie de l'ISBN imprimé des livres anciens
+- Dictée du titre et de l'auteur
