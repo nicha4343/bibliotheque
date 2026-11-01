@@ -132,6 +132,8 @@ export const fr = {
     extraCopyAdded: (ordinal: string, place: string) => `${ordinal} exemplaire ajouté · ${place}`,
     notAdded: (title: string) => `${title} — non ajouté, la lecture se poursuit`,
     undone: 'Dernière lecture annulée',
+    removed: 'Lecture retirée de la session',
+    removeRow: (title: string) => `Retirer « ${title} » de la session`,
     photographed: 'Couverture photographiée — fiche à compléter ultérieurement',
     shelfQr: (place: string) => `Code QR d’étagère reconnu : ${place}`,
     unknownShelfQr: 'Ce code QR ne correspond à aucune étagère de votre bibliothèque',

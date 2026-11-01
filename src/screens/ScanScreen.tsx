@@ -1,7 +1,7 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { CoverImage } from '../components/CoverImage';
-import { CameraIcon, ChevronDownIcon, PinIcon, QuestionIcon, TorchIcon, UndoIcon } from '../components/icons';
+import { CameraIcon, ChevronDownIcon, CloseIcon, PinIcon, QuestionIcon, TorchIcon, UndoIcon } from '../components/icons';
 import { db } from '../db/db';
 import type { Book, ScanEntry, ScanSession, Shelf } from '../db/schema';
 import { DEFAULT_SETTINGS, getSettings } from '../db/settings';
@@ -17,6 +17,7 @@ import { wakeLookups } from '../scan/lookups';
 import { classifyCode, RepeatFilter } from '../scan/reads';
 import {
   answerDuplicate,
+  deleteEntry,
   endSession,
   getActiveSession,
   lastShelfId,
@@ -79,6 +80,10 @@ export function ScanScreen() {
     if (settings.scanSound) beep(kind);
     if (settings.scanVibration) vibrate(kind);
   };
+
+  useEffect(() => {
+    document.title = fr.app.documentTitle(fr.scan.title);
+  }, []);
 
   // Resume the open session, or start one at the last shelf used; otherwise ask where to scan.
   useEffect(() => {
@@ -183,6 +188,11 @@ export function ScanScreen() {
   const undo = async () => {
     if (!session) return;
     if (await undoLastEntry(session.id)) setFlash({ kind: 'info', text: fr.scan.undone });
+  };
+
+  const remove = async (entry: ScanEntry) => {
+    await deleteEntry(entry);
+    setFlash({ kind: 'info', text: fr.scan.removed });
   };
 
   const photograph = async () => {
@@ -303,7 +313,7 @@ export function ScanScreen() {
         ) : (
           <ul class="scan__rows">
             {rows.map((row) => (
-              <SessionRow key={row.entry.id} row={row} />
+              <SessionRow key={row.entry.id} row={row} onRemove={() => void remove(row.entry)} />
             ))}
           </ul>
         )}
@@ -348,7 +358,7 @@ export function ScanScreen() {
   );
 }
 
-function SessionRow({ row }: { row: Row }) {
+function SessionRow({ row, onRemove }: { row: Row; onRemove: () => void }) {
   const { entry, book } = row;
   const isbn = <span class="mono">{entry.isbn13}</span>;
   let visual = <CoverImage book={book} class="cover--row" />;
@@ -407,6 +417,14 @@ function SessionRow({ row }: { row: Row }) {
         <span class="scan-row__detail">{detail}</span>
       </span>
       <span class={`scan-row__status scan-row__status--${tone}`}>{status}</span>
+      <button
+        type="button"
+        class="icon-button scan-row__remove"
+        aria-label={fr.scan.removeRow(entry.status === 'searching' || !book ? (entry.isbn13 ?? title) : title)}
+        onClick={onRemove}
+      >
+        <CloseIcon size={18} />
+      </button>
     </li>
   );
 }
