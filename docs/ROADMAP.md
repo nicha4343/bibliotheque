@@ -2,7 +2,7 @@
 
 Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est terminé qu'après un essai sur un vrai téléphone. Le détail de chaque écran est dans [SPEC.md](SPEC.md).
 
-**Lot en cours : 1 — Version 1 : scanner et retrouver** (lot 0 terminé le 1er novembre 2026)
+**Lot en cours : 2 — Lecture et sauvegarde** (lot 0 et lot 1 terminés le 1er novembre 2026)
 
 ## Lot 0 — Socle
 - [x] Projet Vite + TypeScript strict + Preact, ESLint, Vitest
@@ -28,13 +28,12 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - [x] Paramètres (écran 7) de la version 1 : interrupteurs, clé Google Books, pièces et étagères, étiquettes QR, export et import CSV
 - [x] Export CSV ; import CSV, y compris une exportation Libib : validé sur téléphone le 1er novembre 2026 avec l'exportation réelle de l'utilisateur (60 ouvrages et 63 exemplaires ajoutés, 5 déjà présents ignorés ; couvertures obtenues d'Amazon et Decitre, voir ci-dessous)
 - [x] Relecture complète des textes (vouvoiement, français soutenu) : règles vérifiées par `fr.test.ts`, tournures harmonisées (« n’a pu »)
-- [ ] Essai réel : une étagère entière scannée sur téléphone
+- [x] Essai réel : une étagère entière scannée sur téléphone, validé le 1er novembre 2026 (tout est bon)
 
 ### Reprise du lot 1 (1er novembre 2026)
 - Lectures d'une session : table `scanEntries` (schéma version 2), qui sert aussi de file d'attente des recherches (`src/scan/session.ts`, `src/scan/lookups.ts`, lancée au démarrage dans `main.tsx`).
 - Pièces et étagères : `src/places/places.ts` (création, renommage, suppression si vide, `indexPlaces` pour les libellés « Salon · Étagère 2 »).
 - Composants réutilisables : `Sheet` (fenêtre en bas d'écran), `CoverImage` et `useBlobUrl`, `useCamera` et `captureFrame`/`compressImage` (`src/scan/camera.ts`) pour les photographies de l'écran 3, 4 et 6 ; styles partagés dans `src/styles/components.css`, écrans dans `src/styles/screens.css`.
-- Prochaine étape : essai réel sur téléphone, une étagère entière scannée du début à la fin ; puis clore le lot 1 et passer au lot 2.
 - Couvertures après l'import Libib (1er novembre 2026) : aucune trouvée sur le téléphone, même après « Rechercher les couvertures manquantes » : Open Library, la BnF et Google Books n'en ont pas pour ces ouvrages des Éditions du Triomphe, alors que Libib en avait. Amazon (par ISBN-10) et Decitre (par EAN) ont les 63 couvertures (vérifié) : ajoutés en dernier recours, sur décision de l'utilisateur. Corrigés au passage : cache réservé aux recherches complètes, recherche après import ralentie, bilan des ouvrages non examinés. Validé sur téléphone le 1er novembre 2026 : les couvertures sont trouvées.
 - Export et import CSV : `src/csv/` (`csv.ts` lecture et écriture, `export.ts`, `read.ts` reconnaissance des formats et conversion, testés ; `import.ts` écriture en base, `enrich.ts` recherche des couvertures en arrière-plan) ; écran `ImportScreen` (`#/importer`) ; `findOrCreateShelf` dans `places.ts`.
 - Pièces et étagères (`PlacesScreen`, `#/pieces`) et étiquettes (`LabelsScreen`, `#/etiquettes`, impression par le navigateur, code QR dessiné par `QrCode` avec `uqr` ; relecture vérifiée avec le lecteur de l'application).
