@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'preact/hooks';
-import { ChevronRightIcon } from '../components/icons';
+import { ChevronRightIcon, DownloadIcon } from '../components/icons';
 import { Screen } from '../components/Screen';
 import { SwitchRow } from '../components/SwitchRow';
+import { downloadText, exportLibrary, isoDate } from '../csv/export';
 import type { MetadataProvider, Settings } from '../db/schema';
 import { DEFAULT_SETTINGS, getSettings, updateSettings } from '../db/settings';
 import { getStorageProtection, type StorageProtection } from '../db/storage';
@@ -132,12 +133,41 @@ function GoogleBooksKeyField({ saved }: { saved: string }) {
   );
 }
 
+/** « Exporter (CSV, Excel) »: the file is saved at once, its content summed up below the card. */
+function useExport(): { exporting: boolean; message: string; start: () => void } {
+  const [exporting, setExporting] = useState(false);
+  const [message, setMessage] = useState('');
+  const start = () => {
+    setExporting(true);
+    setMessage(fr.settings.exporting);
+    void exportLibrary()
+      .then(({ text, books, copies }) => {
+        if (books === 0) {
+          setMessage(fr.settings.exportEmpty);
+          return;
+        }
+        const fileName = fr.csv.fileName(isoDate(Date.now()));
+        downloadText(fileName, text);
+        setMessage(fr.settings.exported(fileName, books, copies));
+      })
+      .catch((error: unknown) => {
+        console.error(error);
+        setMessage(fr.settings.exportFailed);
+      })
+      .finally(() => {
+        setExporting(false);
+      });
+  };
+  return { exporting, message, start };
+}
+
 /** Screen 7, version 1. « Mémoriser l’ordre sur l’étagère » comes with lot 3, which uses it. */
 export function SettingsScreen() {
   const offline = useOfflineStatus();
   const storage = useStorageProtection();
   const settings = useLiveQuery<Settings>(() => getSettings(), [], DEFAULT_SETTINGS);
   const activeSources = SOURCES.filter(({ provider }) => settings.sources[provider]).length;
+  const csvExport = useExport();
 
   const set = (changes: Parameters<typeof updateSettings>[0]) => {
     void updateSettings(changes);
@@ -248,7 +278,18 @@ export function SettingsScreen() {
             {fr.settings.labels}
             <ChevronRightIcon size={18} />
           </a>
+          <button type="button" class="link-row" disabled={csvExport.exporting} onClick={csvExport.start}>
+            {fr.settings.exportCsv}
+            <DownloadIcon size={18} />
+          </button>
+          <a class="link-row" href={routeHref('import')}>
+            {fr.settings.importCsv}
+            <ChevronRightIcon size={18} />
+          </a>
         </div>
+        <p class="status-line" role="status">
+          {csvExport.message}
+        </p>
       </section>
 
       <section class="section" aria-labelledby="about-title">

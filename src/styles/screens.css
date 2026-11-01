@@ -1313,3 +1313,8 @@
     max-width: none;
   }
 }
+
+/* CSV import (from the settings) */
+.import__actions {
+  gap: var(--space-2);
+}

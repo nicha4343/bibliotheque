@@ -25,8 +25,8 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - [x] Bilan de fin d'étagère (écran 2) et « Étagère suivante »
 - [x] Bibliothèque (écran 5) : recherche, filtres statut, pièce, étagère
 - [x] Fiche ouvrage (écran 6) : informations, couverture, exemplaires, statut lu / à lire
-- [ ] Paramètres (écran 7) de la version 1 — fait : interrupteurs, clé Google Books, pièces et étagères, étiquettes QR ; reste : export et import CSV
-- [ ] Export CSV ; import CSV, y compris une exportation Libib
+- [x] Paramètres (écran 7) de la version 1 : interrupteurs, clé Google Books, pièces et étagères, étiquettes QR, export et import CSV
+- [x] Export CSV ; import CSV, y compris une exportation Libib (à essayer avec une vraie exportation Libib de l'utilisateur)
 - [ ] Relecture complète des textes (vouvoiement, français soutenu)
 - [ ] Essai réel : une étagère entière scannée sur téléphone
 
@@ -34,7 +34,8 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - Lectures d'une session : table `scanEntries` (schéma version 2), qui sert aussi de file d'attente des recherches (`src/scan/session.ts`, `src/scan/lookups.ts`, lancée au démarrage dans `main.tsx`).
 - Pièces et étagères : `src/places/places.ts` (création, renommage, suppression si vide, `indexPlaces` pour les libellés « Salon · Étagère 2 »).
 - Composants réutilisables : `Sheet` (fenêtre en bas d'écran), `CoverImage` et `useBlobUrl`, `useCamera` et `captureFrame`/`compressImage` (`src/scan/camera.ts`) pour les photographies de l'écran 3, 4 et 6 ; styles partagés dans `src/styles/components.css`, écrans dans `src/styles/screens.css`.
-- Prochaines étapes, dans l'ordre : export CSV, import CSV (format de l'application et exportation Libib ; destination des ouvrages Libib à choisir avec `LocationPicker`), relecture des textes, puis essai réel sur téléphone.
+- Prochaines étapes, dans l'ordre : relecture complète des textes, puis essai réel sur téléphone (une étagère entière, et import d'une vraie exportation Libib : son format exact n'est pas documenté publiquement, les colonnes sont reconnues par leur nom).
+- Export et import CSV : `src/csv/` (`csv.ts` lecture et écriture, `export.ts`, `read.ts` reconnaissance des formats et conversion, testés ; `import.ts` écriture en base, `enrich.ts` recherche des couvertures en arrière-plan) ; écran `ImportScreen` (`#/importer`) ; `findOrCreateShelf` dans `places.ts`.
 - Pièces et étagères (`PlacesScreen`, `#/pieces`) et étiquettes (`LabelsScreen`, `#/etiquettes`, impression par le navigateur, code QR dessiné par `QrCode` avec `uqr` ; relecture vérifiée avec le lecteur de l'application).
 - Bibliothèque et fiche : recherche et filtres dans `src/library/filter.ts` (testés) ; opérations de la fiche dans `src/books/books.ts` ; fenêtres réutilisables `ConfirmSheet` et `CameraSheet`.
 - Boîte « À compléter » : `src/pending/pending.ts` (saisie, nouvelle recherche, photographie, retrait) ; prise de vue réutilisable `CameraSheet` ; clé Google Books vérifiée par `src/metadata/googleBooksKey.ts`, dont l'enregistrement relance la recherche des ISBN inconnus.

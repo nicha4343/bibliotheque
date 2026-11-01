@@ -3,6 +3,7 @@ import { PwaNotices } from './components/PwaNotices';
 import { useRoute, type Route, type TabId } from './router';
 import { BookScreen } from './screens/BookScreen';
 import { EntryScreen } from './screens/EntryScreen';
+import { ImportScreen } from './screens/ImportScreen';
 import { LabelsScreen } from './screens/LabelsScreen';
 import { LibraryScreen } from './screens/LibraryScreen';
 import { PendingScreen } from './screens/PendingScreen';
@@ -22,6 +23,7 @@ function tabOf(route: Route): TabId | undefined {
     case 'settings':
     case 'places':
     case 'labels':
+    case 'import':
       return 'settings';
     default:
       return undefined;
@@ -46,6 +48,8 @@ function CurrentScreen({ route }: { route: Route }) {
       return <PlacesScreen />;
     case 'labels':
       return <LabelsScreen />;
+    case 'import':
+      return <ImportScreen />;
     default:
       return <LibraryScreen />;
   }

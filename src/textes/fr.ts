@@ -404,6 +404,13 @@ export const fr = {
     myData: 'Mes données',
     places: 'Pièces et étagères',
     labels: 'Étiquettes QR à imprimer',
+    exportCsv: 'Exporter (CSV, Excel)',
+    exporting: 'Préparation du fichier…',
+    exportEmpty: 'Votre bibliothèque est vide : il n’y a rien à exporter.',
+    exported: (fileName: string, books: number, copies: number) =>
+      `Fichier « ${fileName} » créé : ${count(books, 'ouvrage', 'ouvrages')}, ${count(copies, 'exemplaire', 'exemplaires')}, une ligne par exemplaire. Les photographies n’y figurent pas.`,
+    exportFailed: 'Le fichier n’a pu être créé.',
+    importCsv: 'Importer (CSV ou exportation Libib)',
     aboutTitle: 'À propos de l’application',
     version: 'Version',
     versionValue: (version: string, date: string) => `${version}, publiée le ${date}`,
@@ -416,6 +423,90 @@ export const fr = {
     storageBestEffort:
       'Vos données sont conservées sur cet appareil ; installez l’application sur l’écran d’accueil pour mieux les protéger.',
     storageUnknown: 'Vos données sont conservées sur cet appareil.',
+  },
+
+  /**
+   * CSV export, one row per copy. The import recognises these column names (ignoring case and
+   * accents): renaming one prevents files exported before from being imported.
+   */
+  csv: {
+    fileName: (isoDate: string) => `ma-bibliotheque-${isoDate}.csv`,
+    columns: {
+      title: 'Titre',
+      authors: 'Auteurs',
+      publisher: 'Éditeur',
+      year: 'Année',
+      isbn13: 'ISBN-13',
+      isbn10: 'ISBN-10',
+      language: 'Langue',
+      series: 'Série',
+      volume: 'Tome',
+      room: 'Pièce',
+      shelf: 'Étagère',
+      status: 'Statut',
+      rating: 'Note',
+      review: 'Avis',
+      tags: 'Étiquettes',
+      addedAt: 'Ajouté le',
+      note: 'Remarque',
+    },
+    statusRead: 'Lu',
+    statusToRead: 'À lire',
+  },
+
+  importFile: {
+    title: 'Importer des ouvrages',
+    back: 'Paramètres',
+    intro:
+      'Choisissez un fichier CSV exporté par cette application, ou par Libib depuis son site (exportation d’une collection). Les ouvrages déjà présents dans votre bibliothèque ne sont pas importés de nouveau.',
+    choose: 'Choisir un fichier',
+    chooseOther: 'Choisir un autre fichier',
+    reading: 'Lecture du fichier…',
+    unreadable: 'Ce fichier n’a pu être lu.',
+    empty: 'Ce fichier ne contient aucun ouvrage.',
+    unknownFormat:
+      'Ce fichier n’est pas reconnu : il ne provient ni de cette application ni de Libib. Sa première ligne doit nommer les colonnes.',
+    fileLabel: 'Fichier',
+    formatApp: 'Exportation de Ma bibliothèque',
+    formatLibib: 'Exportation Libib',
+    newBooks: (books: number, copies: number) =>
+      books === 0
+        ? 'Aucun ouvrage à importer'
+        : `${count(books, 'ouvrage', 'ouvrages')} à importer, ${count(copies, 'exemplaire', 'exemplaires')}`,
+    owned: (value: number) =>
+      value === 1
+        ? '1 ouvrage figure déjà dans votre bibliothèque : il est ignoré.'
+        : `${formatNumber(value)} ouvrages figurent déjà dans votre bibliothèque : ils sont ignorés.`,
+    ignored: (value: number) =>
+      value === 1
+        ? '1 ligne est ignorée : elle ne décrit pas un livre, ou n’a ni titre ni ISBN.'
+        : `${formatNumber(value)} lignes sont ignorées : elles ne décrivent pas un livre, ou n’ont ni titre ni ISBN.`,
+    nothingNew: 'Tous les ouvrages de ce fichier figurent déjà dans votre bibliothèque.',
+    placesFromFile: 'Chaque exemplaire est rangé dans la pièce et sur l’étagère indiquées par le fichier ; celles qui manquent sont créées.',
+    destination: 'Où ranger ces ouvrages ?',
+    destinationTitle: 'Où ranger les ouvrages importés ?',
+    destinationLibib:
+      'Libib n’indique pas l’emplacement des ouvrages : ils seront tous rangés sur l’étagère choisie. Vous pourrez ensuite déplacer chacun depuis sa fiche.',
+    destinationPartial: 'Les exemplaires sans emplacement dans le fichier seront rangés sur l’étagère choisie.',
+    chooseDestination: 'Choisir l’étagère',
+    start: (value: number) => `Importer ${count(value, 'ouvrage', 'ouvrages')}`,
+    importing: 'Importation en cours…',
+    failed: 'L’importation a échoué ; votre bibliothèque est inchangée.',
+    done: (books: number, copies: number) =>
+      `Importation terminée : ${count(books, 'ouvrage', 'ouvrages')} et ${count(copies, 'exemplaire', 'exemplaires')} ajoutés à votre bibliothèque.`,
+    enriching: (done: number, total: number) =>
+      `Recherche des couvertures et des informations manquantes : ${formatNumber(done)} sur ${formatNumber(total)}…`,
+    enrichingHint: 'La recherche se poursuit si vous quittez cet écran, tant que l’application demeure ouverte.',
+    enriched: (covers: number, total: number) =>
+      covers === 0
+        ? 'Recherche terminée : aucune couverture n’a été trouvée.'
+        : `Recherche terminée : couverture trouvée pour ${count(covers, 'ouvrage', 'ouvrages')} sur ${formatNumber(total)}.`,
+    enrichedNoCovers: 'Recherche des informations manquantes terminée.',
+    enrichOffline: (value: number) =>
+      value === 1
+        ? 'Faute de réseau, 1 ouvrage n’a pu être recherché.'
+        : `Faute de réseau, ${formatNumber(value)} ouvrages n’ont pu être recherchés.`,
+    library: 'Consulter ma bibliothèque',
   },
 
   pwa: {

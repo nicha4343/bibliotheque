@@ -717,3 +717,15 @@ select.field__input {
   height: 22px;
   accent-color: var(--color-accent);
 }
+
+button.link-row {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+button.link-row:disabled {
+  cursor: default;
+  opacity: 0.6;
+}

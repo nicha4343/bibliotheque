@@ -209,3 +209,19 @@ export function QrIcon(props: IconProps) {
     </Svg>
   );
 }
+
+export function DownloadIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
+    </Svg>
+  );
+}
+
+export function UploadIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 15V4M7 9l5-5 5 5M5 20h14" />
+    </Svg>
+  );
+}

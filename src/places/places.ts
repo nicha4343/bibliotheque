@@ -48,6 +48,22 @@ export async function createRoom(name: string, database: LibraryDatabase = db): 
   });
 }
 
+const sameName = (a: string, b: string) => a.trim().toLocaleLowerCase('fr') === b.trim().toLocaleLowerCase('fr');
+
+/** Shelf of the given names (case ignored), created with its room when missing: used by the CSV import. */
+export async function findOrCreateShelf(roomName: string, shelfName: string, database: LibraryDatabase = db): Promise<Shelf> {
+  return database.transaction('rw', database.rooms, database.shelves, async () => {
+    const rooms = await database.rooms.toArray();
+    let room = rooms.find((r) => sameName(r.name, roomName));
+    if (!room) {
+      room = { id: newId(), name: roomName.trim(), order: Math.max(0, ...rooms.map((r) => r.order + 1)) };
+      await database.rooms.add(room);
+    }
+    const shelves = await database.shelves.where('roomId').equals(room.id).toArray();
+    return shelves.find((s) => sameName(s.name, shelfName)) ?? createShelf(room.id, shelfName, database);
+  });
+}
+
 export async function renameRoom(id: Id, name: string, database: LibraryDatabase = db): Promise<void> {
   if (name.trim()) await database.rooms.update(id, { name: name.trim() });
 }
