@@ -87,6 +87,8 @@ Un livre (notice) peut avoir plusieurs exemplaires, chacun avec son propre empla
 - Version 1 : « Lors de la lecture des codes » (Signal sonore, Vibration, Signaler les ouvrages déjà possédés) ; « Couvertures automatiques » ; « Sources, interrogées simultanément » (BnF, Google Books, Open Library ; au moins une demeure active) et « Clé Google Books » ; « Lecture hors connexion » ; « Mes données » : Pièces et étagères, Étiquettes QR à imprimer, Exporter (CSV), Importer (CSV, y compris une exportation Libib).
 - **Clé Google Books** (facultative) : sans clé, Google Books partage un quota quotidien commun à tous les sites et refuse souvent de répondre. La clé de l'utilisateur, limitée à l'adresse de l'application, est conservée sur l'appareil (jamais dans le dépôt, qui est public) et ajoutée aux requêtes. À l'enregistrement, une requête la vérifie (« Google Books l'accepte » ou « la refuse »), puis les ISBN inconnus de « À compléter » sont recherchés de nouveau.
 - Lot 3 : « Mémoriser l'ordre sur l'étagère » (désactivé par défaut), affiché avec la fonction qui s'en sert.
+- **Pièces et étagères** : noms modifiables d'un toucher ; « Nouvelle étagère » par pièce ; « Nouvelle pièce » ; suppression d'une étagère ou d'une pièce seulement si elle ne contient aucun ouvrage (ni élément à compléter), avec confirmation.
+- **Étiquettes QR à imprimer** : une étiquette par étagère (code QR, pièce, étagère), toutes cochées par défaut ; impression par le navigateur, quatre étiquettes par ligne (code de 3 cm). Le code contient l'adresse de l'application suivie de `#/etagere/<jeton>` ; seul le jeton compte.
 - Lot 2 : « Sauvegarde automatique » sur Google Drive.
 - Lot 5 : « Inventaire pour l'assurance (PDF) ».
 

@@ -18,14 +18,14 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - [x] Recherche parallèle Google Books, Open Library, BnF ; fusion (tests) ; cache ; file d'attente hors connexion ; vérification CORS de la BnF (accès direct possible)
 - [x] Écran 1 : scan en rafale, liste « Cette session », signal sonore, vibration, annulation
 - [x] Fenêtre « Ouvrage déjà possédé » (réponse explicite obligatoire)
-- [ ] Pièces et étagères : sélecteur, création, renommage ; codes QR d'étagère (lecture et impression des étiquettes) — fait : sélecteur, création, lecture des QR ; reste : renommage, impression
+- [x] Pièces et étagères : sélecteur, création, renommage, suppression si vide ; codes QR d'étagère (lecture et impression des étiquettes)
 - [x] Couvertures automatiques ; capture sur le flux vidéo ; galerie ; priorité à la photographie de l'utilisateur
 - [x] « Sans code-barres » et boîte « À compléter » (écran 3), avec « Rechercher de nouveau »
 - [x] Saisie en série (écran 4), sans reconnaissance de texte
 - [x] Bilan de fin d'étagère (écran 2) et « Étagère suivante »
 - [x] Bibliothèque (écran 5) : recherche, filtres statut, pièce, étagère
 - [x] Fiche ouvrage (écran 6) : informations, couverture, exemplaires, statut lu / à lire
-- [ ] Paramètres (écran 7) de la version 1 — fait : interrupteurs, clé Google Books ; reste : « Mes données »
+- [ ] Paramètres (écran 7) de la version 1 — fait : interrupteurs, clé Google Books, pièces et étagères, étiquettes QR ; reste : export et import CSV
 - [ ] Export CSV ; import CSV, y compris une exportation Libib
 - [ ] Relecture complète des textes (vouvoiement, français soutenu)
 - [ ] Essai réel : une étagère entière scannée sur téléphone
@@ -34,8 +34,8 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - Lectures d'une session : table `scanEntries` (schéma version 2), qui sert aussi de file d'attente des recherches (`src/scan/session.ts`, `src/scan/lookups.ts`, lancée au démarrage dans `main.tsx`).
 - Pièces et étagères : `src/places/places.ts` (création, renommage, suppression si vide, `indexPlaces` pour les libellés « Salon · Étagère 2 »).
 - Composants réutilisables : `Sheet` (fenêtre en bas d'écran), `CoverImage` et `useBlobUrl`, `useCamera` et `captureFrame`/`compressImage` (`src/scan/camera.ts`) pour les photographies de l'écran 3, 4 et 6 ; styles partagés dans `src/styles/components.css`, écrans dans `src/styles/screens.css`.
-- Routes prévues dans `src/router.ts` mais pas encore branchées dans `app.tsx` : `places`, `labels`.
-- Prochaines étapes, dans l'ordre : « Mes données » des paramètres (pièces et étiquettes QR via `uqr`, déjà installé), CSV.
+- Prochaines étapes, dans l'ordre : export CSV, import CSV (format de l'application et exportation Libib ; destination des ouvrages Libib à choisir avec `LocationPicker`), relecture des textes, puis essai réel sur téléphone.
+- Pièces et étagères (`PlacesScreen`, `#/pieces`) et étiquettes (`LabelsScreen`, `#/etiquettes`, impression par le navigateur, code QR dessiné par `QrCode` avec `uqr` ; relecture vérifiée avec le lecteur de l'application).
 - Bibliothèque et fiche : recherche et filtres dans `src/library/filter.ts` (testés) ; opérations de la fiche dans `src/books/books.ts` ; fenêtres réutilisables `ConfirmSheet` et `CameraSheet`.
 - Boîte « À compléter » : `src/pending/pending.ts` (saisie, nouvelle recherche, photographie, retrait) ; prise de vue réutilisable `CameraSheet` ; clé Google Books vérifiée par `src/metadata/googleBooksKey.ts`, dont l'enregistrement relance la recherche des ISBN inconnus.
 - Premier essai sur téléphone (1er novembre 2026) : lecture des codes réussie ; mais deux livres récents (Éditions du Triomphe, 2026) restent inconnus : absents de la BnF et d'Open Library, présents dans Google Books, qui refuse les appels sans clé (quota commun épuisé). Accepté par l'utilisateur : clé Google Books gratuite, créée par lui pas à pas, saisie dans les Paramètres (Amazon écarté : pas d'interface publique gratuite, lecture des pages interdite et bloquée). Clé créée par l'utilisateur le 1er novembre 2026, limitée à https://nicha4343.github.io/* et à la Books API, conservée par lui : ne jamais l'écrire dans le dépôt (public) ; prévoir un champ « Clé Google Books » dans les Paramètres (stockée dans IndexedDB, ajoutée en `&key=` aux requêtes Google Books) ; prévoir aussi « Rechercher de nouveau » sur les ISBN inconnus de l'écran 3. Croix de suppression par ligne de « Cette session » ajoutée à sa demande.

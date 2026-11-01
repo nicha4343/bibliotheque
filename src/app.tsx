@@ -3,8 +3,10 @@ import { PwaNotices } from './components/PwaNotices';
 import { useRoute, type Route, type TabId } from './router';
 import { BookScreen } from './screens/BookScreen';
 import { EntryScreen } from './screens/EntryScreen';
+import { LabelsScreen } from './screens/LabelsScreen';
 import { LibraryScreen } from './screens/LibraryScreen';
 import { PendingScreen } from './screens/PendingScreen';
+import { PlacesScreen } from './screens/PlacesScreen';
 import { RecapScreen } from './screens/RecapScreen';
 import { ScanScreen } from './screens/ScanScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
@@ -19,6 +21,7 @@ function tabOf(route: Route): TabId | undefined {
       return 'pending';
     case 'settings':
     case 'places':
+    case 'labels':
       return 'settings';
     default:
       return undefined;
@@ -39,6 +42,10 @@ function CurrentScreen({ route }: { route: Route }) {
       return <EntryScreen key={route.param ?? 'all'} itemId={route.param} />;
     case 'settings':
       return <SettingsScreen />;
+    case 'places':
+      return <PlacesScreen />;
+    case 'labels':
+      return <LabelsScreen />;
     default:
       return <LibraryScreen />;
   }

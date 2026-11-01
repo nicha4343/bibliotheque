@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
+import { ChevronRightIcon } from '../components/icons';
 import { Screen } from '../components/Screen';
 import { SwitchRow } from '../components/SwitchRow';
 import type { MetadataProvider, Settings } from '../db/schema';
@@ -7,6 +8,7 @@ import { getStorageProtection, type StorageProtection } from '../db/storage';
 import { useLiveQuery } from '../db/useLiveQuery';
 import { checkGoogleBooksKey } from '../metadata/googleBooksKey';
 import { retryAllUnknown } from '../pending/pending';
+import { routeHref } from '../router';
 import { formatDate, fr } from '../textes/fr';
 
 type OfflineStatus = 'ready' | 'preparing' | 'unsupported';
@@ -230,6 +232,22 @@ export function SettingsScreen() {
               set({ offlineScanning });
             }}
           />
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="data-title">
+        <h2 class="section__title" id="data-title">
+          {fr.settings.myData}
+        </h2>
+        <div class="card">
+          <a class="link-row" href={routeHref('places')}>
+            {fr.settings.places}
+            <ChevronRightIcon size={18} />
+          </a>
+          <a class="link-row" href={routeHref('labels')}>
+            {fr.settings.labels}
+            <ChevronRightIcon size={18} />
+          </a>
         </div>
       </section>
 

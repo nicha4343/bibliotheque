@@ -652,3 +652,68 @@ select.field__input {
   align-items: center;
   gap: var(--space-2);
 }
+
+/* Row of a settings card leading to another screen */
+.link-row {
+  min-height: 52px;
+  padding: 0 var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--color-text);
+  font-size: var(--text-body);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.link-row:hover {
+  color: var(--color-text);
+}
+
+.link-row + .link-row {
+  border-top: 1px solid var(--color-divider-soft);
+}
+
+.link-row svg {
+  color: var(--color-text-muted);
+}
+
+/* Return link above the content of a secondary screen */
+.back-bar {
+  margin-top: calc(-1 * var(--space-2));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.back-bar__link {
+  margin-left: -8px;
+  color: var(--color-text);
+  font-size: var(--text-body);
+}
+
+.status-line--warn {
+  background: var(--color-pending-soft);
+  color: var(--color-pending-text);
+}
+
+.check-row {
+  min-height: 52px;
+  padding: 0 var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-body);
+  font-weight: 600;
+}
+
+.check-row + .check-row {
+  border-top: 1px solid var(--color-divider-soft);
+}
+
+.check-row__box {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--color-accent);
+}

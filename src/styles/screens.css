@@ -1150,3 +1150,166 @@
   font-weight: 600;
   color: var(--color-text-muted);
 }
+
+/* Rooms and shelves */
+.place-room {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.place-room__name {
+  min-height: var(--touch-target);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-1);
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.place-room__name svg {
+  color: var(--color-text-muted);
+}
+
+.place__delete {
+  color: var(--color-text-muted);
+}
+
+.place-list {
+  list-style: none;
+}
+
+.place-shelf {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-2) 0 var(--space-4);
+}
+
+.place-shelf + .place-shelf {
+  border-top: 1px solid var(--color-divider-soft);
+}
+
+.place-shelf__name,
+.place-shelf__add {
+  flex: 1;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 0 var(--space-2) 0 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-size: var(--text-body);
+  font-weight: 600;
+  text-align: left;
+}
+
+.place-shelf__add {
+  justify-content: flex-start;
+  gap: 6px;
+  color: var(--color-accent);
+}
+
+.place-shelf__count {
+  font-size: var(--text-small);
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+/* Shelf QR labels */
+.label-choice {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.labels {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-3);
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: var(--space-3);
+  border: 1px dashed var(--color-placeholder);
+  border-radius: var(--radius-control);
+  background: #fff;
+  color: #000;
+  text-align: center;
+  break-inside: avoid;
+}
+
+.label__qr {
+  width: 100%;
+  max-width: 120px;
+  height: auto;
+}
+
+.label__text {
+  display: flex;
+  flex-direction: column;
+}
+
+.label__room {
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+
+.label__shelf {
+  font-size: var(--text-body);
+  font-weight: 700;
+}
+
+@media print {
+  .nav,
+  .notice,
+  .no-print,
+  .screen__header {
+    display: none !important;
+  }
+
+  .app,
+  .screen {
+    display: block;
+    height: auto;
+    overflow: visible;
+    padding: 0;
+    background: #fff;
+  }
+
+  .screen__inner {
+    max-width: none;
+  }
+
+  .labels {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4mm;
+  }
+
+  .label {
+    border-radius: 0;
+    padding: 3mm;
+  }
+
+  .label__qr {
+    width: 30mm;
+    max-width: none;
+  }
+}
