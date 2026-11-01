@@ -27,6 +27,13 @@ async function download(url: string): Promise<Blob | 'blocked' | undefined> {
   }
 }
 
+/** One candidate: downloaded when allowed, kept as a link when its host forbids reading it. */
+export async function fetchCover(candidate: { provider: MetadataProvider; url: string }): Promise<FoundCover | undefined> {
+  const result = await download(candidate.url);
+  if (result instanceof Blob) return { ...candidate, blob: result };
+  return result === 'blocked' ? { ...candidate } : undefined;
+}
+
 /**
  * First cover that can be downloaded among the candidates, Open Library by ISBN last. A cover
  * that may only be displayed (not downloaded) is kept as a link when nothing better exists.

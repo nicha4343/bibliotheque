@@ -69,14 +69,16 @@ Un livre (notice) peut avoir plusieurs exemplaires, chacun avec son propre empla
 ### 5 · Ma bibliothèque (version 1)
 - Recherche instantanée et locale (titre, auteur, ISBN), insensible aux accents.
 - Filtre par pièce ou par étagère (liste déroulante groupée par pièce) ; filtres « Tous / À lire / Lus / Prêtés » (« Prêtés » au lot 4).
-- Ligne : couverture, titre, auteur, emplacement du premier exemplaire, « N exemplaires » s'il y en a plusieurs, statut.
+- Ligne : couverture, titre, auteur, emplacement du premier exemplaire, « N exemplaires » s'il y en a plusieurs, statut. Classement par titre, sans tenir compte de l'article initial (« L'Étranger » sous E) ; les filtres demeurent au retour d'une fiche.
 - Raccourcis Étagères, Séries, Prêts, Listes : affichés à mesure que les lots correspondants sont livrés.
 - Barre de navigation : Bibliothèque, Scanner, À compléter (pastille), Paramètres.
 
 ### 6 · Fiche ouvrage (version 1 pour l'essentiel)
 - Couverture et sa provenance (« Couverture automatique · Open Library », « Votre photographie · prioritaire »), titre, auteur, éditeur, ISBN.
 - « Modifier la couverture » : « Prendre une photographie », « Choisir dans la galerie », « Autres couvertures disponibles », « Rétablir la couverture automatique ».
-- Exemplaires : emplacement (lien vers l'étagère au lot 3), statut, « Ajouter un exemplaire », déplacement.
+- « Modifier » : titre, auteurs (séparés par une virgule), éditeur, année.
+- Exemplaires : emplacement (le toucher déplace l'exemplaire ; lien vers l'étagère au lot 3), « Ajouter un exemplaire », retrait d'un exemplaire (sauf le dernier) avec confirmation.
+- « Supprimer de ma bibliothèque », avec confirmation : la fiche, ses exemplaires et sa couverture.
 - Statut lu / à lire.
 - Lot 2 : « Ma lecture » (note sur 5, « Mon avis »), « Étiquettes » (mots-clés libres, suggestions : Dédicacé, Édition originale, Cadeau, À donner, À relire, Abîmé, Format poche, Classique, plus celles déjà employées), « Citations » (photographier un passage).
 - Lot 4 : bouton « Prêter » par exemplaire.

@@ -1,10 +1,10 @@
 import { useState } from 'preact/hooks';
 import { CameraSheet } from '../components/CameraSheet';
+import { ConfirmSheet } from '../components/ConfirmSheet';
 import { CoverImage } from '../components/CoverImage';
 import { EmptyState } from '../components/EmptyState';
 import { ChevronRightIcon, PendingIcon, PinIcon, QuestionIcon, TrashIcon } from '../components/icons';
 import { Screen } from '../components/Screen';
-import { Sheet } from '../components/Sheet';
 import type { Id, PendingItem } from '../db/schema';
 import { useLiveQuery } from '../db/useLiveQuery';
 import { deleteItem, listPendingItems, retryItem, setItemPhoto } from '../pending/pending';
@@ -123,29 +123,15 @@ export function PendingScreen() {
       )}
 
       {removing && (
-        <Sheet
+        <ConfirmSheet
           title={fr.pending.removeTitle}
+          text={fr.pending.removeText}
+          confirm={fr.pending.remove}
+          onConfirm={() => void remove(removing)}
           onClose={() => {
             setRemoving(undefined);
           }}
-        >
-          <p class="sheet__text">{fr.pending.removeText}</p>
-          <div class="sheet__actions">
-            <button type="button" class="button button--danger button--large" onClick={() => void remove(removing)}>
-              <TrashIcon size={18} />
-              {fr.pending.remove}
-            </button>
-            <button
-              type="button"
-              class="button button--secondary button--large"
-              onClick={() => {
-                setRemoving(undefined);
-              }}
-            >
-              {fr.common.cancel}
-            </button>
-          </div>
-        </Sheet>
+        />
       )}
     </Screen>
   );

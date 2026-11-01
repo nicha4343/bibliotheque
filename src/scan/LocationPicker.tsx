@@ -9,12 +9,14 @@ interface LocationPickerProps {
   places: PlaceIndex;
   currentShelfId: Id | undefined;
   onPick: (shelf: Shelf) => void;
+  /** « Où ranger ces ouvrages ? » by default. */
+  title?: string;
   /** Absent while no shelf has been chosen yet: a place is needed to scan. */
   onClose?: (() => void) | undefined;
 }
 
 /** « Où ranger ces ouvrages ? » — choosing a shelf closes the picker. */
-export function LocationPicker({ places, currentShelfId, onPick, onClose }: LocationPickerProps) {
+export function LocationPicker({ places, currentShelfId, onPick, title = fr.places.pickerTitle, onClose }: LocationPickerProps) {
   const currentRoomId = currentShelfId ? places.byShelfId.get(currentShelfId)?.room.id : undefined;
   const [roomId, setRoomId] = useState<Id | undefined>(currentRoomId ?? places.rooms[0]?.id);
   const [addingRoom, setAddingRoom] = useState(places.rooms.length === 0);
@@ -42,7 +44,7 @@ export function LocationPicker({ places, currentShelfId, onPick, onClose }: Loca
   };
 
   return (
-    <Sheet title={fr.places.pickerTitle} onClose={onClose}>
+    <Sheet title={title} onClose={onClose}>
       <h3 class="sheet__label">{fr.places.room}</h3>
       <div class="chips chips--wrap">
         {places.rooms.map((r) => (

@@ -560,3 +560,95 @@ select.field__input {
   font-size: var(--text-secondary);
   text-align: center;
 }
+
+.field__hint {
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.sheet__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Small labels: place, number of copies, cover provenance */
+.tag {
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 2px 8px;
+  overflow: hidden;
+  border-radius: var(--radius-tag);
+  background: var(--color-tag-background);
+  color: var(--color-tag-text);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.tag--accent {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-hover);
+}
+
+.tag--pending {
+  background: var(--color-pending-soft);
+  color: var(--color-pending-text);
+}
+
+/* Two-way choice (reading status) */
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-field);
+  background: var(--color-divider);
+}
+
+.segmented__option {
+  min-height: var(--touch-target);
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--text-body);
+  font-weight: 600;
+}
+
+.segmented__option[aria-pressed='true'] {
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 1px 3px rgb(21 23 28 / 12%);
+}
+
+.option-list__item--tall {
+  min-height: 64px;
+  padding: var(--space-2) 14px;
+}
+
+.option-list__icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-control);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.option-list__detail {
+  display: block;
+  font-size: var(--text-small);
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.sheet__hint--busy {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}

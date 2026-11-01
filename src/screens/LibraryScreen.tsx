@@ -1,18 +1,96 @@
+import { useEffect, useMemo, useState } from 'preact/hooks';
+import { CoverImage } from '../components/CoverImage';
 import { EmptyState } from '../components/EmptyState';
-import { LibraryIcon } from '../components/icons';
+import { CloseIcon, LibraryIcon, PinIcon, SearchIcon } from '../components/icons';
 import { Screen } from '../components/Screen';
 import { db } from '../db/db';
 import { useLiveQuery } from '../db/useLiveQuery';
-import { ROUTE_HASHES } from '../router';
-import { fr } from '../textes/fr';
+import {
+  matchesPlace,
+  matchesQuery,
+  matchesStatus,
+  toEntries,
+  type LibraryEntry,
+  type PlaceFilter,
+  type StatusFilter,
+} from '../library/filter';
+import { indexPlaces, type PlaceIndex } from '../places/places';
+import { ROUTE_HASHES, routeHref } from '../router';
+import { formatNumber, fr } from '../textes/fr';
 
-/** Screen 5. Lot 0: book count only; search, filters and list come with lot 1. */
+interface LibraryData {
+  entries: LibraryEntry[];
+  places: PlaceIndex;
+}
+
+async function loadLibrary(): Promise<LibraryData> {
+  const [books, copies, rooms, shelves] = await Promise.all([
+    db.books.toArray(),
+    db.copies.toArray(),
+    db.rooms.toArray(),
+    db.shelves.toArray(),
+  ]);
+  return { entries: toEntries(books, copies), places: indexPlaces(rooms, shelves) };
+}
+
+interface Filters {
+  query: string;
+  /** 'all', 'room:<id>' or 'shelf:<id>' (value of the drop-down list). */
+  place: string;
+  status: StatusFilter;
+}
+
+// Kept while the app is open: coming back from a book sheet finds the same list.
+let savedFilters: Filters = { query: '', place: 'all', status: 'all' };
+
+const PAGE_SIZE = 150;
+
+function placeFilter(value: string, places: PlaceIndex): PlaceFilter {
+  const [kind, id = ''] = value.split(':');
+  if (kind === 'shelf') return { kind: 'shelf', shelfId: id };
+  if (kind === 'room') return { kind: 'room', shelfIds: new Set((places.shelvesByRoom.get(id) ?? []).map((shelf) => shelf.id)) };
+  return { kind: 'all' };
+}
+
+const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
+  { id: 'all', label: fr.library.filterAll },
+  { id: 'toread', label: fr.library.filterToRead },
+  { id: 'read', label: fr.library.filterRead },
+];
+
+/** Screen 5: instant local search, filters by place and reading status. */
 export function LibraryScreen() {
-  const bookCount = useLiveQuery<number | undefined>(() => db.books.count(), [], undefined);
+  const data = useLiveQuery<LibraryData | undefined>(() => loadLibrary(), [], undefined);
+  const [filters, setFilters] = useState<Filters>(savedFilters);
+  const [limit, setLimit] = useState(PAGE_SIZE);
+
+  useEffect(() => {
+    savedFilters = filters;
+    setLimit(PAGE_SIZE);
+  }, [filters]);
+
+  const update = (changes: Partial<Filters>) => {
+    setFilters((current) => ({ ...current, ...changes }));
+  };
+
+  const places = data?.places;
+  // The place chosen may have been deleted meanwhile.
+  const placeValue =
+    places && filters.place !== 'all' && !hasPlaceOption(filters.place, places) ? 'all' : filters.place;
+  const byPlaceAndQuery = useMemo(() => {
+    if (!data) return [];
+    const place = placeFilter(placeValue, data.places);
+    return data.entries.filter((entry) => matchesPlace(entry, place) && matchesQuery(entry, filters.query));
+  }, [data, placeValue, filters.query]);
+  const shown = byPlaceAndQuery.filter((entry) => matchesStatus(entry, filters.status));
+  const filtered = filters.query.trim() !== '' || placeValue !== 'all' || filters.status !== 'all';
+
+  const total = data?.entries.length;
+  const subtitle = total === undefined ? undefined : filtered ? fr.library.results(shown.length) : fr.library.summary(total);
 
   return (
-    <Screen title={fr.library.title} subtitle={bookCount === undefined ? undefined : fr.library.summary(bookCount)}>
-      {bookCount === 0 && (
+    <Screen title={fr.library.title} subtitle={subtitle}>
+      {total === 0 && (
         <EmptyState
           icon={<LibraryIcon size={40} />}
           title={fr.library.emptyTitle}
@@ -24,6 +102,153 @@ export function LibraryScreen() {
           }
         />
       )}
+
+      {data && places && total !== 0 && (
+        <>
+          <div class="search">
+            <label class="visually-hidden" for="library-search">
+              {fr.library.searchLabel}
+            </label>
+            <span class="search__icon" aria-hidden="true">
+              <SearchIcon size={20} />
+            </span>
+            <input
+              id="library-search"
+              class="field__input search__input"
+              type="search"
+              value={filters.query}
+              placeholder={fr.library.searchPlaceholder}
+              autocomplete="off"
+              enterKeyHint="search"
+              onInput={(event) => {
+                update({ query: event.currentTarget.value });
+              }}
+            />
+            {filters.query && (
+              <button
+                type="button"
+                class="icon-button search__clear"
+                aria-label={fr.library.clearSearch}
+                onClick={() => {
+                  update({ query: '' });
+                }}
+              >
+                <CloseIcon size={18} />
+              </button>
+            )}
+          </div>
+
+          {places.rooms.length > 0 && (
+            <div class="select-with-icon">
+              <label class="visually-hidden" for="library-place">
+                {fr.library.placeLabel}
+              </label>
+              <span class="select-with-icon__icon" aria-hidden="true">
+                <PinIcon size={18} />
+              </span>
+              <select
+                id="library-place"
+                class="field__input select-with-icon__select"
+                value={placeValue}
+                onChange={(event) => {
+                  update({ place: event.currentTarget.value });
+                }}
+              >
+                <option value="all">{fr.library.allPlaces}</option>
+                {places.rooms.map((room) => (
+                  <optgroup key={room.id} label={room.name}>
+                    <option value={`room:${room.id}`}>{fr.library.wholeRoom(room.name)}</option>
+                    {(places.shelvesByRoom.get(room.id) ?? []).map((shelf) => (
+                      <option key={shelf.id} value={`shelf:${shelf.id}`}>
+                        {fr.places.label(room.name, shelf.name)}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div class="chips chips--wrap" role="group" aria-label={fr.library.statusFilters}>
+            {STATUS_FILTERS.map(({ id, label }) => (
+              <button
+                key={id}
+                type="button"
+                class="chip"
+                aria-pressed={filters.status === id}
+                onClick={() => {
+                  update({ status: id });
+                }}
+              >
+                {label}{' '}
+                <span class="chip__count">
+                  {formatNumber(byPlaceAndQuery.filter((entry) => matchesStatus(entry, id)).length)}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {shown.length === 0 ? (
+            <EmptyState
+              icon={<SearchIcon size={40} />}
+              title={fr.library.noMatchTitle}
+              text={fr.library.noMatchText}
+              action={
+                <a class="button button--primary" href={ROUTE_HASHES.scan}>
+                  {fr.library.noMatchAction}
+                </a>
+              }
+            />
+          ) : (
+            <ul class="book-list">
+              {shown.slice(0, limit).map((entry) => (
+                <BookRow key={entry.book.id} entry={entry} places={places} />
+              ))}
+            </ul>
+          )}
+          {shown.length > limit && (
+            <button
+              type="button"
+              class="button button--secondary button--large"
+              onClick={() => {
+                setLimit((value) => value + PAGE_SIZE);
+              }}
+            >
+              {fr.library.showMore(shown.length - limit)}
+            </button>
+          )}
+        </>
+      )}
     </Screen>
+  );
+}
+
+function hasPlaceOption(value: string, places: PlaceIndex): boolean {
+  const [kind, id = ''] = value.split(':');
+  return kind === 'room' ? places.shelvesByRoom.has(id) : places.byShelfId.has(id);
+}
+
+function BookRow({ entry, places }: { entry: LibraryEntry; places: PlaceIndex }) {
+  const { book, copies } = entry;
+  const first = copies[0];
+  const place = first ? places.byShelfId.get(first.shelfId)?.label : undefined;
+  const read = book.status === 'read';
+  return (
+    <li>
+      <a class="book-row" href={routeHref('book', book.id)}>
+        <CoverImage book={book} class="cover--list" />
+        <span class="book-row__text">
+          <span class="book-row__title">{book.title || fr.common.untitled}</span>
+          <span class="book-row__author">{book.authors.join(', ') || fr.common.unknownAuthor}</span>
+          <span class="book-row__tags">
+            <span class="tag">{place ?? fr.library.noPlace}</span>
+            {copies.length > 1 && <span class="tag tag--accent">{fr.library.copies(copies.length)}</span>}
+            <span class={read ? 'book-row__status book-row__status--read' : 'book-row__status'}>
+              {read ? fr.library.statusRead : fr.library.statusToRead}
+            </span>
+          </span>
+        </span>
+      </a>
+    </li>
   );
 }
