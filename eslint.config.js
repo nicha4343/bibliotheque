@@ -27,7 +27,7 @@ export default defineConfig(
         'error',
         { selector: 'JSXText[value=/[A-Za-zÀ-ÿ]/]', message: TEXTS_MESSAGE },
         {
-          selector: 'JSXAttribute[name.name=/^(aria-label|title|placeholder|alt)$/] > Literal',
+          selector: 'JSXAttribute[name.name=/^(aria-label|title|placeholder|alt)$/] > Literal[value=/[A-Za-zÀ-ÿ]/]',
           message: TEXTS_MESSAGE,
         },
       ],

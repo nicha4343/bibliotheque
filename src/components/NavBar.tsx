@@ -1,12 +1,12 @@
 import { db } from '../db/db';
 import { useLiveQuery } from '../db/useLiveQuery';
-import { ROUTE_HASHES, type RouteId } from '../router';
+import { ROUTE_HASHES, type TabId } from '../router';
 import { formatNumber, fr } from '../textes/fr';
 import { LibraryIcon, PendingIcon, ScanIcon, SettingsIcon } from './icons';
 
 const currentIf = (active: boolean) => (active ? 'page' : undefined);
 
-export function NavBar({ current }: { current: RouteId }) {
+export function NavBar({ current }: { current: TabId }) {
   const pendingCount = useLiveQuery(() => db.pendingItems.count(), [], 0);
 
   return (

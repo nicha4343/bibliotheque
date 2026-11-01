@@ -1,0 +1,27 @@
+{
+  "ISBN:9782070360420": {
+    "title": "La Peste",
+    "authors": [
+      {
+        "url": "http://openlibrary.org/authors/OL124171A/Albert_Camus",
+        "name": "Albert Camus"
+      }
+    ],
+    "publishers": [
+      {
+        "name": "Gallimard"
+      }
+    ],
+    "publish_date": "avril 2022",
+    "identifiers": {
+      "isbn_13": [
+        "9782070360420"
+      ]
+    },
+    "cover": {
+      "small": "https://covers.openlibrary.org/b/id/14831798-S.jpg",
+      "medium": "https://covers.openlibrary.org/b/id/14831798-M.jpg",
+      "large": "https://covers.openlibrary.org/b/id/14831798-L.jpg"
+    }
+  }
+}

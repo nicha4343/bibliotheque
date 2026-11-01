@@ -41,6 +41,7 @@ describe('base de données', () => {
         'pendingItems',
         'quotes',
         'rooms',
+        'scanEntries',
         'scanSessions',
         'settings',
         'shelves',

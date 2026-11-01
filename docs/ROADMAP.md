@@ -14,15 +14,15 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - [x] Section « Commandes » de CLAUDE.md complétée
 
 ## Lot 1 — Version 1 : scanner et retrouver
-- [ ] Lecture des codes (BarcodeDetector ou zxing-wasm) : EAN-13/ISBN et QR ; anti-double lecture ; validation ISBN (tests)
-- [ ] Recherche parallèle Google Books, Open Library, BnF ; fusion (tests) ; cache ; file d'attente hors connexion ; vérification CORS de la BnF
-- [ ] Écran 1 : scan en rafale, liste « Cette session », signal sonore, vibration, annulation
-- [ ] Fenêtre « Ouvrage déjà possédé » (réponse explicite obligatoire)
-- [ ] Pièces et étagères : sélecteur, création, renommage ; codes QR d'étagère (lecture et impression des étiquettes)
-- [ ] Couvertures automatiques ; capture sur le flux vidéo ; galerie ; priorité à la photographie de l'utilisateur
+- [x] Lecture des codes (BarcodeDetector ou zxing-wasm) : EAN-13/ISBN et QR ; anti-double lecture ; validation ISBN (tests)
+- [x] Recherche parallèle Google Books, Open Library, BnF ; fusion (tests) ; cache ; file d'attente hors connexion ; vérification CORS de la BnF (accès direct possible)
+- [x] Écran 1 : scan en rafale, liste « Cette session », signal sonore, vibration, annulation
+- [x] Fenêtre « Ouvrage déjà possédé » (réponse explicite obligatoire)
+- [ ] Pièces et étagères : sélecteur, création, renommage ; codes QR d'étagère (lecture et impression des étiquettes) — fait : sélecteur, création, lecture des QR ; reste : renommage, impression
+- [ ] Couvertures automatiques ; capture sur le flux vidéo ; galerie ; priorité à la photographie de l'utilisateur — fait : couvertures automatiques (conservées pour l'affichage hors connexion)
 - [ ] « Sans code-barres » et boîte « À compléter » (écran 3)
 - [ ] Saisie en série (écran 4), sans reconnaissance de texte
-- [ ] Bilan de fin d'étagère (écran 2) et « Étagère suivante »
+- [x] Bilan de fin d'étagère (écran 2) et « Étagère suivante »
 - [ ] Bibliothèque (écran 5) : recherche, filtres statut, pièce, étagère
 - [ ] Fiche ouvrage (écran 6) : informations, couverture, exemplaires, statut lu / à lire
 - [ ] Paramètres (écran 7) de la version 1

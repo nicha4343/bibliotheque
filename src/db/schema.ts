@@ -85,6 +85,36 @@ export interface ScanSessionCounts {
   extraCopies: number;
 }
 
+/**
+ * One read of a scan session, in the « Cette session » list. Codes waiting for their metadata
+ * (status searching) form the lookup queue, kept across restarts and network losses.
+ */
+export type ScanEntryStatus =
+  | 'searching' // metadata lookup pending (also offline)
+  | 'added' // new notice and its copy created
+  | 'asking' // already owned: the « Ouvrage déjà possédé » dialog awaits an answer
+  | 'extraCopy' // already owned: one more copy added
+  | 'notAdded' // already owned: the user declined another copy
+  | 'pending'; // sent to « À compléter » (unknown ISBN or no barcode)
+
+export interface ScanEntry {
+  id: Id;
+  sessionId: Id;
+  /** Shelf current when the code was read (a shelf QR code may change it afterwards). */
+  shelfId: Id;
+  kind: 'isbn' | 'noBarcode';
+  isbn13?: string;
+  status: ScanEntryStatus;
+  bookId?: Id;
+  /** Records created by this read, removed by « Annuler la dernière lecture ». */
+  copyId?: Id;
+  createdBook?: boolean;
+  /** Number of the copy added (« 2ᵉ exemplaire »). */
+  copyNumber?: number;
+  pendingItemId?: Id;
+  createdAt: Timestamp;
+}
+
 export interface ScanSession {
   id: Id;
   shelfId: Id;

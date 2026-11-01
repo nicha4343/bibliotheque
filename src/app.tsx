@@ -1,28 +1,52 @@
-import type { ComponentType } from 'preact';
 import { NavBar } from './components/NavBar';
 import { PwaNotices } from './components/PwaNotices';
-import { useRoute, type RouteId } from './router';
+import { useRoute, type Route, type TabId } from './router';
 import { LibraryScreen } from './screens/LibraryScreen';
 import { PendingScreen } from './screens/PendingScreen';
+import { RecapScreen } from './screens/RecapScreen';
 import { ScanScreen } from './screens/ScanScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 
-const SCREENS: Record<RouteId, ComponentType> = {
-  library: LibraryScreen,
-  scan: ScanScreen,
-  pending: PendingScreen,
-  settings: SettingsScreen,
-};
+/** Tab highlighted in the navigation bar; none for full-screen pages (scan, recap…). */
+function tabOf(route: Route): TabId | undefined {
+  switch (route.id) {
+    case 'library':
+    case 'book':
+      return 'library';
+    case 'pending':
+      return 'pending';
+    case 'settings':
+    case 'places':
+      return 'settings';
+    default:
+      return undefined;
+  }
+}
+
+function CurrentScreen({ route }: { route: Route }) {
+  switch (route.id) {
+    case 'scan':
+      return <ScanScreen />;
+    case 'recap':
+      return <RecapScreen sessionId={route.param} />;
+    case 'pending':
+      return <PendingScreen />;
+    case 'settings':
+      return <SettingsScreen />;
+    default:
+      return <LibraryScreen />;
+  }
+}
 
 export function App() {
   const route = useRoute();
-  const CurrentScreen = SCREENS[route];
+  const tab = tabOf(route);
 
   return (
-    <div class="app">
-      <CurrentScreen />
+    <div class={tab ? 'app' : 'app app--full'}>
+      <CurrentScreen route={route} />
       <PwaNotices />
-      <NavBar current={route} />
+      {tab && <NavBar current={tab} />}
     </div>
   );
 }

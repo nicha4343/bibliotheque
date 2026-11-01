@@ -7,6 +7,7 @@ import type {
   PendingItem,
   Quote,
   Room,
+  ScanEntry,
   ScanSession,
   SettingsRecord,
   Shelf,
@@ -23,6 +24,7 @@ export class LibraryDatabase extends Dexie {
   copies!: EntityTable<Copy, 'id'>;
   pendingItems!: EntityTable<PendingItem, 'id'>;
   scanSessions!: EntityTable<ScanSession, 'id'>;
+  scanEntries!: EntityTable<ScanEntry, 'id'>;
   loans!: EntityTable<Loan, 'id'>;
   wishes!: EntityTable<Wish, 'id'>;
   quotes!: EntityTable<Quote, 'id'>;
@@ -46,6 +48,10 @@ export class LibraryDatabase extends Dexie {
       metadataCache: 'isbn13, fetchedAt',
       blobs: 'id',
       settings: 'id',
+    });
+    // Lot 1: reads of a scan session, which also form the lookup queue.
+    this.version(2).stores({
+      scanEntries: 'id, sessionId, status, createdAt',
     });
   }
 }

@@ -1,0 +1,25 @@
+{
+  "kind": "books#volumes",
+  "totalItems": 1,
+  "items": [
+    {
+      "kind": "books#volume",
+      "id": "Xq4pAAAAYAAJ",
+      "volumeInfo": {
+        "title": "La peste",
+        "authors": ["Albert Camus"],
+        "publisher": "Folio",
+        "publishedDate": "1972-03-15",
+        "industryIdentifiers": [
+          { "type": "ISBN_10", "identifier": "2070360423" },
+          { "type": "ISBN_13", "identifier": "9782070360420" }
+        ],
+        "imageLinks": {
+          "smallThumbnail": "http://books.google.com/books/content?id=Xq4pAAAAYAAJ&printsec=frontcover&img=1&zoom=5&edge=curl&source=gbs_api",
+          "thumbnail": "http://books.google.com/books/content?id=Xq4pAAAAYAAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
+        },
+        "language": "fr"
+      }
+    }
+  ]
+}
