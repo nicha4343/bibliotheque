@@ -4,13 +4,14 @@ import { readDate, readLibraryFile } from './read';
 
 const read = (text: string) => readLibraryFile(parseCsv(text));
 
+// Header of a real Libib export (1er novembre 2026); the rows are made up.
 const LIBIB = [
-  'item_type,title,creators,first_name,last_name,ean_isbn13,upc_isbn10,description,publisher,publish_date,group,tags,notes,price,length,number_of_discs,number_of_players,age_group,ensemble,aspect_ratio,esrb,rating,review,review_date,status,began,completed,added,copies',
-  'book,La Peste,Albert Camus,Albert,Camus,9782070360420,2070360423,Roman,Gallimard,1972-01-01,,"classique, poche",Dédicacé,,,,,,,,,4,Magnifique,,Completed,,,2023-03-15,2',
-  'book,Astérix le Gaulois,"René Goscinny, Albert Uderzo",René,Goscinny,9782012101333,,,Hachette,2004,Astérix,,,,,,,,,,,,,,Not begun,,,2023-03-16,1',
-  'movie,Amélie,Jean-Pierre Jeunet,,,3333973137123,,,,,,,,,,,,,,,,,,,,,,2023-03-17,1',
-  'book,,,,,,,,,,,,,,,,,,,,,,,,,,,,1',
-  'book,Carnet sans code,Inconnu,,,,,,,,,,,,,,,,,,,,,,,,,,1',
+  'id,item_type,title,creators,first_name,last_name,collection,ean_isbn13,upc_isbn10,description,publisher,publish_date,group,tags,notes,price,length,number_of_discs,number_of_players,age_group,ensemble,aspect_ratio,esrb,rating,review,review_date,status,began,completed,added,copies',
+  'a1,book,La Peste,Albert Camus,Albert,Camus,Salon,9782070360420,2070360423,"Un ""grand"" roman",Gallimard,1972-01-01,,"classique, poche",Dédicacé,,,,,,,,,4,Magnifique,,Completed,,,2023-03-15,2',
+  'a2,book,Astérix le Gaulois,"René Goscinny, Albert Uderzo",René,Goscinny,Salon,9782012101333,,,Hachette,2004,Astérix,,,,,,,,,,,,,,Not begun,,,2023-03-16,1',
+  'a3,movie,Amélie,Jean-Pierre Jeunet,,,Salon,3333973137123,,,,,,,,,,,,,,,,,,,,,,2023-03-17,1',
+  'a4,book,,,,,Salon,,,,,,,,,,,,,,,,,,,,,,,,1',
+  'a5,book,Carnet sans code,Inconnu,,,Salon,,,,,,,,,,,,,,,,,,,,,,,,1',
 ].join('\n');
 
 describe('exportation Libib', () => {
