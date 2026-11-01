@@ -85,4 +85,3 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 ## À décider par l'utilisateur
 - Lecture par photographie de l'ISBN imprimé des livres anciens
 - Dictée du titre et de l'auteur
-- Lieux partagés : étiquettes communes à tous ou propres à chaque personne
