@@ -36,6 +36,7 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - Composants réutilisables : `Sheet` (fenêtre en bas d'écran), `CoverImage` et `useBlobUrl`, `useCamera` et `captureFrame`/`compressImage` (`src/scan/camera.ts`) pour les photographies de l'écran 3, 4 et 6 ; styles partagés dans `src/styles/components.css`, écrans dans `src/styles/screens.css`.
 - Routes prévues dans `src/router.ts` mais pas encore branchées dans `app.tsx` : `entry` (écran 4), `book` (écran 6), `places`, `labels`.
 - Prochaines étapes, dans l'ordre : écran 3 et 4, bibliothèque et fiche, paramètres (avec pièces et étiquettes QR via `uqr`, déjà installé), CSV.
+- Premier essai sur téléphone (1er novembre 2026) : lecture des codes réussie ; mais deux livres récents (Éditions du Triomphe, 2026) restent inconnus : absents de la BnF et d'Open Library, présents dans Google Books, qui refuse les appels sans clé (quota commun épuisé). Proposé à l'utilisateur : clé Google Books gratuite, créée par lui pas à pas, saisie dans les Paramètres ; prévoir aussi « Rechercher de nouveau » sur les ISBN inconnus de l'écran 3. Croix de suppression par ligne de « Cette session » ajoutée à sa demande.
 
 ## Lot 2 — Lecture et sauvegarde
 - [ ] Note sur 5 et avis
