@@ -43,10 +43,15 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - Clé Google Books saisie dans les Paramètres et validée sur téléphone le 1er novembre 2026 : les ISBN jusque-là inconnus sont trouvés.
 
 ## Lot 2 — Lecture et sauvegarde
-- [ ] Note sur 5 et avis
-- [ ] Étiquettes libres avec suggestions
-- [ ] Citations photographiées
+- [x] Note sur 5 et avis (« Ma lecture », avec le statut de lecture)
+- [x] Étiquettes libres avec suggestions ; recherche de la bibliothèque par étiquette
+- [x] Citations photographiées ou saisies
 - [ ] Sauvegarde automatique sur Google Drive (nécessite la création d'un identifiant Google par l'utilisateur, à guider pas à pas)
+
+### Reprise du lot 2 (1er novembre 2026)
+- Fiche ouvrage : sections dans `src/books/` (`ReadingSection`, `TagsSection`, `QuotesSection`) ; logique dans `tags.ts` et `quotes.ts` (testées). Aucun changement de schéma : `rating`, `review`, `tags` et la table `quotes` existaient depuis la version 1.
+- `CameraSheet` accepte un titre, une consigne et une taille maximale (1 920 pixels pour un passage).
+- Vérifié dans le navigateur ; reste à essayer sur téléphone, avec la sauvegarde Google Drive.
 
 ## Lot 3 — Étagères
 - [ ] Option « Mémoriser l'ordre sur l'étagère »

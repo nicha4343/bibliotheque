@@ -19,7 +19,7 @@ const copy = (id: string, bookId: string, shelfId: string, addedAt = 0): Copy =>
 const books = [
   book('a', 'L’Étranger', ['Albert Camus'], { isbn13: '9782070360024', status: 'read' }),
   book('b', 'Les Misérables', ['Victor Hugo']),
-  book('c', 'Belle du Seigneur', ['Albert Cohen']),
+  book('c', 'Belle du Seigneur', ['Albert Cohen'], { tags: ['Dédicacé', 'Format poche'] }),
 ];
 const entries = toEntries(books, [copy('1', 'a', 'salon-1'), copy('2', 'a', 'chambre-1', 5), copy('3', 'b', 'salon-2')]);
 const find = (id: string) => entries.find((entry) => entry.book.id === id);
@@ -34,6 +34,11 @@ describe('recherche dans la bibliothèque', () => {
   it('exige chacun des mots saisis', () => {
     expect(entries.filter((e) => matchesQuery(e, 'albert camus')).map((e) => e.book.id)).toEqual(['a']);
     expect(entries.filter((e) => matchesQuery(e, '')).length).toBe(3);
+  });
+
+  it('retrouve les ouvrages par étiquette', () => {
+    expect(entries.filter((e) => matchesQuery(e, 'dedicace')).map((e) => e.book.id)).toEqual(['c']);
+    expect(entries.filter((e) => matchesQuery(e, 'cohen poche')).map((e) => e.book.id)).toEqual(['c']);
   });
 
   it('retrouve un ISBN saisi avec des tirets', () => {

@@ -21,7 +21,7 @@ export function sortKey(title: string): string {
 export interface LibraryEntry {
   book: Book;
   copies: Copy[];
-  /** Folded title, authors and ISBN, searched by the query. */
+  /** Folded title, authors, tags and ISBN, searched by the query. */
   haystack: string;
   sortKey: string;
 }
@@ -37,7 +37,9 @@ export function toEntries(books: readonly Book[], copies: readonly Copy[]): Libr
     .map((book) => ({
       book,
       copies: (byBook.get(book.id) ?? []).sort((a, b) => a.addedAt - b.addedAt),
-      haystack: [foldText(book.title), ...book.authors.map(foldText), book.isbn13 ?? '', book.isbn10 ?? ''].join('\n'),
+      haystack: [foldText(book.title), ...book.authors.map(foldText), ...book.tags.map(foldText), book.isbn13 ?? '', book.isbn10 ?? ''].join(
+        '\n',
+      ),
       sortKey: sortKey(book.title),
     }))
     .sort((a, b) => a.sortKey.localeCompare(b.sortKey, 'fr') || a.book.createdAt - b.book.createdAt);

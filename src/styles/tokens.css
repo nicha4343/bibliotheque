@@ -21,6 +21,7 @@
   --color-tag-text: #3d424b;
   --color-switch-off: #c9cdd4;
   --color-on-accent: #ffffff;
+  --color-star: #d97706; /* rating */
 
   /* Scan screen (dark, around the camera picture) */
   --color-scan-background: #0b0d10;
@@ -31,6 +32,7 @@
   /* Typography */
   --font-sans: 'DM Sans Variable', 'DM Sans', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace; /* ISBN */
+  --font-serif: Georgia, 'Times New Roman', serif; /* quotes */
   --text-title: 28px;
   --text-body: 15px;
   --text-input: 16px; /* 16 px or more: iOS does not zoom on focus */

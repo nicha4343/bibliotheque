@@ -10,13 +10,16 @@ import {
   setUserCover,
   updateBook,
 } from '../books/books';
+import { QuotesSection } from '../books/QuotesSection';
+import { ReadingSection } from '../books/ReadingSection';
+import { TagsSection } from '../books/TagsSection';
 import { CameraSheet } from '../components/CameraSheet';
 import { ConfirmSheet } from '../components/ConfirmSheet';
 import { CoverImage } from '../components/CoverImage';
 import { CameraIcon, ChevronLeftIcon, GalleryIcon, PencilIcon, PinIcon, PlusIcon, TrashIcon } from '../components/icons';
 import { Sheet } from '../components/Sheet';
 import { db } from '../db/db';
-import type { Book, Copy, ReadingStatus } from '../db/schema';
+import type { Book, Copy } from '../db/schema';
 import { useLiveQuery } from '../db/useLiveQuery';
 import { fetchCover, type CoverCandidate } from '../metadata/covers';
 import { joinAuthors, parseAuthors } from '../pending/pending';
@@ -56,7 +59,7 @@ const coverBadge = (book: Book): string => {
   return book.cover.provider ? fr.book.coverAuto(fr.common.providers[book.cover.provider]) : fr.book.coverAutoUnknown;
 };
 
-/** Screen 6, version 1: information, cover, copies and reading status. */
+/** Screen 6: information, cover, copies, reading (status, rating, review), tags and quotes. */
 export function BookScreen({ bookId }: { bookId: string }) {
   const data = useLiveQuery<BookData | undefined>(() => loadBook(bookId), [bookId], undefined);
   const [dialog, setDialog] = useState<Dialog>();
@@ -87,10 +90,6 @@ export function BookScreen({ bookId }: { bookId: string }) {
 
   const placeOf = (copy: Copy) => places.byShelfId.get(copy.shelfId)?.label ?? fr.library.noPlace;
   const details = [book.publisher, book.year ? String(book.year) : undefined].filter(Boolean).join(' · ');
-
-  const setStatus = (status: ReadingStatus) => {
-    void updateBook(book.id, { status });
-  };
 
   return (
     <main class="screen">
@@ -139,34 +138,6 @@ export function BookScreen({ bookId }: { bookId: string }) {
         <p class="status-line" role="status">
           {message}
         </p>
-
-        <section class="section" aria-labelledby="status-title">
-          <h2 class="section__title" id="status-title">
-            {fr.book.status}
-          </h2>
-          <div class="segmented" role="group" aria-labelledby="status-title">
-            <button
-              type="button"
-              class="segmented__option"
-              aria-pressed={book.status === 'toread'}
-              onClick={() => {
-                setStatus('toread');
-              }}
-            >
-              {fr.book.toRead}
-            </button>
-            <button
-              type="button"
-              class="segmented__option"
-              aria-pressed={book.status === 'read'}
-              onClick={() => {
-                setStatus('read');
-              }}
-            >
-              {fr.book.read}
-            </button>
-          </div>
-        </section>
 
         <section class="section" aria-labelledby="copies-title">
           <h2 class="section__title" id="copies-title">
@@ -217,6 +188,10 @@ export function BookScreen({ bookId }: { bookId: string }) {
             </li>
           </ul>
         </section>
+
+        <ReadingSection book={book} />
+        <TagsSection book={book} />
+        <QuotesSection bookId={book.id} onMessage={setMessage} />
 
         <button
           type="button"

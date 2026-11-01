@@ -1128,6 +1128,157 @@
   margin-top: var(--space-4);
 }
 
+/* « Ma lecture », « Étiquettes », « Citations » */
+.book-card {
+  padding: var(--space-4);
+  gap: var(--space-4);
+}
+
+.rating {
+  margin: -6px 0 -6px -8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.rating__star {
+  width: var(--touch-target);
+  height: var(--touch-target);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-placeholder);
+}
+
+.rating__star--on {
+  color: var(--color-star);
+}
+
+.rating__value {
+  margin-left: var(--space-2);
+  font-size: var(--text-secondary);
+  font-weight: 700;
+  color: var(--color-tag-text);
+}
+
+.tag-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip--tag {
+  border-color: var(--color-text);
+  background: var(--color-text);
+  color: var(--color-surface);
+}
+
+.quote-list {
+  list-style: none;
+}
+
+.quote-list > li + li {
+  border-top: 1px solid var(--color-divider-soft);
+}
+
+.quote {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: 14px var(--space-4);
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+}
+
+.quote__thumb {
+  width: 56px;
+  height: 72px;
+  flex-shrink: 0;
+  border-radius: var(--radius-cover);
+  background: var(--color-divider);
+  object-fit: cover;
+}
+
+.quote__body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.quote__text {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-style: italic;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.quote__text--none {
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  font-style: normal;
+  font-weight: 600;
+}
+
+.quote__date {
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.card-action {
+  width: 100%;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 var(--space-4);
+  border: 0;
+  background: transparent;
+  color: var(--color-accent);
+  font-size: var(--text-body);
+  font-weight: 600;
+  text-align: left;
+}
+
+.quote-photo {
+  display: flex;
+  flex-direction: column;
+}
+
+.quote-photo__frame {
+  max-height: 50dvh;
+  overflow: auto;
+  border-radius: var(--radius-control);
+  background: var(--color-divider);
+}
+
+.quote-photo__image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Two and a half times wider: the passage is read by scrolling in both directions. */
+.quote-photo__frame--zoomed .quote-photo__image {
+  width: 250%;
+  max-width: none;
+}
+
+.quote-photo__zoom {
+  align-self: flex-end;
+}
+
 .cover-choices {
   display: flex;
   gap: var(--space-3);

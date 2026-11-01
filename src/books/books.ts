@@ -5,10 +5,11 @@ import { bookshopCandidates, type CoverCandidate, type FoundCover } from '../met
 import { openLibraryCoverUrl } from '../metadata/sources';
 import { attachAutoCover } from '../scan/lookups';
 import { newCopy } from '../scan/session';
+import { deleteBookQuotes } from './quotes';
 
 // Changes made on the book sheet (screen 6).
 
-export type BookChanges = Partial<Pick<Book, 'title' | 'authors' | 'publisher' | 'year' | 'status'>>;
+export type BookChanges = Partial<Pick<Book, 'title' | 'authors' | 'publisher' | 'year' | 'status' | 'rating' | 'review'>>;
 
 /** An empty optional field is removed from the notice. */
 export async function updateBook(bookId: Id, changes: BookChanges, database: LibraryDatabase = db): Promise<void> {
@@ -83,12 +84,13 @@ export async function removeCopy(copyId: Id, database: LibraryDatabase = db): Pr
   });
 }
 
-/** « Supprimer de ma bibliothèque »: the notice, its copies and its cover. */
+/** « Supprimer de ma bibliothèque »: the notice, its copies, its cover and its quotes. */
 export async function deleteBook(bookId: Id, database: LibraryDatabase = db): Promise<void> {
-  await database.transaction('rw', [database.books, database.copies, database.blobs], async () => {
+  await database.transaction('rw', [database.books, database.copies, database.quotes, database.blobs], async () => {
     const book = await database.books.get(bookId);
     if (book?.cover?.blobId) await database.blobs.delete(book.cover.blobId);
     await database.copies.where('bookId').equals(bookId).delete();
+    await deleteBookQuotes(bookId, database);
     await database.books.delete(bookId);
   });
 }

@@ -225,3 +225,21 @@ export function UploadIcon(props: IconProps) {
     </Svg>
   );
 }
+
+/** Star of the rating, filled when selected. */
+export function StarIcon({ size = 22, filled = false }: IconProps & { filled?: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linejoin="round"
+    >
+      <path d="M12 3.5l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 16.9l-5.3 2.7 1-5.8-4.2-4.1 5.9-.9z" />
+    </svg>
+  );
+}

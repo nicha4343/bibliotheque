@@ -8,10 +8,15 @@ import { Sheet } from './Sheet';
 interface CameraSheetProps {
   onCapture: (photo: Blob) => Promise<void> | void;
   onClose: () => void;
+  /** A book cover by default. */
+  title?: string;
+  hint?: string;
+  /** Largest side of the stored photograph, in pixels: larger for a passage to be read. */
+  maxSize?: number;
 }
 
 /** Photograph taken on the live picture, without leaving the app (no file picker). */
-export function CameraSheet({ onCapture, onClose }: CameraSheetProps) {
+export function CameraSheet({ onCapture, onClose, title = fr.camera.title, hint = fr.camera.hint, maxSize }: CameraSheetProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const camera = useCamera(videoRef);
   const [busy, setBusy] = useState(false);
@@ -21,7 +26,7 @@ export function CameraSheet({ onCapture, onClose }: CameraSheetProps) {
     if (!video || busy) return;
     setBusy(true);
     try {
-      await onCapture(await captureFrame(video));
+      await onCapture(await captureFrame(video, maxSize));
       onClose();
     } finally {
       setBusy(false);
@@ -39,7 +44,7 @@ export function CameraSheet({ onCapture, onClose }: CameraSheetProps) {
       : undefined;
 
   return (
-    <Sheet title={fr.camera.title} onClose={onClose}>
+    <Sheet title={title} onClose={onClose}>
       <div class="camera">
         <video class="camera__video" ref={videoRef} playsInline muted autoPlay aria-hidden="true" />
         {error ? (
@@ -53,7 +58,7 @@ export function CameraSheet({ onCapture, onClose }: CameraSheetProps) {
           camera.status === 'starting' && <p class="camera__message">{fr.scan.cameraStarting}</p>
         )}
       </div>
-      <p class="sheet__hint">{fr.camera.hint}</p>
+      <p class="sheet__hint">{hint}</p>
       <button
         type="button"
         class="button button--primary button--large"
