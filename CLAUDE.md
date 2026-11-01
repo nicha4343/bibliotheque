@@ -2,6 +2,7 @@
 
 Application web installable sur téléphone (PWA) pour cataloguer une bibliothèque personnelle en scannant les codes-barres des livres **en rafale**, sans jamais interrompre le scan. Elle est née des défauts de Libib : recherche lente après chaque scan, clic obligatoire entre deux livres, saisie manuelle qui coupe la série, photo de couverture défaillante.
 
+- **Application en ligne** : https://nicha4343.github.io/bibliotheque/ (dépôt public https://github.com/nicha4343/bibliotheque).
 - **Maquette interactive validée** (11 écrans) : https://claude.ai/artifact/DK1VELndFEaoxytF6rRr2b
 - **Spécification détaillée** : [docs/SPEC.md](docs/SPEC.md) — à relire avant de toucher à un écran.
 - **Feuille de route et avancement** : [docs/ROADMAP.md](docs/ROADMAP.md) — indique le lot en cours.
@@ -67,7 +68,7 @@ Node 24. Installer les dépendances une fois : `npm install`.
 | `npm run texts:fix` | Pose espaces insécables, apostrophes ’ et points de suspension dans `src/textes/fr.ts` |
 | `npm run icons` | Régénère les icônes PNG de `public/` à partir de `public/icon.svg` |
 
-**Déploiement** : automatique à chaque push sur `main` (GitHub Actions, `.github/workflows/deploy.yml`) vers GitHub Pages ; l'application est publiée si le lint, les tests et la construction réussissent.
+**Déploiement** : automatique à chaque push sur `main` (GitHub Actions, `.github/workflows/deploy.yml`) vers GitHub Pages, https://nicha4343.github.io/bibliotheque/ ; l'application est publiée si le lint, les tests et la construction réussissent (deux minutes environ). Suivi : `gh run list`. Les commits portent l'adresse anonyme GitHub de l'utilisateur (dépôt public) : ne pas la remplacer.
 
 ### Points d'attention
 - **Espaces insécables** : les outils d'édition ne savent pas toujours les saisir. Écrire les textes de `fr.ts` avec des espaces ordinaires, puis lancer `npm run texts:fix` ; le test `fr.test.ts` signale toute faute restante (typographie, tutoiement, vocabulaire proscrit).

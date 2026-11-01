@@ -10,7 +10,7 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - [x] Base IndexedDB (Dexie) avec le modèle de données de SPEC.md
 - [x] Fichier unique des textes `src/textes/fr.ts`
 - [x] Jetons de design (couleurs, polices, espacements) repris de la maquette ; barre de navigation
-- [ ] Déploiement HTTPS gratuit et ouverture sur le téléphone
+- [ ] Déploiement HTTPS gratuit et ouverture sur le téléphone — en ligne sur https://nicha4343.github.io/bibliotheque/ ; reste l’essai sur le téléphone (ouverture, installation sur l’écran d’accueil, ouverture en mode avion)
 - [x] Section « Commandes » de CLAUDE.md complétée
 
 ## Lot 1 — Version 1 : scanner et retrouver
