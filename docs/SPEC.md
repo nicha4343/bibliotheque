@@ -28,7 +28,7 @@ Un livre (notice) peut avoir plusieurs exemplaires, chacun avec son propre empla
 
 - **ISBN** : accepter EAN-13 commençant par 978 ou 979 et ISBN-10 ; valider la clé de contrôle ; tout stocker en ISBN-13. Ignorer les autres codes-barres (prix, add-on à 5 chiffres).
 - **Anti-double lecture** : un même code lu à moins de 2,5 s d'intervalle est ignoré.
-- **Recherche des métadonnées** : Google Books, Open Library et BnF interrogées en parallèle, délai maximal 8 s ; la première réponse exploitable crée la notice, les suivantes complètent les champs vides. Résultat mis en cache. La BnF accepte l'appel direct depuis le navigateur (vérifié au lot 1, aucun relais nécessaire) ; elle est interrogée avec l'ISBN-13 et l'ISBN-10, les ouvrages antérieurs à 2007 n'y étant catalogués qu'en ISBN-10. Google Books, sans clé, épuise souvent son quota quotidien : l'application n'en dépend pas.
+- **Recherche des métadonnées** : Google Books, Open Library et BnF interrogées en parallèle, délai maximal 8 s ; la première réponse exploitable crée la notice, les suivantes complètent les champs vides. Résultat mis en cache. La BnF accepte l'appel direct depuis le navigateur (vérifié au lot 1, aucun relais nécessaire) ; elle est interrogée avec l'ISBN-13 et l'ISBN-10, les ouvrages antérieurs à 2007 n'y étant catalogués qu'en ISBN-10. Google Books, sans clé, épuise souvent son quota quotidien : l'application n'en dépend pas, et l'utilisateur peut saisir sa propre clé (écran 7).
 - **Hors connexion** : le code est conservé avec l'état « Recherche… » ; la recherche reprend au retour du réseau, même après la fermeture de l'application. Si l'option « Lecture hors connexion » est désactivée, un code lu sans réseau n'est pas enregistré et un bandeau le signale.
 - **Ouvrage déjà possédé** : détecté dès la lecture, sans réseau. Si l'option « Signaler les ouvrages déjà possédés » est désactivée, un exemplaire supplémentaire est ajouté directement.
 - **Zone de visée** : seuls les codes situés dans le cadre sont lus, pour ignorer ceux des ouvrages voisins.
@@ -55,14 +55,15 @@ Un livre (notice) peut avoir plusieurs exemplaires, chacun avec son propre empla
 
 ### 3 · À compléter (version 1)
 - Liste des éléments avec filtre « Tous / ISBN inconnu / Sans code-barres » et compteur.
-- Carte : photographie ou icône, nature, ISBN éventuel ; actions « Photographier », « Corriger » ou « Saisir ».
+- Carte : photographie ou icône, nature, ISBN éventuel, emplacement ; actions « Rechercher de nouveau » (ISBN inconnu : une source a pu le cataloguer depuis, ou être indisponible), « Photographier » (prise de vue sur place, sans quitter l'écran), « Saisir » (écran 4 pour cet élément seul) ; icône « Retirer » avec confirmation (élément mis de côté par erreur ; sa photographie est effacée).
 - Suggestion de titre et d'auteur lue sur la couverture (« Relevé sur la couverture », bouton « Confirmer ») : **lot 6** (reconnaissance de texte).
 - « Compléter en série · N » ouvre l'écran 4.
 
 ### 4 · Saisie en série (version 1)
 - Un élément après l'autre, barre de progression « 1 sur N ».
-- Photographie (ou bouton « Photographier la couverture » qui capture sans changer d'application), champs Titre, Auteur, Éditeur (facultatif), emplacement repris de la session.
-- Boutons « Reporter » et « Enregistrer » (dernier : « Terminer ») ; écran final « Toutes les fiches sont complètes ».
+- Photographie (ou bouton « Photographier la couverture » qui capture sans changer d'application ; toucher la photographie la reprend), champs Titre (obligatoire), Auteur (plusieurs auteurs séparés par une virgule), Éditeur (facultatif), emplacement repris de la session et modifiable.
+- La photographie devient la couverture de la notice (« Votre photographie », prioritaire). Si l'ISBN est entré entre-temps dans la bibliothèque, seul un exemplaire est ajouté.
+- Boutons « Reporter » et « Enregistrer » (dernier : « Terminer ») ; écran final « Toutes les fiches sont complètes » (« Saisie terminée » s'il reste des ouvrages reportés).
 - Pastilles de mots relevés sous chaque champ : **lot 6**.
 
 ### 5 · Ma bibliothèque (version 1)
@@ -81,7 +82,9 @@ Un livre (notice) peut avoir plusieurs exemplaires, chacun avec son propre empla
 - Lot 4 : bouton « Prêter » par exemplaire.
 
 ### 7 · Paramètres
-- Version 1 : « Lors de la lecture des codes » (Signal sonore, Vibration, Signaler les ouvrages déjà possédés, Mémoriser l'ordre sur l'étagère — désactivé par défaut) ; « Couvertures automatiques » ; « Sources, interrogées simultanément » (BnF, Google Books, Open Library) ; « Lecture hors connexion » ; « Mes données » : Pièces et étagères, Étiquettes QR à imprimer, Exporter (CSV), Importer (CSV, y compris une exportation Libib).
+- Version 1 : « Lors de la lecture des codes » (Signal sonore, Vibration, Signaler les ouvrages déjà possédés) ; « Couvertures automatiques » ; « Sources, interrogées simultanément » (BnF, Google Books, Open Library ; au moins une demeure active) et « Clé Google Books » ; « Lecture hors connexion » ; « Mes données » : Pièces et étagères, Étiquettes QR à imprimer, Exporter (CSV), Importer (CSV, y compris une exportation Libib).
+- **Clé Google Books** (facultative) : sans clé, Google Books partage un quota quotidien commun à tous les sites et refuse souvent de répondre. La clé de l'utilisateur, limitée à l'adresse de l'application, est conservée sur l'appareil (jamais dans le dépôt, qui est public) et ajoutée aux requêtes. À l'enregistrement, une requête la vérifie (« Google Books l'accepte » ou « la refuse »), puis les ISBN inconnus de « À compléter » sont recherchés de nouveau.
+- Lot 3 : « Mémoriser l'ordre sur l'étagère » (désactivé par défaut), affiché avec la fonction qui s'en sert.
 - Lot 2 : « Sauvegarde automatique » sur Google Drive.
 - Lot 5 : « Inventaire pour l'assurance (PDF) ».
 

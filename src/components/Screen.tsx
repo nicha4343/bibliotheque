@@ -8,10 +8,12 @@ let hasNavigated = false;
 interface ScreenProps {
   title: string;
   subtitle?: string | undefined;
+  /** Shown beside the title (a count badge). */
+  titleAside?: ComponentChildren;
   children?: ComponentChildren;
 }
 
-export function Screen({ title, subtitle, children }: ScreenProps) {
+export function Screen({ title, subtitle, titleAside, children }: ScreenProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -25,9 +27,12 @@ export function Screen({ title, subtitle, children }: ScreenProps) {
     <main class="screen">
       <div class="screen__inner">
         <header class="screen__header">
-          <h1 class="screen__title" tabIndex={-1} ref={headingRef}>
-            {title}
-          </h1>
+          <div class="screen__title-row">
+            <h1 class="screen__title" tabIndex={-1} ref={headingRef}>
+              {title}
+            </h1>
+            {titleAside}
+          </div>
           {subtitle && <p class="screen__subtitle">{subtitle}</p>}
         </header>
         {children}

@@ -194,10 +194,113 @@ export const fr = {
     emptyTitle: 'Aucun ouvrage à compléter',
     emptyText:
       'Les ouvrages dont l’ISBN est inconnu et ceux qui n’ont pas de code-barres seront rassemblés ici, pour être complétés à votre convenance.',
+    intro: 'Les ouvrages non reconnus lors de vos lectures sont conservés ici, en attendant que vous complétiez leur fiche. Rien n’a été perdu.',
+    filters: 'Nature des ouvrages',
+    filterAll: 'Tous',
+    filterUnknown: 'ISBN inconnu',
+    filterNoBarcode: 'Sans code-barres',
+    kindUnknown: 'ISBN inconnu',
+    kindNoBarcode: 'Sans code-barres',
+    unknownText: 'Ce code n’est référencé dans aucune source.',
+    noBarcodeText: (date: string) => `Photographié le ${date}`,
+    retry: 'Rechercher de nouveau',
+    retrying: 'Recherche…',
+    photograph: 'Photographier',
+    enter: 'Saisir',
+    remove: 'Retirer',
+    removeLabel: (what: string) => `Retirer « ${what} » de la liste`,
+    removeTitle: 'Retirer cet ouvrage de la liste ?',
+    removeText: 'Il ne sera pas ajouté à votre bibliothèque, et sa photographie sera effacée. Cette opération est définitive.',
+    removed: 'Ouvrage retiré de la liste',
+    found: (title: string) => `« ${title} » a été retrouvé et ajouté à votre bibliothèque`,
+    stillUnknown: 'Ce code demeure inconnu de toutes les sources : saisissez sa fiche.',
+    unavailable: 'Les sources n’ont pu être jointes : réessayez lorsque le réseau sera disponible.',
+    completeSeries: (value: number) => `Compléter en série · ${formatNumber(value)}`,
+  },
+
+  entry: {
+    title: 'Saisie en série',
+    close: 'Fermer',
+    step: (index: number, total: number) => `${formatNumber(index)} sur ${formatNumber(total)}`,
+    postpone: 'Reporter',
+    save: 'Enregistrer',
+    finish: 'Terminer',
+    photoCaption: 'Photographie prise lors de la lecture.',
+    takenHere: 'Photographie prise ici même, sans quitter l’application.',
+    unknownCaption:
+      'Ce code n’est référencé dans aucune source. Saisissez le titre et l’auteur ; vous pouvez aussi photographier la couverture.',
+    noPhotoCaption: 'Aucune photographie : saisissez le titre et l’auteur.',
+    photographCover: 'Photographier la couverture',
+    retakePhoto: 'Photographier de nouveau',
+    place: 'Emplacement',
+    changePlace: (place: string) => `Emplacement : ${place}. Modifier`,
+    titleLabel: 'Titre',
+    titlePlaceholder: 'Titre de l’ouvrage',
+    authorLabel: 'Auteur',
+    authorPlaceholder: 'Auteur ou autrice',
+    publisherLabel: 'Éditeur',
+    publisherPlaceholder: 'Facultatif',
+    titleRequired: 'Indiquez au moins le titre de l’ouvrage.',
+    doneTitle: 'Toutes les fiches sont complètes',
+    endedTitle: 'Saisie terminée',
+    doneAdded: (value: number) =>
+      value === 0
+        ? 'Aucun ouvrage n’a été ajouté.'
+        : value === 1
+          ? '1 ouvrage a été ajouté à votre bibliothèque.'
+          : `${formatNumber(value)} ouvrages ont été ajoutés à votre bibliothèque.`,
+    doneRemaining: (value: number) =>
+      value === 1
+        ? '1 ouvrage demeure dans « À compléter ».'
+        : `${formatNumber(value)} ouvrages demeurent dans « À compléter ».`,
+    library: 'Consulter ma bibliothèque',
+    backToPending: 'Revenir à « À compléter »',
+    nothing: 'Aucun ouvrage n’attend d’être complété.',
+  },
+
+  camera: {
+    title: 'Photographier la couverture',
+    shoot: 'Prendre la photographie',
+    hint: 'Cadrez la couverture entière, puis touchez le bouton.',
   },
 
   settings: {
     title: 'Paramètres',
+    scanning: 'Lors de la lecture des codes',
+    sound: 'Signal sonore',
+    soundDetail: 'À chaque code reconnu',
+    vibration: 'Vibration',
+    vibrationDetail: 'Pour poursuivre sans regarder l’écran ; sans effet sur iPhone',
+    flagOwned: 'Signaler les ouvrages déjà possédés',
+    flagOwnedDetail: 'Propose l’ajout d’un exemplaire supplémentaire',
+    covers: 'Couvertures',
+    autoCovers: 'Couvertures automatiques',
+    autoCoversDetail: 'Votre propre photographie demeure prioritaire',
+    sources: 'Sources, interrogées simultanément',
+    bnfDetail: 'Particulièrement fiable pour les éditions françaises',
+    googleBooksDetail: 'Vaste catalogue international',
+    openLibraryDetail: 'Catalogue libre et gratuit',
+    lastSource: 'Au moins une source doit demeurer active.',
+    keyLabel: 'Clé Google Books',
+    keyDetail:
+      'Facultative. Sans clé, Google Books refuse souvent de répondre ; avec la vôtre, il répond toujours. Elle demeure sur cet appareil.',
+    keySave: 'Enregistrer',
+    keyChecking: 'Vérification auprès de Google Books…',
+    keyValid: 'Clé enregistrée : Google Books l’accepte.',
+    keyRefused:
+      'Clé enregistrée, mais Google Books la refuse : vérifiez qu’elle a été copiée en entier et qu’elle autorise ce site.',
+    keyUnverified: 'Clé enregistrée. Google Books n’a pu être joint pour la vérifier.',
+    keyRemoved: 'Clé supprimée : Google Books est interrogé sans clé.',
+    keyRetrying: 'Nouvelle recherche des ISBN inconnus…',
+    keyFound: (value: number) =>
+      value === 0
+        ? 'Aucun des ouvrages mis de côté n’a été retrouvé.'
+        : value === 1
+          ? '1 ouvrage mis de côté a été retrouvé et ajouté à votre bibliothèque.'
+          : `${formatNumber(value)} ouvrages mis de côté ont été retrouvés et ajoutés à votre bibliothèque.`,
+    offlineSection: 'Hors connexion',
+    offlineScanning: 'Lecture hors connexion',
+    offlineScanningDetail: 'Les codes sont conservés ; la recherche s’effectue au retour du réseau',
     aboutTitle: 'À propos de l’application',
     version: 'Version',
     versionValue: (version: string, date: string) => `${version}, publiée le ${date}`,

@@ -1,6 +1,7 @@
 import { NavBar } from './components/NavBar';
 import { PwaNotices } from './components/PwaNotices';
 import { useRoute, type Route, type TabId } from './router';
+import { EntryScreen } from './screens/EntryScreen';
 import { LibraryScreen } from './screens/LibraryScreen';
 import { PendingScreen } from './screens/PendingScreen';
 import { RecapScreen } from './screens/RecapScreen';
@@ -31,6 +32,8 @@ function CurrentScreen({ route }: { route: Route }) {
       return <RecapScreen sessionId={route.param} />;
     case 'pending':
       return <PendingScreen />;
+    case 'entry':
+      return <EntryScreen key={route.param ?? 'all'} itemId={route.param} />;
     case 'settings':
       return <SettingsScreen />;
     default:

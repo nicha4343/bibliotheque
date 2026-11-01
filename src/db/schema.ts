@@ -196,6 +196,8 @@ export interface Settings {
   sources: Record<MetadataProvider, boolean>;
   /** Lecture hors connexion: keep scanned codes and search them once the network is back. */
   offlineScanning: boolean;
+  /** Clé Google Books of the user (empty: none). Kept on the device only, never in the repository. */
+  googleBooksKey: string;
 }
 
 export const SETTINGS_KEY = 'app';

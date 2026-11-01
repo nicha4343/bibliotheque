@@ -94,6 +94,7 @@ export async function findMetadata(
   try {
     const metadata = await searchMetadata(isbn13, {
       sources: settings.sources,
+      googleBooksKey: settings.googleBooksKey,
       onProgress: (partial) => {
         first ??= onFirst(partial);
       },

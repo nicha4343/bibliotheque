@@ -57,6 +57,12 @@ describe('analyse des sources', () => {
   it('interroge la BnF avec l’ISBN-13 et l’ISBN-10', () => {
     expect(decodeURIComponent(sourceUrl('bnf', ISBN))).toContain('bib.isbn any "9782070360420 2070360423"');
   });
+
+  it('ajoute la clé Google Books de l’utilisateur, s’il en a saisi une', () => {
+    expect(sourceUrl('googleBooks', ISBN)).not.toContain('key=');
+    expect(sourceUrl('googleBooks', ISBN, '  ')).not.toContain('key=');
+    expect(sourceUrl('googleBooks', ISBN, ' AIza-test ')).toMatch(/&key=AIza-test$/);
+  });
 });
 
 describe('fusion', () => {

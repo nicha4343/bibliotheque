@@ -16,11 +16,12 @@ type Answer = { status: 'found'; record: SourceRecord } | { status: 'notFound' }
 async function askSource(
   provider: MetadataProvider,
   isbn13: string,
-  signal: AbortSignal,
-  fetchImpl: typeof fetch,
+  options: { signal: AbortSignal; fetchImpl: typeof fetch; googleBooksKey: string | undefined },
 ): Promise<Answer> {
   try {
-    const response = await fetchImpl(sourceUrl(provider, isbn13), { signal });
+    const response = await options.fetchImpl(sourceUrl(provider, isbn13, options.googleBooksKey), {
+      signal: options.signal,
+    });
     // 429: Google Books quota exhausted; not a sign that the book is unknown.
     if (!response.ok) return { status: 'failed' };
     const record =
@@ -37,6 +38,8 @@ async function askSource(
 
 export interface SearchOptions {
   sources: Record<MetadataProvider, boolean>;
+  /** The user's own Google Books key, if any. */
+  googleBooksKey?: string | undefined;
   /** Called each time a source brings a usable record, with everything merged so far. */
   onProgress?: (metadata: BookMetadata) => void;
   timeoutMs?: number;
@@ -60,7 +63,11 @@ export async function searchMetadata(isbn13: string, options: SearchOptions): Pr
   try {
     await Promise.all(
       providers.map(async (provider) => {
-        const answer = await askSource(provider, isbn13, controller.signal, fetchImpl);
+        const answer = await askSource(provider, isbn13, {
+          signal: controller.signal,
+          fetchImpl,
+          googleBooksKey: options.googleBooksKey,
+        });
         if (answer.status === 'failed') return;
         answered += 1;
         if (answer.status === 'found') {

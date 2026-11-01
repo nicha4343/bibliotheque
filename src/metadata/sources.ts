@@ -15,11 +15,16 @@ export interface SourceRecord {
   coverUrl?: string;
 }
 
-/** The request to send to a source for an ISBN-13. */
-export function sourceUrl(provider: MetadataProvider, isbn13: string): string {
+/**
+ * The request to send to a source for an ISBN-13. Without a key, Google Books shares one daily
+ * quota between every site calling it and often refuses: the user may enter a key of their own.
+ */
+export function sourceUrl(provider: MetadataProvider, isbn13: string, googleBooksKey = ''): string {
   switch (provider) {
-    case 'googleBooks':
-      return `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn13}&maxResults=1`;
+    case 'googleBooks': {
+      const key = googleBooksKey.trim() ? `&key=${encodeURIComponent(googleBooksKey.trim())}` : '';
+      return `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn13}&maxResults=1${key}`;
+    }
     case 'openLibrary':
       return `https://openlibrary.org/api/books?bibkeys=ISBN:${isbn13}&format=json&jscmd=data`;
     case 'bnf': {

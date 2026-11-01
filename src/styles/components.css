@@ -432,3 +432,131 @@ select.field__input {
     transform: rotate(360deg);
   }
 }
+
+/* Small actions inside a card */
+.small-button {
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-small);
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  position: relative;
+}
+
+/* Drawn 36 px tall, tappable over 44 px. */
+.small-button::before {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
+}
+
+.small-button:hover {
+  color: var(--color-text);
+}
+
+.small-button--accent {
+  border-color: transparent;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-hover);
+  font-weight: 700;
+}
+
+.small-button--accent:hover {
+  color: var(--color-accent-hover);
+}
+
+.small-button:disabled {
+  opacity: 0.7;
+}
+
+/* Result of an action, announced to screen readers */
+.status-line {
+  padding: 10px 14px;
+  border-radius: var(--radius-control);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-hover);
+  font-size: var(--text-secondary);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.status-line:empty {
+  display: none;
+}
+
+/* Main action kept in view at the bottom of a scrolling screen */
+.sticky-footer {
+  position: sticky;
+  bottom: 0;
+  margin: 0 calc(-1 * var(--space-5));
+  padding: var(--space-3) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(to top, var(--color-background) 70%, transparent);
+}
+
+.sheet__text {
+  font-size: var(--text-body);
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+
+.sheet__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-divider);
+  overflow: hidden;
+}
+
+.progress__bar {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--color-accent);
+  transition: width 0.25s ease;
+}
+
+/* Live picture for a photograph (screens 3, 4 and 6) */
+.camera {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  max-height: 58dvh;
+  border-radius: var(--radius-card);
+  background: var(--color-scan-background);
+  overflow: hidden;
+}
+
+.camera__video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.camera__message {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  color: var(--color-scan-text);
+  font-size: var(--text-secondary);
+  text-align: center;
+}

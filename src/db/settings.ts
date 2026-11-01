@@ -9,6 +9,7 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   autoCovers: true,
   sources: { bnf: true, googleBooks: true, openLibrary: true },
   offlineScanning: true,
+  googleBooksKey: '',
 };
 
 /** Stored values over the defaults, so a setting added later gets its default value. */
