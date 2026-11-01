@@ -3,6 +3,7 @@ import type { Book } from '../db/schema';
 import bnfXml from './fixtures/bnf.xml?raw';
 import googleBooksJson from './fixtures/googleBooks.json';
 import openLibraryJson from './fixtures/openLibrary.json';
+import { bookshopCandidates } from './covers';
 import { completeBook, mergeRecords } from './merge';
 import { SearchUnavailable, searchMetadata } from './search';
 import { parseBnf, parseGoogleBooks, parseOpenLibrary, sourceUrl, type SourceRecord } from './sources';
@@ -186,5 +187,18 @@ describe('recherche simultanée', () => {
     });
     expect(metadata.providers).toEqual([]);
     expect(metadata.incomplete).toBe(true);
+  });
+});
+
+describe('couvertures des libraires', () => {
+  it('cherchent chez Amazon par ISBN-10, puis chez Decitre par EAN', () => {
+    expect(bookshopCandidates('9782383861089')).toEqual([
+      { provider: 'amazon', url: 'https://images-na.ssl-images-amazon.com/images/P/2383861081.01.LZZZZZZZ.jpg' },
+      { provider: 'decitre', url: 'https://products-images.di-static.com/image/_/9782383861089-475x500-1.jpg' },
+    ]);
+  });
+
+  it('se limitent à Decitre pour un ISBN en 979, sans équivalent à dix chiffres', () => {
+    expect(bookshopCandidates('9791023456783').map((candidate) => candidate.provider)).toEqual(['decitre']);
   });
 });

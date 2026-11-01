@@ -6,6 +6,9 @@ export type Timestamp = number;
 
 export type MetadataProvider = 'googleBooks' | 'openLibrary' | 'bnf';
 
+/** Where an automatic cover comes from: a metadata source, or a bookseller as a last resort. */
+export type CoverProvider = MetadataProvider | 'amazon' | 'decitre';
+
 /** Pièce. */
 export interface Room {
   id: Id;
@@ -30,7 +33,7 @@ export interface Cover {
   source: 'auto' | 'user';
   url?: string;
   blobId?: Id;
-  provider?: MetadataProvider;
+  provider?: CoverProvider;
 }
 
 /** Notice d'ouvrage; its physical copies are Copy records. */

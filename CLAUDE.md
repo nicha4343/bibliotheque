@@ -43,7 +43,7 @@ Application web installable sur téléphone (PWA) pour cataloguer une bibliothè
 - **Données locales** dans IndexedDB via Dexie ; photographies stockées en Blob JPEG compressé. Sauvegarde : export/import CSV, puis Google Drive (lot 2).
 - **Lecture des codes** : API native `BarcodeDetector` quand elle existe, sinon la bibliothèque `barcode-detector` (fondée sur zxing-wasm). Formats : EAN-13 (ISBN 978/979) et QR (étagères).
 - **Métadonnées**, interrogées **en parallèle** (la première réponse complète l'emporte, les autres complètent les champs vides) : Google Books, Open Library, BnF (SRU). Mise en cache locale. La BnF accepte l'appel direct depuis le navigateur (CORS vérifié au lot 1) : aucun relais nécessaire.
-- **Couvertures** : Open Library Covers, Google Books ; photographie prise sur le flux vidéo du scan lui-même (pas de sélecteur de fichier pour la prise de vue).
+- **Couvertures** : Open Library Covers, Google Books ; en dernier recours, les libraires Amazon (par ISBN-10, image enregistrée) puis Decitre (par EAN, affichée par lien, en ligne seulement) — adresses non officielles, choisies par l'utilisateur le 1er novembre 2026 parce qu'elles seules ont les couvertures des ouvrages récents des petits éditeurs ; photographie prise sur le flux vidéo du scan lui-même (pas de sélecteur de fichier pour la prise de vue).
 - Signal sonore via Web Audio ; vibration via `navigator.vibrate` (absente sur iPhone : ne pas en dépendre).
 
 ## Conventions de code

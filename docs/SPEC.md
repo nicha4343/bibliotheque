@@ -32,7 +32,7 @@ Un livre (notice) peut avoir plusieurs exemplaires, chacun avec son propre empla
 - **Hors connexion** : le code est conservé avec l'état « Recherche… » ; la recherche reprend au retour du réseau, même après la fermeture de l'application. Si l'option « Lecture hors connexion » est désactivée, un code lu sans réseau n'est pas enregistré et un bandeau le signale.
 - **Ouvrage déjà possédé** : détecté dès la lecture, sans réseau. Si l'option « Signaler les ouvrages déjà possédés » est désactivée, un exemplaire supplémentaire est ajouté directement.
 - **Zone de visée** : seuls les codes situés dans le cadre sont lus, pour ignorer ceux des ouvrages voisins.
-- **Couverture** : recherchée automatiquement ; une photographie de l'utilisateur la remplace toujours et n'est jamais écrasée par une couverture automatique.
+- **Couverture** : recherchée automatiquement, dans l'ordre : couvertures données par les sources, Open Library par ISBN, puis en dernier recours Amazon (par ISBN-10 : ISBN en 978 seulement ; image enregistrée, visible hors connexion ; image d'un pixel écartée quand il n'en a pas) et Decitre (par EAN ; lecture interdite par le site, donc couverture conservée comme lien, visible en ligne seulement, après vérification qu'elle s'affiche). Une couverture enregistrable l'emporte sur une couverture en lien. Choix de l'utilisateur (1er novembre 2026) : Open Library, la BnF et Google Books n'avaient aucune des 63 couvertures de son import Libib, Amazon et Decitre les avaient toutes ; adresses non officielles, susceptibles de cesser de fonctionner. Une photographie de l'utilisateur la remplace toujours et n'est jamais écrasée par une couverture automatique.
 
 ## Écrans
 

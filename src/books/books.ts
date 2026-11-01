@@ -1,7 +1,7 @@
 import { db, type LibraryDatabase } from '../db/db';
 import { newId } from '../db/ids';
-import type { Book, Cover, Id, MetadataProvider } from '../db/schema';
-import { type FoundCover } from '../metadata/covers';
+import type { Book, Cover, CoverProvider, Id } from '../db/schema';
+import { bookshopCandidates, type CoverCandidate, type FoundCover } from '../metadata/covers';
 import { openLibraryCoverUrl } from '../metadata/sources';
 import { attachAutoCover } from '../scan/lookups';
 import { newCopy } from '../scan/session';
@@ -54,17 +54,14 @@ export async function restoreAutoCover(bookId: Id, database: LibraryDatabase = d
   return Boolean((await database.books.get(bookId))?.cover);
 }
 
-/** « Autres couvertures disponibles »: those the sources gave, and Open Library's by ISBN. */
-export async function coverCandidates(
-  book: Book,
-  database: LibraryDatabase = db,
-): Promise<{ provider: MetadataProvider; url: string }[]> {
+/** « Autres couvertures disponibles »: those the sources gave, Open Library's by ISBN, then the booksellers'. */
+export async function coverCandidates(book: Book, database: LibraryDatabase = db): Promise<CoverCandidate[]> {
   if (!book.isbn13) return [];
   const cached = await database.metadataCache.get(book.isbn13);
-  const candidates = [...(cached?.payload.coverUrls ?? [])];
+  const candidates: { provider: CoverProvider; url: string }[] = [...(cached?.payload.coverUrls ?? [])];
   const openLibrary = openLibraryCoverUrl(book.isbn13);
   if (!candidates.some((candidate) => candidate.url === openLibrary)) candidates.push({ provider: 'openLibrary', url: openLibrary });
-  return candidates;
+  return [...candidates, ...bookshopCandidates(book.isbn13)];
 }
 
 export async function addCopy(bookId: Id, shelfId: Id, database: LibraryDatabase = db): Promise<void> {

@@ -164,7 +164,7 @@ export const fr = {
     unknownAuthor: 'Auteur inconnu',
     /** « 2ᵉ exemplaire » */
     ordinal: (value: number) => (value === 1 ? '1er' : `${formatNumber(value)}ᵉ`),
-    providers: { bnf: 'BnF', googleBooks: 'Google Books', openLibrary: 'Open Library' },
+    providers: { bnf: 'BnF', googleBooks: 'Google Books', openLibrary: 'Open Library', amazon: 'Amazon', decitre: 'Decitre' },
   },
 
   places: {

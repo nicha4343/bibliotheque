@@ -16,9 +16,9 @@ import { CoverImage } from '../components/CoverImage';
 import { CameraIcon, ChevronLeftIcon, GalleryIcon, PencilIcon, PinIcon, PlusIcon, TrashIcon } from '../components/icons';
 import { Sheet } from '../components/Sheet';
 import { db } from '../db/db';
-import type { Book, Copy, MetadataProvider, ReadingStatus } from '../db/schema';
+import type { Book, Copy, ReadingStatus } from '../db/schema';
 import { useLiveQuery } from '../db/useLiveQuery';
-import { fetchCover } from '../metadata/covers';
+import { fetchCover, type CoverCandidate } from '../metadata/covers';
 import { joinAuthors, parseAuthors } from '../pending/pending';
 import { loadPlaces, type PlaceIndex } from '../places/places';
 import { navigate, routeHref } from '../router';
@@ -305,7 +305,7 @@ interface CoverSheetProps {
 /** « Modifier la couverture »: photograph, gallery, other automatic covers, restore. */
 function CoverSheet({ book, onCamera, onMessage, onClose }: CoverSheetProps) {
   const galleryRef = useRef<HTMLInputElement>(null);
-  const candidates = useLiveQuery<{ provider: MetadataProvider; url: string }[]>(() => coverCandidates(book), [book.id], []);
+  const candidates = useLiveQuery<CoverCandidate[]>(() => coverCandidates(book), [book.id], []);
   const [failed, setFailed] = useState<ReadonlySet<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const shown = candidates.filter((candidate) => !failed.has(candidate.url) && candidate.url !== book.cover?.url);
@@ -321,7 +321,7 @@ function CoverSheet({ book, onCamera, onMessage, onClose }: CoverSheetProps) {
     }
   };
 
-  const pickCandidate = async (candidate: { provider: MetadataProvider; url: string }) => {
+  const pickCandidate = async (candidate: CoverCandidate) => {
     setBusy(true);
     const found = await fetchCover(candidate);
     setBusy(false);
