@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie';
 import type {
+  BackupState,
   Book,
   Copy,
   Loan,
@@ -31,6 +32,7 @@ export class LibraryDatabase extends Dexie {
   metadataCache!: EntityTable<MetadataCacheEntry, 'isbn13'>;
   blobs!: EntityTable<StoredBlob, 'id'>;
   settings!: EntityTable<SettingsRecord, 'id'>;
+  backup!: EntityTable<BackupState, 'id'>;
 
   constructor(name = DATABASE_NAME) {
     super(name);
@@ -52,6 +54,10 @@ export class LibraryDatabase extends Dexie {
     // Lot 1: reads of a scan session, which also form the lookup queue.
     this.version(2).stores({
       scanEntries: 'id, sessionId, status, createdAt',
+    });
+    // Lot 2: Google Drive backup state (client, tokens, last backup).
+    this.version(3).stores({
+      backup: 'id',
     });
   }
 }

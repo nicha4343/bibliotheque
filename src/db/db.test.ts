@@ -33,6 +33,7 @@ describe('base de données', () => {
     await database.open();
     expect(database.tables.map((table) => table.name).sort()).toEqual(
       [
+        'backup',
         'blobs',
         'books',
         'copies',

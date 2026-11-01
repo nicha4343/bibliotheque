@@ -44,6 +44,17 @@ export function formatDate(date: Date): string {
   return `${day === 1 ? '1er' : String(day)} ${month} ${date.getFullYear()}`;
 }
 
+/** « 21 h 40 », « 9 h 05 » (local time). */
+export function formatTime(date: Date): string {
+  return `${date.getHours()} h ${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+/** « 31 octobre 2026 à 9 h 05 »; « aujourd’hui à 21 h 40 » when now is given and is the same day. */
+export function formatDateTime(date: Date, now?: Date): string {
+  const day = now && date.toDateString() === now.toDateString() ? 'aujourd’hui' : formatDate(date);
+  return `${day} à ${formatTime(date)}`;
+}
+
 /** « 45 s », « 2 min 10 s », « 1 h 05 min ». */
 export function formatDuration(milliseconds: number): string {
   const seconds = Math.max(0, Math.round(milliseconds / 1000));
@@ -400,6 +411,62 @@ export const fr = {
     title: 'Photographier la couverture',
     shoot: 'Prendre la photographie',
     hint: 'Cadrez la couverture entière, puis touchez le bouton.',
+  },
+
+  backup: {
+    title: 'Sauvegarde',
+    back: 'Paramètres',
+    settingsRow: 'Sauvegarde sur Google Drive',
+    rowNotSet: 'Non configurée : vos données ne sont conservées que sur ce téléphone',
+    rowDisabled: 'Sauvegarde automatique désactivée',
+    rowNever: 'Aucune sauvegarde pour le moment',
+    rowLast: (when: string) => `Dernière sauvegarde : ${when}`,
+    rowReconnect: 'Google refuse l’accès : reconnectez-vous',
+    intro:
+      'Votre bibliothèque, ses photographies et ses citations sont copiées sur votre Google Drive, dans un dossier réservé à l’application et invisible dans Drive. Vous pourrez les restaurer sur un autre téléphone.',
+    clientTitle: 'Identifiants Google',
+    clientIntro:
+      'Créés dans la console Google Cloud, selon les explications qui vous ont été fournies. Ils demeurent sur ce téléphone.',
+    clientId: 'Identifiant du client',
+    clientSecret: 'Code secret du client',
+    clientIdInvalid: 'L’identifiant se termine par « .apps.googleusercontent.com ».',
+    clientSecretMissing: 'Saisissez le code secret.',
+    redirect: 'Adresse de redirection à déclarer',
+    connect: 'Se connecter à Google Drive',
+    reconnect: 'Se reconnecter à Google Drive',
+    editClient: 'Modifier les identifiants',
+    connecting: 'Connexion à Google Drive…',
+    connected: 'Google Drive est connecté : première sauvegarde en cours.',
+    cancelled: 'Connexion annulée.',
+    signInFailed: 'La connexion n’a pu aboutir. Vérifiez l’identifiant et le code secret, puis recommencez.',
+    missingScope: 'L’accès à Google Drive n’a pas été accordé : recommencez en cochant la case proposée par Google.',
+    status: 'État',
+    auto: 'Sauvegarde automatique',
+    autoDetail: 'Au démarrage, puis toutes les dix minutes et à la sortie de l’application, si la bibliothèque a changé',
+    last: (when: string) => `Dernière sauvegarde : ${when}`,
+    never: 'Aucune sauvegarde pour le moment.',
+    errorOffline: 'La dernière tentative a échoué faute de connexion ; elle sera renouvelée.',
+    errorRefused: 'Google refuse désormais l’accès : reconnectez-vous.',
+    errorFailed: 'La dernière tentative a échoué ; elle sera renouvelée.',
+    backUpNow: 'Sauvegarder maintenant',
+    backingUp: 'Sauvegarde en cours…',
+    backedUp: 'Sauvegarde effectuée.',
+    restore: 'Restaurer une sauvegarde',
+    searching: 'Recherche de la sauvegarde…',
+    noBackup: 'Aucune sauvegarde ne figure sur ce compte Google Drive.',
+    restoreTitle: 'Restaurer cette sauvegarde ?',
+    restoreText: (when: string, books: number, local: number) =>
+      `La sauvegarde du ${when} (${count(books, 'ouvrage', 'ouvrages')}) remplacera la bibliothèque de ce téléphone (${count(local, 'ouvrage', 'ouvrages')}). Cette opération est définitive.`,
+    restoreConfirm: 'Restaurer',
+    restoring: (done: number, total: number) =>
+      `Téléchargement des photographies : ${formatNumber(done)} sur ${formatNumber(total)}…`,
+    restored: 'Bibliothèque restaurée.',
+    restoreFailed: 'La restauration n’a pu aboutir ; la bibliothèque de ce téléphone est inchangée.',
+    disconnect: 'Déconnecter Google Drive',
+    disconnectTitle: 'Déconnecter Google Drive ?',
+    disconnectText: 'Les sauvegardes déjà faites demeurent sur votre Google Drive ; aucune nouvelle ne sera faite.',
+    disconnectConfirm: 'Déconnecter',
+    disconnected: 'Google Drive est déconnecté.',
   },
 
   settings: {

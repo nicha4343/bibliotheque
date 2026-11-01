@@ -9,11 +9,14 @@ import './styles/components.css';
 import './styles/screens.css';
 import { render } from 'preact';
 import { App } from './app';
+import { startBackups } from './backup/backup';
 import { requestPersistentStorage } from './db/storage';
 import { unlockAudio } from './scan/feedback';
 import { startLookups } from './scan/lookups';
 
 void requestPersistentStorage();
+// Before the first rendering: a return from Google's sign-in page leads to the backup screen.
+startBackups();
 // Codes read offline or before the app was closed are searched again.
 startLookups();
 // Browsers only allow sound after a touch.

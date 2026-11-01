@@ -1,6 +1,7 @@
 import { NavBar } from './components/NavBar';
 import { PwaNotices } from './components/PwaNotices';
 import { useRoute, type Route, type TabId } from './router';
+import { BackupScreen } from './screens/BackupScreen';
 import { BookScreen } from './screens/BookScreen';
 import { EntryScreen } from './screens/EntryScreen';
 import { ImportScreen } from './screens/ImportScreen';
@@ -24,6 +25,7 @@ function tabOf(route: Route): TabId | undefined {
     case 'places':
     case 'labels':
     case 'import':
+    case 'backup':
       return 'settings';
     default:
       return undefined;
@@ -50,6 +52,8 @@ function CurrentScreen({ route }: { route: Route }) {
       return <LabelsScreen />;
     case 'import':
       return <ImportScreen />;
+    case 'backup':
+      return <BackupScreen />;
     default:
       return <LibraryScreen />;
   }

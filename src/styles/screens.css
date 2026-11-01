@@ -1469,3 +1469,27 @@
 .import__actions {
   gap: var(--space-2);
 }
+
+/* Backup on Google Drive */
+.backup__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.backup__last {
+  border-top: 1px solid var(--color-divider-soft);
+}
+
+.backup__last .card__label {
+  font-weight: 500;
+}
+
+.backup__error {
+  color: var(--color-pending-text);
+}
+
+.backup__redirect {
+  font-size: var(--text-small);
+  overflow-wrap: anywhere;
+}

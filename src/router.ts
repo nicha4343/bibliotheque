@@ -1,7 +1,18 @@
 import { useEffect, useState } from 'preact/hooks';
 
 // Hash-based routes: they work on any static host and offline, without server-side rewrites.
-export type RouteId = 'library' | 'scan' | 'pending' | 'settings' | 'recap' | 'entry' | 'book' | 'places' | 'labels' | 'import';
+export type RouteId =
+  | 'library'
+  | 'scan'
+  | 'pending'
+  | 'settings'
+  | 'recap'
+  | 'entry'
+  | 'book'
+  | 'places'
+  | 'labels'
+  | 'import'
+  | 'backup';
 
 /** The four tabs of the navigation bar. */
 export type TabId = 'library' | 'scan' | 'pending' | 'settings';
@@ -23,6 +34,8 @@ export const ROUTE_HASHES: Readonly<Record<RouteId, string>> = {
   places: '#/pieces',
   labels: '#/etiquettes',
   import: '#/importer',
+  /** Also where Google's sign-in page sends the user back (see backup/google.ts). */
+  backup: '#/sauvegarde',
 };
 
 export const routeHref = (id: RouteId, param?: string): string =>

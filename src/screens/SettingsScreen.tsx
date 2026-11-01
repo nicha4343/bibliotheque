@@ -1,18 +1,19 @@
 import { useEffect, useState } from 'preact/hooks';
+import { getBackupState } from '../backup/google';
 import { EnrichmentStatus } from '../components/EnrichmentStatus';
 import { ChevronRightIcon, DownloadIcon } from '../components/icons';
 import { Screen } from '../components/Screen';
 import { SwitchRow } from '../components/SwitchRow';
 import { booksWithoutCover, enrichBooks, useEnrichment } from '../csv/enrich';
 import { downloadText, exportLibrary, isoDate } from '../csv/export';
-import type { MetadataProvider, Settings } from '../db/schema';
+import type { BackupState, MetadataProvider, Settings } from '../db/schema';
 import { DEFAULT_SETTINGS, getSettings, updateSettings } from '../db/settings';
 import { getStorageProtection, type StorageProtection } from '../db/storage';
 import { useLiveQuery } from '../db/useLiveQuery';
 import { checkGoogleBooksKey } from '../metadata/googleBooksKey';
 import { retryAllUnknown } from '../pending/pending';
 import { routeHref } from '../router';
-import { formatDate, fr } from '../textes/fr';
+import { formatDate, formatDateTime, fr } from '../textes/fr';
 
 type OfflineStatus = 'ready' | 'preparing' | 'unsupported';
 
@@ -187,13 +188,21 @@ function MissingCovers() {
   );
 }
 
-/** Screen 7, version 1. « Mémoriser l’ordre sur l’étagère » comes with lot 3, which uses it. */
+function backupSummary(state: BackupState | undefined): string {
+  if (!state?.refreshToken) return fr.backup.rowNotSet;
+  if (state.lastError === 'refused') return fr.backup.rowReconnect;
+  if (!state.enabled) return fr.backup.rowDisabled;
+  return state.lastBackupAt ? fr.backup.rowLast(formatDateTime(new Date(state.lastBackupAt), new Date())) : fr.backup.rowNever;
+}
+
+/** Screen 7. « Mémoriser l’ordre sur l’étagère » comes with lot 3, which uses it. */
 export function SettingsScreen() {
   const offline = useOfflineStatus();
   const storage = useStorageProtection();
   const settings = useLiveQuery<Settings>(() => getSettings(), [], DEFAULT_SETTINGS);
   const activeSources = SOURCES.filter(({ provider }) => settings.sources[provider]).length;
   const csvExport = useExport();
+  const backup = useLiveQuery<BackupState | undefined>(() => getBackupState(), [], undefined);
 
   const set = (changes: Parameters<typeof updateSettings>[0]) => {
     void updateSettings(changes);
@@ -201,6 +210,21 @@ export function SettingsScreen() {
 
   return (
     <Screen title={fr.settings.title}>
+      <section class="section" aria-labelledby="backup-title">
+        <h2 class="section__title" id="backup-title">
+          {fr.backup.title}
+        </h2>
+        <div class="card">
+          <a class="link-row link-row--detail" href={routeHref('backup')}>
+            <span class="setting__text">
+              <span class="setting__label">{fr.backup.settingsRow}</span>
+              <span class="setting__detail">{backupSummary(backup)}</span>
+            </span>
+            <ChevronRightIcon size={18} />
+          </a>
+        </div>
+      </section>
+
       <section class="section" aria-labelledby="scanning-title">
         <h2 class="section__title" id="scanning-title">
           {fr.settings.scanning}

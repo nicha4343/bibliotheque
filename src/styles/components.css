@@ -678,6 +678,17 @@ select.field__input {
   color: var(--color-text-muted);
 }
 
+.link-row--detail {
+  min-height: 60px;
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
+  gap: var(--space-3);
+}
+
+.link-row--detail svg {
+  flex-shrink: 0;
+}
+
 /* Return link above the content of a secondary screen */
 .back-bar {
   margin-top: calc(-1 * var(--space-2));

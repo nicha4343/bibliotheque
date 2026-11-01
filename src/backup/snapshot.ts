@@ -1,0 +1,116 @@
+import { db, type LibraryDatabase } from '../db/db';
+import type { Book, Copy, Id, PendingItem, Quote, Room, SettingsRecord, Shelf } from '../db/schema';
+
+// Contents of a backup: every record the user made, the photographs being saved as separate files.
+// Left out: the metadata cache and the scan sessions (rebuilt or short-lived), the backup state.
+
+export const SNAPSHOT_FORMAT = 'ma-bibliotheque';
+export const SNAPSHOT_VERSION = 1;
+
+export interface Snapshot {
+  format: typeof SNAPSHOT_FORMAT;
+  version: number;
+  createdAt: number;
+  rooms: Room[];
+  shelves: Shelf[];
+  books: Book[];
+  copies: Copy[];
+  pendingItems: PendingItem[];
+  quotes: Quote[];
+  settings: SettingsRecord[];
+  /** Photographs (covers, books without a barcode, quotes), each saved as photo-<id>.jpg. */
+  blobIds: Id[];
+}
+
+const byId = <T extends { id: string }>(records: T[]): T[] => records.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+
+export async function buildSnapshot(database: LibraryDatabase = db, now = Date.now()): Promise<Snapshot> {
+  return database.transaction(
+    'r',
+    [
+      database.rooms,
+      database.shelves,
+      database.books,
+      database.copies,
+      database.pendingItems,
+      database.quotes,
+      database.settings,
+      database.blobs,
+    ],
+    async () => ({
+      format: SNAPSHOT_FORMAT,
+      version: SNAPSHOT_VERSION,
+      createdAt: now,
+      rooms: byId(await database.rooms.toArray()),
+      shelves: byId(await database.shelves.toArray()),
+      books: byId(await database.books.toArray()),
+      copies: byId(await database.copies.toArray()),
+      pendingItems: byId(await database.pendingItems.toArray()),
+      quotes: byId(await database.quotes.toArray()),
+      settings: await database.settings.toArray(),
+      blobIds: (await database.blobs.toCollection().primaryKeys()).sort(),
+    }),
+  );
+}
+
+/** Fingerprint of the contents, its date aside: an unchanged library is not uploaded again. */
+export async function snapshotHash(snapshot: Snapshot): Promise<string> {
+  const { createdAt: _createdAt, ...contents } = snapshot;
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(contents)));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+const LISTS = ['rooms', 'shelves', 'books', 'copies', 'pendingItems', 'quotes', 'settings', 'blobIds'] as const;
+
+/** A file read from Drive, checked before it replaces anything. */
+export function parseSnapshot(text: string): Snapshot | undefined {
+  try {
+    const value = JSON.parse(text) as Partial<Snapshot> | null;
+    if (value?.format !== SNAPSHOT_FORMAT || typeof value.version !== 'number' || value.version > SNAPSHOT_VERSION)
+      return undefined;
+    if (typeof value.createdAt !== 'number' || !LISTS.every((key) => Array.isArray(value[key]))) return undefined;
+    return value as Snapshot;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Replaces the library of this device with the backup, in one transaction: on failure nothing changes.
+ * The photographs must already be in the blobs table; those the backup does not use are removed.
+ */
+export async function restoreSnapshot(snapshot: Snapshot, database: LibraryDatabase = db): Promise<void> {
+  const tables = [
+    database.rooms,
+    database.shelves,
+    database.books,
+    database.copies,
+    database.pendingItems,
+    database.quotes,
+    database.settings,
+    database.blobs,
+    database.scanSessions,
+    database.scanEntries,
+  ];
+  await database.transaction('rw', tables, async () => {
+    // Scan sessions refer to the shelves and items replaced here.
+    await Promise.all([database.scanSessions.clear(), database.scanEntries.clear()]);
+    await database.rooms.clear();
+    await database.rooms.bulkAdd(snapshot.rooms);
+    await database.shelves.clear();
+    await database.shelves.bulkAdd(snapshot.shelves);
+    await database.books.clear();
+    await database.books.bulkAdd(snapshot.books);
+    await database.copies.clear();
+    await database.copies.bulkAdd(snapshot.copies);
+    await database.pendingItems.clear();
+    await database.pendingItems.bulkAdd(snapshot.pendingItems);
+    await database.quotes.clear();
+    await database.quotes.bulkAdd(snapshot.quotes);
+    await database.settings.clear();
+    await database.settings.bulkAdd(snapshot.settings);
+    const kept = new Set(snapshot.blobIds);
+    const local = await database.blobs.toCollection().primaryKeys();
+    await database.blobs.bulkDelete(local.filter((id) => !kept.has(id)));
+  });
+}

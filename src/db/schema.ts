@@ -207,6 +207,30 @@ export interface Settings {
 
 export const SETTINGS_KEY = 'app';
 
+export type BackupError = 'offline' | 'refused' | 'failed';
+
+/**
+ * Sauvegarde automatique sur Google Drive (lot 2). The client and its secret are created by the user
+ * in the Google Cloud console and typed in the app: kept on the device only, never in the repository.
+ * Not part of the backup itself.
+ */
+export interface BackupState {
+  id: 'drive';
+  clientId: string;
+  clientSecret: string;
+  /** Present once the user has signed in; Google may revoke it (lastError « refused »). */
+  refreshToken?: string;
+  accessToken?: string;
+  accessTokenExpiresAt?: Timestamp;
+  /** PKCE verifier and state while the user signs in on Google's page. */
+  pendingSignIn?: { verifier: string; state: string };
+  enabled: boolean;
+  lastBackupAt?: Timestamp;
+  /** Fingerprint of the last uploaded backup: an unchanged library is not uploaded again. */
+  lastHash?: string;
+  lastError?: BackupError;
+}
+
 export interface SettingsRecord extends Partial<Omit<Settings, 'sources'>> {
   id: typeof SETTINGS_KEY;
   sources?: Partial<Record<MetadataProvider, boolean>>;

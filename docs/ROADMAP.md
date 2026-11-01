@@ -46,12 +46,13 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - [x] Note sur 5 et avis (« Ma lecture », avec le statut de lecture)
 - [x] Étiquettes libres avec suggestions ; recherche de la bibliothèque par étiquette
 - [x] Citations photographiées ou saisies
-- [ ] Sauvegarde automatique sur Google Drive (nécessite la création d'un identifiant Google par l'utilisateur, à guider pas à pas)
+- [ ] Sauvegarde automatique sur Google Drive (nécessite la création d'un identifiant Google par l'utilisateur, à guider pas à pas) : code écrit et testé avec un faux Drive (`src/backup/`, écran `BackupScreen`, table `backup` du schéma version 3) ; reste la création du client Google par l'utilisateur, puis l'essai sur téléphone (connexion, sauvegarde, restauration)
 
 ### Reprise du lot 2 (1er novembre 2026)
 - Fiche ouvrage : sections dans `src/books/` (`ReadingSection`, `TagsSection`, `QuotesSection`) ; logique dans `tags.ts` et `quotes.ts` (testées). Aucun changement de schéma : `rating`, `review`, `tags` et la table `quotes` existaient depuis la version 1.
 - `CameraSheet` accepte un titre, une consigne et une taille maximale (1 920 pixels pour un passage).
 - Vérifié dans le navigateur ; reste à essayer sur téléphone, avec la sauvegarde Google Drive.
+- Sauvegarde : `google.ts` (connexion par code d'autorisation avec PKCE, jeton de renouvellement, appels Drive), `snapshot.ts` (contenu, empreinte, restauration en une transaction), `backup.ts` (sauvegarde incrémentale des photographies, déclenchements automatiques lancés par `startBackups` dans `main.tsx`, restauration). Choix : client « Application Web » avec code secret saisi par l'utilisateur (Google l'exige même avec PKCE) plutôt que le jeton d'une heure de Google Identity Services, qui aurait obligé à une nouvelle connexion à chaque usage. CORS vérifié le 1er novembre 2026 sur `oauth2.googleapis.com/token` et l'API Drive.
 
 ## Lot 3 — Étagères
 - [ ] Option « Mémoriser l'ordre sur l'étagère »
