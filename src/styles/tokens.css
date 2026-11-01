@@ -1,0 +1,53 @@
+/* Design tokens taken from the validated mock-up (https://claude.ai/artifact/DK1VELndFEaoxytF6rRr2b). */
+:root {
+  /* Colours */
+  --color-accent: #0f766e;
+  --color-accent-hover: #0b5c55;
+  --color-accent-soft: #e3f2f0;
+  --color-focus-ring: #cdede8;
+  --color-pending: #b45309; /* « À compléter » */
+  --color-text: #15171c;
+  --color-text-muted: #5a606b;
+  --color-placeholder: #8a909b;
+  --color-background: #f4f5f7;
+  --color-surface: #ffffff;
+  --color-border: #d5d8de;
+  --color-divider: #e3e5ea;
+  --color-divider-soft: #eef0f3;
+  --color-tag-background: #e9ebef;
+  --color-tag-text: #3d424b;
+  --color-switch-off: #c9cdd4;
+  --color-on-accent: #ffffff;
+
+  /* Typography */
+  --font-sans: 'DM Sans Variable', 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace; /* ISBN */
+  --text-title: 28px;
+  --text-body: 15px;
+  --text-input: 16px; /* 16 px or more: iOS does not zoom on focus */
+  --text-secondary: 14px;
+  --text-small: 13px;
+  --text-caption: 12px;
+  --text-nav: 11px;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+
+  /* Radii */
+  --radius-cover: 4px;
+  --radius-tag: 6px;
+  --radius-control: 12px;
+  --radius-field: 14px;
+  --radius-card: 16px;
+  --radius-pill: 999px;
+
+  /* Sizes */
+  --touch-target: 44px; /* minimum tap area */
+  --nav-height: 72px;
+  --content-max-width: 640px;
+}

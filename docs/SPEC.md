@@ -12,7 +12,7 @@ Le scan ne s'interrompt jamais. Toute opération lente (recherche, couverture, s
 |---|---|
 | **Room** (pièce) | id, name, order |
 | **Shelf** (étagère) | id, roomId, name, order, qrToken |
-| **Book** (notice) | id, isbn13, isbn10?, title, authors[], publisher?, year?, language?, seriesName?, seriesIndex?, cover { source: `auto` \| `user`, url?, blobId?, provider? }, status (`toread` \| `read`), rating (0–5), review, tags[], createdAt, updatedAt |
+| **Book** (notice) | id, isbn13? (absent seulement pour un ouvrage sans code-barres complété à la main), isbn10?, title, authors[], publisher?, year?, language?, seriesName?, seriesIndex?, cover { source: `auto` \| `user`, url?, blobId?, provider? }, status (`toread` \| `read`), rating (0–5), review, tags[], createdAt, updatedAt |
 | **Copy** (exemplaire) | id, bookId, shelfId, position? (si l'option d'ordre est active), addedAt, note? |
 | **PendingItem** (à compléter) | id, kind (`unknownIsbn` \| `noBarcode`), isbn?, photoBlobId?, shelfId, sessionId, createdAt |
 | **ScanSession** | id, shelfId, startedAt, endedAt, compteurs (scannés, ajoutés, à compléter, exemplaires supplémentaires) |

@@ -5,13 +5,13 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 **Lot en cours : 0 — Socle**
 
 ## Lot 0 — Socle
-- [ ] Projet Vite + TypeScript strict + Preact, ESLint, Vitest
-- [ ] PWA : manifeste, icônes, service worker (fonctionnement hors connexion)
-- [ ] Base IndexedDB (Dexie) avec le modèle de données de SPEC.md
-- [ ] Fichier unique des textes `src/textes/fr.ts`
-- [ ] Jetons de design (couleurs, polices, espacements) repris de la maquette ; barre de navigation
+- [x] Projet Vite + TypeScript strict + Preact, ESLint, Vitest
+- [x] PWA : manifeste, icônes, service worker (fonctionnement hors connexion)
+- [x] Base IndexedDB (Dexie) avec le modèle de données de SPEC.md
+- [x] Fichier unique des textes `src/textes/fr.ts`
+- [x] Jetons de design (couleurs, polices, espacements) repris de la maquette ; barre de navigation
 - [ ] Déploiement HTTPS gratuit et ouverture sur le téléphone
-- [ ] Section « Commandes » de CLAUDE.md complétée
+- [x] Section « Commandes » de CLAUDE.md complétée
 
 ## Lot 1 — Version 1 : scanner et retrouver
 - [ ] Lecture des codes (BarcodeDetector ou zxing-wasm) : EAN-13/ISBN et QR ; anti-double lecture ; validation ISBN (tests)

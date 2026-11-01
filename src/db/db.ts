@@ -1,0 +1,53 @@
+import Dexie, { type EntityTable } from 'dexie';
+import type {
+  Book,
+  Copy,
+  Loan,
+  MetadataCacheEntry,
+  PendingItem,
+  Quote,
+  Room,
+  ScanSession,
+  SettingsRecord,
+  Shelf,
+  StoredBlob,
+  Wish,
+} from './schema';
+
+export const DATABASE_NAME = 'ma-bibliotheque';
+
+export class LibraryDatabase extends Dexie {
+  rooms!: EntityTable<Room, 'id'>;
+  shelves!: EntityTable<Shelf, 'id'>;
+  books!: EntityTable<Book, 'id'>;
+  copies!: EntityTable<Copy, 'id'>;
+  pendingItems!: EntityTable<PendingItem, 'id'>;
+  scanSessions!: EntityTable<ScanSession, 'id'>;
+  loans!: EntityTable<Loan, 'id'>;
+  wishes!: EntityTable<Wish, 'id'>;
+  quotes!: EntityTable<Quote, 'id'>;
+  metadataCache!: EntityTable<MetadataCacheEntry, 'isbn13'>;
+  blobs!: EntityTable<StoredBlob, 'id'>;
+  settings!: EntityTable<SettingsRecord, 'id'>;
+
+  constructor(name = DATABASE_NAME) {
+    super(name);
+    // Only indexed fields are listed. Never edit a published version: add version(2) with the changes.
+    this.version(1).stores({
+      rooms: 'id, order',
+      shelves: 'id, roomId, &qrToken',
+      books: 'id, &isbn13, status, createdAt, *tags',
+      copies: 'id, bookId, shelfId, addedAt',
+      pendingItems: 'id, kind, shelfId, sessionId, createdAt',
+      scanSessions: 'id, shelfId, startedAt',
+      loans: 'id, copyId, borrower, dueAt',
+      wishes: 'id, isbn',
+      quotes: 'id, bookId',
+      metadataCache: 'isbn13, fetchedAt',
+      blobs: 'id',
+      settings: 'id',
+    });
+  }
+}
+
+export const db = new LibraryDatabase();

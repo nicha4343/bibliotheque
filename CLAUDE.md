@@ -54,7 +54,28 @@ Application web installable sur téléphone (PWA) pour cataloguer une bibliothè
 
 ## Commandes
 
-À compléter lors du lot 0 (installation du socle) : lancement en développement, construction, tests, déploiement.
+Node 24. Installer les dépendances une fois : `npm install`.
+
+| Commande | Rôle |
+|---|---|
+| `npm run dev` | Développement local sur http://localhost:5173 (sans service worker) |
+| `npm run build` | Vérification des types puis construction dans `dist/` |
+| `npm run preview` | Aperçu de la construction sur http://localhost:4173, service worker actif (hors connexion, mises à jour) |
+| `npm test` | Tests unitaires (Vitest) |
+| `npm run lint` | ESLint ; refuse tout texte visible écrit en dur dans un composant |
+| `npm run check` | Lint, tests et construction : à lancer avant chaque commit |
+| `npm run texts:fix` | Pose espaces insécables, apostrophes ’ et points de suspension dans `src/textes/fr.ts` |
+| `npm run icons` | Régénère les icônes PNG de `public/` à partir de `public/icon.svg` |
+
+**Déploiement** : automatique à chaque push sur `main` (GitHub Actions, `.github/workflows/deploy.yml`) vers GitHub Pages ; l'application est publiée si le lint, les tests et la construction réussissent.
+
+### Points d'attention
+- **Espaces insécables** : les outils d'édition ne savent pas toujours les saisir. Écrire les textes de `fr.ts` avec des espaces ordinaires, puis lancer `npm run texts:fix` ; le test `fr.test.ts` signale toute faute restante (typographie, tutoiement, vocabulaire proscrit).
+- **Base IndexedDB** (`src/db/db.ts`) : ne jamais modifier une version publiée du schéma ; ajouter `this.version(N + 1)` avec les changements, sans quoi les données des téléphones seraient perdues ou illisibles.
+- **Navigation** par ancre (`#/bibliotheque`, `#/scanner`, `#/a-completer`, `#/parametres`) : fonctionne sur tout hébergement statique et hors connexion. Base Vite relative (`./`).
+- **Mises à jour** : jamais de rechargement automatique (il interromprait un scan) ; un bandeau propose « Mettre à jour » ou « Reporter ».
+- **Polices** embarquées (Fontsource), pas de Google Fonts : rendu identique hors connexion.
+- TypeScript reste en 6.x et ESLint en 9.x tant que typescript-eslint et eslint-plugin-jsx-a11y ne prennent pas en charge TypeScript 7 et ESLint 10.
 
 ## Méthode de travail
 

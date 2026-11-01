@@ -1,0 +1,250 @@
+/* App shell: the screen scrolls, the navigation bar stays at the bottom. */
+.app {
+  height: 100vh;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+}
+
+.screen {
+  overflow-y: auto;
+  padding: calc(var(--space-6) + env(safe-area-inset-top)) var(--space-5) var(--space-5);
+}
+
+.screen__inner {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.screen__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.screen__title {
+  font-size: var(--text-title);
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  line-height: 1.2;
+}
+
+.screen__subtitle {
+  font-size: var(--text-secondary);
+  color: var(--color-text-muted);
+}
+
+/* Buttons */
+.button {
+  min-height: var(--touch-target);
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-control);
+  font-size: var(--text-secondary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.button--primary {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.button--primary:hover {
+  background: var(--color-accent-hover);
+  color: var(--color-on-accent);
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 48px var(--space-3);
+  text-align: center;
+}
+
+.empty-state__icon {
+  color: var(--color-accent);
+}
+
+.empty-state__title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.empty-state__text {
+  max-width: 34em;
+  font-size: var(--text-secondary);
+  color: var(--color-text-muted);
+}
+
+/* Grouped settings, as on screen 7 */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.section__title {
+  padding-left: var(--space-1);
+  font-size: var(--text-small);
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.card__row {
+  min-height: 56px;
+  padding: var(--space-2) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.card__row + .card__row {
+  border-top: 1px solid var(--color-divider-soft);
+}
+
+.card__label {
+  font-size: var(--text-body);
+  font-weight: 600;
+}
+
+.card__value {
+  margin: 0;
+  font-size: var(--text-caption);
+  line-height: 1.35;
+  color: var(--color-text-muted);
+}
+
+/* Banner above the navigation bar (update available, offline ready) */
+.notice {
+  margin: 0 var(--space-3) var(--space-2);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  border-radius: var(--radius-field);
+  background: var(--color-text);
+  color: var(--color-surface);
+  font-size: var(--text-secondary);
+}
+
+.notice__text {
+  flex: 1 1 14em;
+}
+
+.notice__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.notice__button {
+  min-height: var(--touch-target);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-control);
+  font-weight: 600;
+  background: transparent;
+  color: var(--color-surface);
+}
+
+.notice__button--primary {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+/* Navigation bar */
+.nav {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  min-height: var(--nav-height);
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top: 1px solid var(--color-divider);
+  background: var(--color-surface);
+}
+
+.nav__link {
+  min-height: var(--nav-height);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--text-nav);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.nav__link:hover {
+  color: var(--color-text);
+}
+
+.nav__link[aria-current='page'],
+.nav__link--scan,
+.nav__link--scan:hover {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.nav__scan-icon {
+  width: 40px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-control);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.nav__link--scan[aria-current='page'] .nav__scan-icon {
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+/* Every icon sits in a box as tall as the Scanner pill, so the labels line up. */
+.nav__icon {
+  position: relative;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav__badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: var(--color-pending);
+  color: var(--color-on-accent);
+  font-size: var(--text-nav);
+  font-weight: 700;
+}

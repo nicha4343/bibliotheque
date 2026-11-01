@@ -1,0 +1,39 @@
+{
+  "name": "ma-bibliotheque",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "check": "npm run lint && npm run test && npm run build",
+    "icons": "pwa-assets-generator",
+    "texts:fix": "node scripts/fix-texts.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/dm-sans": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "dexie": "^4.4.7",
+    "preact": "^11.1.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@preact/preset-vite": "^2.10.6",
+    "@types/node": "^24.19.2",
+    "@vite-pwa/assets-generator": "^2.0.0",
+    "eslint": "^9.39.5",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "fake-indexeddb": "^6.2.7",
+    "globals": "^17.14.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vite": "^8.3.5",
+    "vite-plugin-pwa": "^2.0.0",
+    "vitest": "^5.0.5",
+    "workbox-window": "^7.4.1"
+  }
+}
