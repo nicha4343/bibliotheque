@@ -74,10 +74,15 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - [ ] Suggestions titre et auteur dans « À compléter » et pastilles dans la saisie en série
 
 ## Plus tard
-- Synchronisation entre appareils (piste : Google Drive)
+- Synchronisation entre appareils (piste : Google Drive ; même mécanisme que l'écriture à plusieurs dans un lieu partagé)
 - Photographie d'une étagère entière : lecture des tranches par IA
-- Bibliothèque partagée en famille
+- Lieux partagés en famille (décisions du 1er novembre 2026, détail dans SPEC.md, « Lieux partagés en famille »), dans cet ordre :
+  - niveau « Lieu » au-dessus des pièces, utile sans partage ;
+  - séparation de « Lu », de la note et de l'avis, propres à chaque personne (nouvelle version du schéma) ;
+  - partage d'un lieu en consultation avec plusieurs personnes (Google Drive, après la sauvegarde du lot 2) ;
+  - ajout et déplacement d'exemplaires par les invités, seulement si cela reste simple.
 
 ## À décider par l'utilisateur
 - Lecture par photographie de l'ISBN imprimé des livres anciens
 - Dictée du titre et de l'auteur
+- Lieux partagés : étiquettes communes à tous ou propres à chaque personne

@@ -19,6 +19,7 @@ Le scan ne s'interrompt jamais. Toute opération lente (recherche, couverture, s
 | **Loan** (prêt) — lot 4 | id, copyId, borrower, lentAt, dueAt, returnedAt? |
 | **Wish** (souhait) — lot 5 | id, title, author?, isbn?, source (`series` \| `manual`) |
 | **Quote** (citation) — lot 2 | id, bookId, text, photoBlobId?, createdAt |
+| **Place** (lieu) — plus tard | id, name, order, partage? (fichier Google Drive, rôle : propriétaire ou invité) ; les pièces recevront un placeId (voir « Lieux partagés en famille ») |
 | **MetadataCache** | isbn13, payload fusionné, fetchedAt |
 | **Settings** | voir écran 7 |
 
@@ -119,7 +120,20 @@ Un livre (notice) peut avoir plusieurs exemplaires, chacun avec son propre empla
 - **Doublons** : ouvrages en plusieurs exemplaires, marque « À donner », export CSV.
 - **Assurance** : inventaire PDF (couvertures, prix d'achat, classement par pièce et étagère, photographies des éditions précieuses).
 
+## Lieux partagés en famille (plus tard)
+
+Décisions de l'utilisateur du 1er novembre 2026. Exemple : des parents partagent les ouvrages de leur maison de campagne avec leurs enfants.
+
+- **Lieu** : nouveau niveau au-dessus des pièces (« Maison », « Maison de campagne ») ; chaque pièce appartient à un lieu. Utile même sans partage. Les pièces existantes rejoignent un premier lieu, renommable (nouvelle version du schéma, sans perte).
+- **Partage** : un lieu, et lui seul, se partage avec une ou plusieurs personnes (par exemple tous les enfants) ; le reste de la bibliothèque demeure privé. Chaque personne a un compte Google (vérifié avec l'utilisateur).
+- **Consultation d'abord** : les invités voient les ouvrages du lieu, leurs couvertures et leur emplacement, y compris hors connexion (copie conservée sur leur téléphone, mise à jour dès que le réseau le permet). La vérification « En librairie » (lot 5) signale aussi les ouvrages des lieux partagés.
+- **Ajouter et déplacer** des exemplaires par un invité : souhaité seulement si cela reste simple ; à évaluer après la consultation (voir « Écriture à plusieurs »). Jamais de suppression ni de modification des notices par un invité.
+- **Données personnelles** : « Lu », note et avis appartiennent à chaque personne et ne se partagent pas ; un invité peut indiquer ses propres lectures des ouvrages d'un lieu partagé (conservées chez lui). Le modèle actuel les range dans la notice (Book) : une nouvelle version du schéma les en séparera. Étiquettes communes ou personnelles : à décider.
+- **Technique** (Google Drive, après la sauvegarde du lot 2) : un seul fichier par lieu partagé (données et photographies), créé dans le Drive du propriétaire et partagé par le partage Google habituel ; l'invité l'ouvre une fois depuis l'application avec le sélecteur Google (Google Picker). Raison : l'autorisation limitée `drive.file` ne donne accès qu'aux fichiers créés par l'application ou choisis par l'utilisateur, jamais au contenu d'un dossier ; un accès plus large (`drive.readonly`) est classé « restreint » par Google, qui impose alors une vérification de l'application.
+- **Écriture à plusieurs** (même mécanisme que la synchronisation entre ses propres appareils) : chaque appareil relit le fichier commun, y fusionne ses changements (identifiants uniques, la modification la plus récente l'emporte, traces des suppressions) puis l'enregistre ; il conserve ses changements tant qu'il ne les retrouve pas dans le fichier commun, si bien que deux enregistrements simultanés ne perdent rien.
+- **Fin du partage** : retrait d'une personne depuis l'application ou depuis Google Drive ; sa copie s'efface à la mise à jour suivante.
+
 ## Questions ouvertes
 
 - Reconnaissance de texte sur les couvertures (lot 6) : Tesseract.js (gratuit, approximatif) ou IA de vision (fiable, payante à l'usage).
-- À décider par l'utilisateur : lecture par photographie de l'ISBN imprimé des livres anciens ; dictée du titre et de l'auteur.
+- À décider par l'utilisateur : lecture par photographie de l'ISBN imprimé des livres anciens ; dictée du titre et de l'auteur ; étiquettes communes ou personnelles dans un lieu partagé.
