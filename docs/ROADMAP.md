@@ -27,14 +27,14 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - [x] Fiche ouvrage (écran 6) : informations, couverture, exemplaires, statut lu / à lire
 - [x] Paramètres (écran 7) de la version 1 : interrupteurs, clé Google Books, pièces et étagères, étiquettes QR, export et import CSV
 - [x] Export CSV ; import CSV, y compris une exportation Libib (à essayer avec une vraie exportation Libib de l'utilisateur)
-- [ ] Relecture complète des textes (vouvoiement, français soutenu)
+- [x] Relecture complète des textes (vouvoiement, français soutenu) : règles vérifiées par `fr.test.ts`, tournures harmonisées (« n’a pu »)
 - [ ] Essai réel : une étagère entière scannée sur téléphone
 
 ### Reprise du lot 1 (1er novembre 2026)
 - Lectures d'une session : table `scanEntries` (schéma version 2), qui sert aussi de file d'attente des recherches (`src/scan/session.ts`, `src/scan/lookups.ts`, lancée au démarrage dans `main.tsx`).
 - Pièces et étagères : `src/places/places.ts` (création, renommage, suppression si vide, `indexPlaces` pour les libellés « Salon · Étagère 2 »).
 - Composants réutilisables : `Sheet` (fenêtre en bas d'écran), `CoverImage` et `useBlobUrl`, `useCamera` et `captureFrame`/`compressImage` (`src/scan/camera.ts`) pour les photographies de l'écran 3, 4 et 6 ; styles partagés dans `src/styles/components.css`, écrans dans `src/styles/screens.css`.
-- Prochaines étapes, dans l'ordre : relecture complète des textes, puis essai réel sur téléphone (une étagère entière, et import d'une vraie exportation Libib : son format exact n'est pas documenté publiquement, les colonnes sont reconnues par leur nom).
+- Prochaine étape : essai réel sur téléphone (une étagère entière, et import d'une vraie exportation Libib : son format exact n'est pas documenté publiquement, les colonnes sont reconnues par leur nom).
 - Export et import CSV : `src/csv/` (`csv.ts` lecture et écriture, `export.ts`, `read.ts` reconnaissance des formats et conversion, testés ; `import.ts` écriture en base, `enrich.ts` recherche des couvertures en arrière-plan) ; écran `ImportScreen` (`#/importer`) ; `findOrCreateShelf` dans `places.ts`.
 - Pièces et étagères (`PlacesScreen`, `#/pieces`) et étiquettes (`LabelsScreen`, `#/etiquettes`, impression par le navigateur, code QR dessiné par `QrCode` avec `uqr` ; relecture vérifiée avec le lecteur de l'application).
 - Bibliothèque et fiche : recherche et filtres dans `src/library/filter.ts` (testés) ; opérations de la fiche dans `src/books/books.ts` ; fenêtres réutilisables `ConfirmSheet` et `CameraSheet`.

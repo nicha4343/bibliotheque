@@ -202,7 +202,7 @@ export const fr = {
     title: 'Étiquettes QR à imprimer',
     back: 'Paramètres',
     intro:
-      'Collez chaque étiquette sur son étagère : en la scannant, les ouvrages suivants y seront rangés, sans passer par le sélecteur.',
+      'Collez chaque étiquette sur son étagère : dès que vous la scannez, les ouvrages suivants y sont rangés, sans passer par le sélecteur.',
     choose: 'Étagères à imprimer',
     all: 'Toutes',
     none: 'Aucune',
@@ -259,8 +259,8 @@ export const fr = {
     cameraNotFound: 'Aucune caméra n’a été trouvée sur cet appareil.',
     cameraUnsupported:
       'Ce navigateur ne permet pas d’utiliser la caméra ici. Ouvrez l’application à son adresse sécurisée, commençant par https.',
-    cameraFailed: 'La caméra n’a pas pu être ouverte. Fermez les autres applications qui l’utilisent, puis réessayez.',
-    detectorFailed: 'La lecture des codes-barres n’a pas pu démarrer sur ce navigateur.',
+    cameraFailed: 'La caméra n’a pu être ouverte. Fermez les autres applications qui l’utilisent, puis réessayez.',
+    detectorFailed: 'La lecture des codes-barres n’a pu démarrer sur ce navigateur.',
     retry: 'Réessayer',
   },
 
