@@ -1,8 +1,9 @@
 import { useRef, useState } from 'preact/hooks';
+import { EnrichmentStatus } from '../components/EnrichmentStatus';
 import { ChevronLeftIcon, PinIcon, UploadIcon } from '../components/icons';
 import { Screen } from '../components/Screen';
 import { decodeText, parseCsv } from '../csv/csv';
-import { enrichBooks, useEnrichment, type EnrichmentState } from '../csv/enrich';
+import { enrichBooks, useEnrichment } from '../csv/enrich';
 import { applyImport, previewImport, type ImportPreview, type ImportResult } from '../csv/import';
 import { readLibraryFile, type FileFormat } from '../csv/read';
 import type { Id } from '../db/schema';
@@ -34,29 +35,6 @@ async function readFile(file: File): Promise<Step> {
   if (!read.ok) return { kind: 'choose', error: read.error === 'empty' ? fr.importFile.empty : fr.importFile.unknownFormat };
   const preview = await previewImport(read.books);
   return { kind: 'ready', fileName: file.name, format: read.format, ignoredRows: read.ignoredRows, preview };
-}
-
-/** Background search of covers and missing fields after an import. */
-function EnrichmentStatus({ state }: { state: EnrichmentState }) {
-  if (state.total === 0) return null;
-  if (state.running) {
-    return (
-      <>
-        <p class="sheet__hint sheet__hint--busy" role="status">
-          <span class="spinner" aria-hidden="true" />
-          {fr.importFile.enriching(state.done, state.total)}
-        </p>
-        <p class="screen__intro">{fr.importFile.enrichingHint}</p>
-      </>
-    );
-  }
-  const searched = state.total - state.unavailable;
-  return (
-    <p class="status-line" role="status">
-      {state.withCovers ? fr.importFile.enriched(state.covers, searched) : fr.importFile.enrichedNoCovers}
-      {state.unavailable > 0 && ` ${fr.importFile.enrichOffline(state.unavailable)}`}
-    </p>
-  );
 }
 
 function Summary({ step }: { step: Extract<Step, { kind: 'ready' }> }) {

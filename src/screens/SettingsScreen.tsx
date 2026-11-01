@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'preact/hooks';
+import { EnrichmentStatus } from '../components/EnrichmentStatus';
 import { ChevronRightIcon, DownloadIcon } from '../components/icons';
 import { Screen } from '../components/Screen';
 import { SwitchRow } from '../components/SwitchRow';
+import { booksWithoutCover, enrichBooks, useEnrichment } from '../csv/enrich';
 import { downloadText, exportLibrary, isoDate } from '../csv/export';
 import type { MetadataProvider, Settings } from '../db/schema';
 import { DEFAULT_SETTINGS, getSettings, updateSettings } from '../db/settings';
@@ -161,6 +163,30 @@ function useExport(): { exporting: boolean; message: string; start: () => void }
   return { exporting, message, start };
 }
 
+/** « Rechercher les couvertures manquantes »: a source may have been unavailable, or catalogued the book since. */
+function MissingCovers() {
+  const missing = useLiveQuery(() => booksWithoutCover(), [], []);
+  const enrichment = useEnrichment();
+  return (
+    <div class="setting setting--stacked">
+      <p class="setting__detail">{fr.settings.missingCovers(missing.length)}</p>
+      {missing.length > 0 && (
+        <button
+          type="button"
+          class="button button--secondary"
+          disabled={enrichment.running}
+          onClick={() => {
+            enrichBooks(missing);
+          }}
+        >
+          {fr.settings.searchCovers}
+        </button>
+      )}
+      <EnrichmentStatus state={enrichment} />
+    </div>
+  );
+}
+
 /** Screen 7, version 1. « Mémoriser l’ordre sur l’étagère » comes with lot 3, which uses it. */
 export function SettingsScreen() {
   const offline = useOfflineStatus();
@@ -220,6 +246,7 @@ export function SettingsScreen() {
               set({ autoCovers });
             }}
           />
+          {settings.autoCovers && <MissingCovers />}
         </div>
       </section>
 

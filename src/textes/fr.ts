@@ -376,6 +376,13 @@ export const fr = {
     covers: 'Couvertures',
     autoCovers: 'Couvertures automatiques',
     autoCoversDetail: 'Votre propre photographie demeure prioritaire',
+    missingCovers: (value: number) =>
+      value === 0
+        ? 'Tous vos ouvrages pourvus d’un ISBN ont une couverture.'
+        : value === 1
+          ? '1 ouvrage pourvu d’un ISBN n’a pas de couverture.'
+          : `${formatNumber(value)} ouvrages pourvus d’un ISBN n’ont pas de couverture.`,
+    searchCovers: 'Rechercher les couvertures manquantes',
     sources: 'Sources, interrogées simultanément',
     bnfDetail: 'Particulièrement fiable pour les éditions françaises',
     googleBooksDetail: 'Vaste catalogue international',
@@ -494,19 +501,23 @@ export const fr = {
     failed: 'L’importation a échoué ; votre bibliothèque est inchangée.',
     done: (books: number, copies: number) =>
       `Importation terminée : ${count(books, 'ouvrage', 'ouvrages')} et ${count(copies, 'exemplaire', 'exemplaires')} ajoutés à votre bibliothèque.`,
-    enriching: (done: number, total: number) =>
+    library: 'Consulter ma bibliothèque',
+  },
+
+  /** Background search of covers and missing fields (after an import, or from the settings). */
+  enrichment: {
+    running: (done: number, total: number) =>
       `Recherche des couvertures et des informations manquantes : ${formatNumber(done)} sur ${formatNumber(total)}…`,
-    enrichingHint: 'La recherche se poursuit si vous quittez cet écran, tant que l’application demeure ouverte.',
-    enriched: (covers: number, total: number) =>
+    runningHint: 'La recherche se poursuit si vous quittez cet écran, tant que l’application demeure ouverte.',
+    done: (covers: number, total: number) =>
       covers === 0
         ? 'Recherche terminée : aucune couverture n’a été trouvée.'
         : `Recherche terminée : couverture trouvée pour ${count(covers, 'ouvrage', 'ouvrages')} sur ${formatNumber(total)}.`,
-    enrichedNoCovers: 'Recherche des informations manquantes terminée.',
-    enrichOffline: (value: number) =>
+    doneNoCovers: 'Recherche des informations manquantes terminée.',
+    notSearched: (value: number) =>
       value === 1
-        ? 'Faute de réseau, 1 ouvrage n’a pu être recherché.'
-        : `Faute de réseau, ${formatNumber(value)} ouvrages n’ont pu être recherchés.`,
-    library: 'Consulter ma bibliothèque',
+        ? '1 ouvrage n’a pu être recherché dans toutes les sources (réseau absent, ou source momentanément indisponible) : réessayez ultérieurement avec « Rechercher les couvertures manquantes », dans les Paramètres.'
+        : `${formatNumber(value)} ouvrages n’ont pu être recherchés dans toutes les sources (réseau absent, ou source momentanément indisponible) : réessayez ultérieurement avec « Rechercher les couvertures manquantes », dans les Paramètres.`,
   },
 
   pwa: {

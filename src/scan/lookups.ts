@@ -100,7 +100,8 @@ export async function findMetadata(
       },
     });
     await first;
-    if (metadata.providers.length > 0) {
+    // A source that did not answer (Google Books over its quota, for instance) is asked again next time.
+    if (metadata.providers.length > 0 && !metadata.incomplete) {
       await database.metadataCache.put({ isbn13, payload: metadata, fetchedAt: Date.now() });
     }
     return metadata;

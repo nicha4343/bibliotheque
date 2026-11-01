@@ -81,5 +81,7 @@ export async function searchMetadata(isbn13: string, options: SearchOptions): Pr
   }
 
   if (records.length === 0 && answered === 0) throw new SearchUnavailable();
-  return mergeRecords(isbn13, records);
+  const metadata = mergeRecords(isbn13, records);
+  if (answered < providers.length) metadata.incomplete = true;
+  return metadata;
 }

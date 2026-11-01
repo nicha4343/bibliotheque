@@ -130,6 +130,7 @@ describe('recherche simultanée', () => {
       onProgress: (partial) => progress.push(partial.providers),
     });
     expect(metadata.providers.sort()).toEqual(['bnf', 'googleBooks', 'openLibrary']);
+    expect(metadata.incomplete).toBeUndefined();
     expect(progress.length).toBe(3);
     expect(progress[0]?.length).toBe(1);
   });
@@ -175,5 +176,15 @@ describe('recherche simultanée', () => {
       },
     });
     expect(metadata.providers).toEqual(['bnf']);
+    expect(metadata.incomplete).toBe(true);
+  });
+
+  it('signale une recherche incomplète quand une source refuse de répondre (quota de Google Books)', async () => {
+    const metadata = await searchMetadata(ISBN, {
+      sources: allSources,
+      fetchImpl: fakeFetch((host) => (host === 'googleapis' ? new Response('{}', { status: 429 }) : new Response('{}'))),
+    });
+    expect(metadata.providers).toEqual([]);
+    expect(metadata.incomplete).toBe(true);
   });
 });

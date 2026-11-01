@@ -165,6 +165,8 @@ export interface BookMetadata {
   coverUrls?: { provider: MetadataProvider; url: string }[];
   /** Sources that answered; empty when the ISBN is unknown everywhere. */
   providers: MetadataProvider[];
+  /** An enabled source did not answer (network, quota, timeout): fields or covers may be missing. Never cached. */
+  incomplete?: boolean;
 }
 
 export interface MetadataCacheEntry {
