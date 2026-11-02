@@ -46,7 +46,7 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - [x] Note sur 5 et avis (« Ma lecture », avec le statut de lecture)
 - [x] Étiquettes libres avec suggestions ; recherche de la bibliothèque par étiquette
 - [x] Citations photographiées ou saisies
-- [x] Sauvegarde automatique sur Google Drive (`src/backup/`, écran `BackupScreen`, table `backup` du schéma version 3) : client Google « Application Web » créé par l'utilisateur le 2 novembre 2026 dans le projet « Ma bibliotheque » (application publiée « En production », autorisation `drive.appdata` non sensible, page de confidentialité `public/confidentialite.html` exigée par Google) ; connexion et première sauvegarde validées sur téléphone le 2 novembre 2026. La restauration n'a été essayée qu'avec un faux Drive.
+- [x] Sauvegarde automatique sur Google Drive (`src/backup/`, écran `BackupScreen`, table `backup` du schéma version 3) : client Google « Application Web » créé par l'utilisateur le 2 novembre 2026 dans le projet « Ma bibliotheque » (application publiée « En production », autorisation `drive.appdata` non sensible, page de confidentialité `public/confidentialite.html` exigée par Google) ; connexion et première sauvegarde validées sur téléphone le 2 novembre 2026. Relecture de la sauvegarde avant restauration (date, nombre d'ouvrages) validée sur téléphone le 2 novembre 2026 ; la restauration complète n'a été essayée qu'avec un faux Drive.
 
 ### Reprise du lot 2 (1er novembre 2026)
 - Fiche ouvrage : sections dans `src/books/` (`ReadingSection`, `TagsSection`, `QuotesSection`) ; logique dans `tags.ts` et `quotes.ts` (testées). Aucun changement de schéma : `rating`, `review`, `tags` et la table `quotes` existaient depuis la version 1.
