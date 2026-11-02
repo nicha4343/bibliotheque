@@ -5,7 +5,7 @@ import googleBooksJson from './fixtures/googleBooks.json';
 import openLibraryJson from './fixtures/openLibrary.json';
 import { bookshopCandidates } from './covers';
 import { completeBook, mergeRecords } from './merge';
-import { SearchUnavailable, searchMetadata } from './search';
+import { SearchUnavailable, searchMetadata, setGoogleBooksPacing } from './search';
 import { parseBnf, parseGoogleBooks, parseOpenLibrary, sourceUrl, type SourceRecord } from './sources';
 
 const ISBN = '9782070360420';
@@ -187,6 +187,53 @@ describe('recherche simultanée', () => {
     });
     expect(metadata.providers).toEqual([]);
     expect(metadata.incomplete).toBe(true);
+  });
+
+  it('demande de nouveau à Google Books après un refus momentané', async () => {
+    let calls = 0;
+    const metadata = await searchMetadata(ISBN, {
+      sources: allSources,
+      fetchImpl: fakeFetch((host) => {
+        if (host !== 'googleapis') return new Response(host === 'bnf' ? '<x/>' : '{}');
+        calls += 1;
+        return calls < 3 ? new Response('{}', { status: 429 }) : new Response(JSON.stringify(googleBooksJson));
+      }),
+    });
+    expect(calls).toBe(3);
+    expect(metadata.providers).toEqual(['googleBooks']);
+    expect(metadata.incomplete).toBeUndefined();
+  });
+
+  it('ne redemande pas avec une clé refusée', async () => {
+    let calls = 0;
+    const metadata = await searchMetadata(ISBN, {
+      sources: allSources,
+      fetchImpl: fakeFetch((host) => {
+        if (host !== 'googleapis') return new Response('{}');
+        calls += 1;
+        return new Response('{}', { status: 403 });
+      }),
+    });
+    expect(calls).toBe(1);
+    expect(metadata.incomplete).toBe(true);
+  });
+
+  it('espace les requêtes adressées à Google Books, même simultanées', async () => {
+    setGoogleBooksPacing({ spacingMs: 40, retryDelaysMs: [] });
+    try {
+      const times: number[] = [];
+      const options = {
+        sources: { bnf: false, googleBooks: true, openLibrary: false },
+        fetchImpl: fakeFetch(() => {
+          times.push(Date.now());
+          return new Response('{}');
+        }),
+      };
+      await Promise.all([searchMetadata(ISBN, options), searchMetadata(ISBN, options)]);
+      expect((times[1] ?? 0) - (times[0] ?? 0)).toBeGreaterThanOrEqual(30);
+    } finally {
+      setGoogleBooksPacing({ spacingMs: 0, retryDelaysMs: [0, 0] });
+    }
   });
 });
 
