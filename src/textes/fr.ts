@@ -112,6 +112,9 @@ export const fr = {
     noMatchText: 'Cet ouvrage ne figure pas encore dans votre bibliothèque ? Vous pouvez l’ajouter en le scannant.',
     noMatchAction: 'Scanner un ouvrage',
     showMore: (value: number) => `Afficher les ouvrages suivants · ${formatNumber(value)} restants`,
+    shortcuts: 'Raccourcis',
+    shelves: 'Étagères',
+    lost: 'Déclaré perdu',
   },
 
   book: {
@@ -180,6 +183,12 @@ export const fr = {
     quoteDeleted: 'Citation supprimée',
     copies: (value: number) => `Exemplaires · ${formatNumber(value)}`,
     move: (place: string) => `Déplacer l’exemplaire rangé dans ${place}`,
+    moveButton: 'Déplacer',
+    position: (ordinal: string) => `${ordinal} position à partir de la gauche`,
+    lostOn: (date: string) => `Déclaré perdu le ${date}`,
+    found: 'Retrouvé',
+    foundLabel: (place: string) => `Exemplaire retrouvé : choisir où le ranger (dernier emplacement connu : ${place})`,
+    foundTitle: 'Où ranger cet exemplaire retrouvé ?',
     moveTitle: 'Où ranger cet exemplaire ?',
     addCopy: 'Ajouter un exemplaire',
     addCopyTitle: 'Où ranger le nouvel exemplaire ?',
@@ -213,6 +222,8 @@ export const fr = {
     unknownAuthor: 'Auteur inconnu',
     /** « 2ᵉ exemplaire » */
     ordinal: (value: number) => (value === 1 ? '1er' : `${formatNumber(value)}ᵉ`),
+    /** « 1re position », « 3ᵉ position » */
+    ordinalFeminine: (value: number) => (value === 1 ? '1re' : `${formatNumber(value)}ᵉ`),
     providers: { bnf: 'BnF', googleBooks: 'Google Books', openLibrary: 'Open Library', amazon: 'Amazon', decitre: 'Decitre' },
   },
 
@@ -260,6 +271,110 @@ export const fr = {
     hint: 'Conseil : imprimez sur du papier autocollant, ou découpez et fixez avec un ruban adhésif.',
   },
 
+  shelves: {
+    title: 'Étagères',
+    back: 'Bibliothèque',
+    summary: (value: number) => (value === 0 ? 'Aucune étagère pour le moment' : count(value, 'étagère', 'étagères')),
+    books: (value: number) => (value === 0 ? 'Vide' : count(value, 'ouvrage', 'ouvrages')),
+    checkedOn: (date: string) => `vérifiée le ${date}`,
+    empty: 'Créez d’abord vos pièces et étagères :',
+  },
+
+  /** Screen 8: one shelf, its order, its check. */
+  shelf: {
+    back: 'Étagères',
+    backToBook: 'Fiche de l’ouvrage',
+    notFound: 'Cette étagère ne figure pas dans votre bibliothèque : elle a pu être supprimée.',
+    books: (value: number) => (value === 0 ? 'Aucun ouvrage' : count(value, 'ouvrage', 'ouvrages')),
+    inOrder: 'dans l’ordre de la dernière lecture',
+    byTitle: 'classés par titre',
+    unknownPositions: (value: number) =>
+      value === 1
+        ? 'La position d’un ouvrage n’est pas connue : il figure à la fin. Vérifiez l’étagère pour la relever.'
+        : `La position de ${formatNumber(value)} ouvrages n’est pas connue : ils figurent à la fin. Vérifiez l’étagère pour la relever.`,
+    orderOff:
+      'Pour voir les ouvrages dans l’ordre de rangement, activez « Mémoriser l’ordre sur l’étagère » dans les Paramètres, puis vérifiez cette étagère.',
+    whereTitle: (title: string) => `Où se trouve « ${title} » ?`,
+    wherePosition: (place: string, ordinal: string) => `${place} · ${ordinal} position à partir de la gauche`,
+    whereUnknown: (place: string) => `${place} · position inconnue`,
+    whereLost: (place: string) => `Déclaré perdu ; dernier emplacement connu : ${place}`,
+    spines: 'Tranches des ouvrages, de gauche à droite',
+    spine: (ordinal: string, title: string) => `${ordinal} position : ${title}`,
+    lent: (title: string) => `${title} · prêté`,
+    positionPrefix: (ordinal: string) => `${ordinal} position :`,
+    empty: 'Aucun ouvrage n’est rangé sur cette étagère.',
+    scanHere: 'Scanner des ouvrages sur cette étagère',
+    verify: 'Vérifier cette étagère',
+    verifyDetail: 'Scannez-la de nouveau ; l’application compare',
+    resume: (value: number) => `Reprendre la vérification · ${count(value, 'ouvrage lu', 'ouvrages lus')}`,
+    printQr: 'Imprimer le code QR de cette étagère',
+    resultTitle: (date: string) => `Vérification du ${date}`,
+    hideResult: 'Masquer ce bilan',
+    inPlace: (value: number) =>
+      value === 0
+        ? 'Aucun ouvrage à sa place'
+        : value === 1
+          ? '1 ouvrage à sa place'
+          : `${formatNumber(value)} ouvrages à leur place`,
+    unchecked: (value: number) =>
+      value === 1
+        ? '1 ouvrage sans code-barres n’a pu être vérifié par le scan.'
+        : `${formatNumber(value)} ouvrages sans code-barres n’ont pu être vérifiés par le scan.`,
+    missingTag: 'Introuvable',
+    missingText: 'Cet ouvrage devrait se trouver ici et n’est pas prêté.',
+    storedElsewhere: 'Il est rangé ailleurs',
+    storedElsewhereTitle: 'Où se trouve cet ouvrage ?',
+    declareLost: 'Déclarer perdu',
+    misplacedTag: 'Mal rangé',
+    misplacedText: (place: string) => `Trouvé ici, alors qu’il est habituellement rangé dans ${place}.`,
+    moveHere: 'Le ranger désormais ici',
+    putBack: 'Le remettre à sa place',
+    lentTag: 'Prêté',
+    lentText: 'Absence attendue : cet ouvrage est prêté.',
+    notOwnedTag: 'Absent de votre bibliothèque',
+    notOwnedTitle: 'Ouvrage inconnu',
+    notOwnedText: 'Ce code ne correspond à aucun ouvrage de votre bibliothèque.',
+    addHere: 'L’ajouter à cette étagère',
+    answerMoved: (place: string) => `Emplacement mis à jour : ${place}`,
+    answerPutBack: (place: string) => `À replacer dans ${place}`,
+    answerLost: 'Déclaré perdu',
+    answerAdded: 'Ajouté à votre bibliothèque, sur cette étagère',
+    answerFailed: 'Cette opération n’a pu aboutir : la vérification a pu être remplacée par une autre.',
+  },
+
+  /** Scanning a shelf to check it (screen 8, « Vérifier cette étagère »). */
+  check: {
+    title: 'Vérification de l’étagère',
+    quit: 'Quitter la vérification : elle pourra être reprise',
+    found: (found: number, total: number) => `sur ${formatNumber(total)} ${plural(found, 'retrouvé', 'retrouvés')}`,
+    toReview: 'à examiner',
+    ready: 'Présentez le code-barres de chaque ouvrage de l’étagère',
+    hintOrdered: 'Scannez les ouvrages dans l’ordre, de gauche à droite : leur ordre sera mémorisé.',
+    hintFree: 'Scannez chacun des ouvrages de l’étagère, dans l’ordre de votre choix.',
+    inPlace: (title: string) => `${title} — à sa place`,
+    misplaced: (title: string, place: string) => `${title} — habituellement rangé dans ${place}`,
+    notOwned: 'Cet ouvrage ne figure pas dans votre bibliothèque',
+    repeated: (title: string) => `${title} — déjà lu au cours de cette vérification`,
+    thisShelf: (place: string) => `Étagère reconnue : ${place}`,
+    otherShelf: (place: string) => `Ce code QR désigne une autre étagère, ${place} : la vérification se poursuit`,
+    listTitle: 'Ouvrages lus',
+    empty: 'Les ouvrages scannés apparaîtront ici, le plus récent en tête.',
+    removeRow: (title: string) => `Retirer « ${title} » de la vérification`,
+    rowInPlace: 'À sa place',
+    rowMisplaced: 'Mal rangé',
+    rowMisplacedDetail: (place: string) => `Habituellement : ${place}`,
+    rowNotOwned: 'Absent',
+    rowRepeated: 'Déjà lu',
+    cancel: 'Abandonner',
+    finish: (value: number) => `Terminer · ${formatNumber(value)}`,
+    cancelTitle: 'Abandonner la vérification ?',
+    cancelText: (value: number) =>
+      value === 1
+        ? 'L’ouvrage lu sera oublié ; votre bibliothèque demeure inchangée.'
+        : `Les ${formatNumber(value)} ouvrages lus seront oubliés ; votre bibliothèque demeure inchangée.`,
+    cancelConfirm: 'Abandonner la vérification',
+  },
+
   scan: {
     title: 'Scanner',
     choosePlace: 'Choisir un emplacement',
@@ -268,6 +383,7 @@ export const fr = {
     scanned: (value: number) => plural(value, 'scanné', 'scannés'),
     pending: 'à compléter',
     hint: 'La caméra demeure active : vous pouvez enchaîner les ouvrages sans toucher l’écran.',
+    hintOrdered: 'Scannez les ouvrages de gauche à droite : leur ordre sur l’étagère est mémorisé.',
     sessionTitle: 'Cette session',
     emptySession: 'Les ouvrages scannés apparaîtront ici, le plus récent en tête.',
     undo: 'Annuler la dernière lecture',
@@ -320,6 +436,7 @@ export const fr = {
     add: (ordinal: string) => `Ajouter un ${ordinal} exemplaire`,
     willBePlaced: (place: string) => `Il sera rangé dans ${place}`,
     decline: 'Ne pas l’ajouter',
+    lostPlace: (place: string) => `${place} · déclaré perdu`,
   },
 
   recap: {
@@ -478,6 +595,8 @@ export const fr = {
     vibrationDetail: 'Pour poursuivre sans regarder l’écran ; sans effet sur iPhone',
     flagOwned: 'Signaler les ouvrages déjà possédés',
     flagOwnedDetail: 'Propose l’ajout d’un exemplaire supplémentaire',
+    rememberOrder: 'Mémoriser l’ordre sur l’étagère',
+    rememberOrderDetail: 'Relevé de gauche à droite lors du scan ou de la vérification d’une étagère',
     covers: 'Couvertures',
     autoCovers: 'Couvertures automatiques',
     autoCoversDetail: 'Votre propre photographie demeure prioritaire',

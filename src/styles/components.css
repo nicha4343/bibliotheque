@@ -25,6 +25,22 @@
   color: var(--color-text);
 }
 
+.button--soft {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-hover);
+}
+
+.button--soft:hover {
+  color: var(--color-accent-hover);
+}
+
+/* Several side by side in a card: the text may wrap. */
+.button--compact {
+  padding: 6px var(--space-3);
+  font-size: var(--text-small);
+  text-align: center;
+}
+
 .button--large {
   min-height: 52px;
   border-radius: var(--radius-field);

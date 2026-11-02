@@ -1,7 +1,7 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { CoverImage } from '../components/CoverImage';
-import { CameraIcon, ChevronDownIcon, CloseIcon, PinIcon, QuestionIcon, TorchIcon, UndoIcon } from '../components/icons';
+import { CameraIcon, ChevronDownIcon, CloseIcon, PinIcon, QuestionIcon, UndoIcon } from '../components/icons';
 import { db } from '../db/db';
 import type { Book, ScanEntry, ScanSession, Shelf } from '../db/schema';
 import { DEFAULT_SETTINGS, getSettings } from '../db/settings';
@@ -28,13 +28,8 @@ import {
   undoLastEntry,
 } from '../scan/session';
 import { useCamera, useCodeDetection } from '../scan/useCamera';
+import { Viewfinder, type Flash } from '../scan/Viewfinder';
 import { formatNumber, fr } from '../textes/fr';
-
-type FlashKind = 'ok' | 'warn' | 'info';
-interface Flash {
-  kind: FlashKind;
-  text: string;
-}
 
 interface Row {
   entry: ScanEntry;
@@ -156,7 +151,8 @@ export function ScanScreen() {
       return;
     }
     signal('read');
-    void recordIsbn(session, meaning.isbn13, { flagOwnedBooks: settings.flagOwnedBooks }).then((entry) => {
+    const options = { flagOwnedBooks: settings.flagOwnedBooks, position: settings.rememberShelfOrder ? Date.now() : undefined };
+    void recordIsbn(session, meaning.isbn13, options).then((entry) => {
       if (entry.status === 'searching') {
         setFlash({ kind: 'info', text: navigator.onLine ? fr.scan.read(meaning.isbn13) : fr.scan.offline });
         wakeLookups();
@@ -201,7 +197,7 @@ export function ScanScreen() {
     setBusy(true);
     try {
       const photo = await captureFrame(video);
-      await recordNoBarcode(session, photo);
+      await recordNoBarcode(session, photo, { position: settings.rememberShelfOrder ? Date.now() : undefined });
       signal('read');
       setFlash({ kind: 'warn', text: fr.scan.photographed });
     } finally {
@@ -219,25 +215,16 @@ export function ScanScreen() {
     else navigate('library');
   };
 
-  const cameraMessage =
-    camera.status === 'error'
-      ? {
-          denied: fr.scan.cameraDenied,
-          notFound: fr.scan.cameraNotFound,
-          unsupported: fr.scan.cameraUnsupported,
-          failed: fr.scan.cameraFailed,
-        }[camera.error ?? 'failed']
-      : !detectorAvailable
-        ? fr.scan.detectorFailed
-        : undefined;
-
   return (
     <main class="scan">
       <h1 class="visually-hidden">{fr.scan.title}</h1>
-      <div class="scan__view" ref={viewRef}>
-        <video class="scan__video" ref={videoRef} playsInline muted autoPlay aria-hidden="true" />
-
-        <div class="scan__top">
+      <Viewfinder
+        refs={refs}
+        camera={camera}
+        detectorAvailable={detectorAvailable}
+        flash={flash}
+        hint={settings.rememberShelfOrder ? fr.scan.hintOrdered : fr.scan.hint}
+        place={
           <button
             type="button"
             class="scan__place"
@@ -249,54 +236,18 @@ export function ScanScreen() {
             <span class="scan__place-label">{place?.label ?? fr.scan.choosePlace}</span>
             <ChevronDownIcon size={16} />
           </button>
-          {camera.torchAvailable && (
-            <button
-              type="button"
-              class="scan__round-button"
-              aria-label={camera.torchOn ? fr.scan.torchOff : fr.scan.torchOn}
-              aria-pressed={camera.torchOn}
-              onClick={camera.toggleTorch}
-            >
-              <TorchIcon size={20} />
-            </button>
-          )}
-        </div>
-
-        <div class="scan__counters">
-          <span class="scan__counter">
-            <strong>{formatNumber(rows.length)}</strong> {fr.scan.scanned(rows.length)}
-          </span>
-          <span class="scan__counter scan__counter--pending">
-            <strong>{formatNumber(pendingCount)}</strong> {fr.scan.pending}
-          </span>
-        </div>
-
-        <div class="scan__center">
-          <p class={`scan__flash scan__flash--${flash.kind}`} role="status">
-            <span class="scan__flash-dot" aria-hidden="true" />
-            <span class="scan__flash-text">{flash.text}</span>
-          </p>
-          <div class="scan__aim" ref={aimRef} aria-hidden="true">
-            <span class="scan__corner scan__corner--tl" />
-            <span class="scan__corner scan__corner--tr" />
-            <span class="scan__corner scan__corner--bl" />
-            <span class="scan__corner scan__corner--br" />
-            {camera.status === 'ready' && <span class="scan__sweep" />}
-          </div>
-          {cameraMessage ? (
-            <div class="scan__message">
-              <p>{cameraMessage}</p>
-              {camera.status === 'error' && (
-                <button type="button" class="button button--light" onClick={camera.retry}>
-                  {fr.scan.retry}
-                </button>
-              )}
-            </div>
-          ) : (
-            <p class="scan__hint">{camera.status === 'starting' ? fr.scan.cameraStarting : fr.scan.hint}</p>
-          )}
-        </div>
-      </div>
+        }
+        counters={
+          <>
+            <span class="scan__counter">
+              <strong>{formatNumber(rows.length)}</strong> {fr.scan.scanned(rows.length)}
+            </span>
+            <span class="scan__counter scan__counter--pending">
+              <strong>{formatNumber(pendingCount)}</strong> {fr.scan.pending}
+            </span>
+          </>
+        }
+      />
 
       <section class="scan__sheet" aria-labelledby="session-title">
         <div class="scan__sheet-header">

@@ -64,10 +64,15 @@ export interface Copy {
   id: Id;
   bookId: Id;
   shelfId: Id;
-  /** Left-to-right position, only when the « Mémoriser l’ordre sur l’étagère » option is on. */
+  /**
+   * Sort key on its shelf, from left to right, only when « Mémoriser l’ordre sur l’étagère » is on:
+   * the time of the read when scanned, renumbered by a shelf check (see shelves/order.ts).
+   */
   position?: number;
   addedAt: Timestamp;
   note?: string;
+  /** « Déclarer perdu » after a shelf check; cleared when the copy is seen or moved again. */
+  lostAt?: Timestamp;
 }
 
 /** Élément « À compléter ». */
@@ -79,6 +84,8 @@ export interface PendingItem {
   shelfId: Id;
   sessionId: Id;
   createdAt: Timestamp;
+  /** Position of the copy to create on shelfId (order remembered), taken from the read. */
+  position?: number;
 }
 
 export interface ScanSessionCounts {
@@ -116,6 +123,8 @@ export interface ScanEntry {
   copyNumber?: number;
   pendingItemId?: Id;
   createdAt: Timestamp;
+  /** Position given to the copy created by this read, when the order on the shelf is remembered. */
+  position?: number;
 }
 
 export interface ScanSession {
@@ -124,6 +133,49 @@ export interface ScanSession {
   startedAt: Timestamp;
   endedAt?: Timestamp;
   counts: ScanSessionCounts;
+}
+
+/** One code read during a shelf check. */
+export interface CheckRead {
+  isbn13: string;
+  at: Timestamp;
+}
+
+/** Comparison of the codes read with the library, made when the check ends. Ids are copy ids. */
+export interface ShelfCheckResult {
+  inPlace: Id[];
+  /** Expected here and not read, not lent: « Introuvable ». */
+  missing: Id[];
+  /** Expected here, not read, lent: an expected absence. */
+  lent: Id[];
+  /** Read here although kept on another shelf: « Mal rangé ». */
+  misplaced: { copyId: Id; shelfId: Id; position: number }[];
+  /** Read here, not in the library (or a notice without any copy). */
+  notOwned: { isbn13: string; bookId?: Id; position: number }[];
+  /** Copies of books without an ISBN, which a scan cannot check. */
+  unchecked: Id[];
+}
+
+export type CheckAnswer =
+  | { kind: 'movedHere' } // « Le ranger désormais ici »
+  | { kind: 'toPutBack' } // « Le remettre à sa place »
+  | { kind: 'movedTo'; shelfId: Id } // « Il est rangé ailleurs »
+  | { kind: 'lost' } // « Déclarer perdu »
+  | { kind: 'added' }; // « L’ajouter à cette étagère »
+
+/** « Vérifier cette étagère » (lot 3, screen 8): the codes read on the shelf, then the comparison. */
+export interface ShelfCheck {
+  id: Id;
+  shelfId: Id;
+  startedAt: Timestamp;
+  endedAt?: Timestamp;
+  /** In the order of reading, i.e. from left to right. */
+  reads: CheckRead[];
+  result?: ShelfCheckResult;
+  /** Answers to the results, by copy id (or ISBN for a book not in the library). */
+  answers?: Record<string, CheckAnswer>;
+  /** Hidden from the shelf view by the user. */
+  dismissed?: boolean;
 }
 
 /** Prêt (lot 4). */

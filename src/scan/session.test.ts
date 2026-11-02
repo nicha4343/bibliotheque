@@ -107,7 +107,7 @@ describe('session de scan', () => {
   it('annule la dernière lecture et ce qu’elle a créé', async () => {
     const entry = await recordIsbn(session, ISBN, { flagOwnedBooks: true }, database);
     await resolveFound(entry.id, metadata, database);
-    await recordNoBarcode(session, new Blob(['jpeg']), database);
+    await recordNoBarcode(session, new Blob(['jpeg']), {}, database);
     await undoLastEntry(session.id, database);
     expect(await database.pendingItems.count()).toBe(0);
     expect(await database.blobs.count()).toBe(0);
@@ -127,7 +127,7 @@ describe('session de scan', () => {
   it('compte les lectures à la fin de la session', async () => {
     const found = await recordIsbn(session, ISBN, { flagOwnedBooks: true }, database);
     await resolveFound(found.id, metadata, database);
-    await recordNoBarcode(session, new Blob(['jpeg']), database);
+    await recordNoBarcode(session, new Blob(['jpeg']), {}, database);
     await recordIsbn(session, ISBN, { flagOwnedBooks: true }, database);
     const ended = await endSession(session.id, database);
     expect(ended?.counts).toEqual({ scanned: 3, added: 1, pending: 1, extraCopies: 0 });

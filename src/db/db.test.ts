@@ -45,6 +45,7 @@ describe('base de données', () => {
         'scanEntries',
         'scanSessions',
         'settings',
+        'shelfChecks',
         'shelves',
         'wishes',
       ].sort(),

@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { CoverImage } from '../components/CoverImage';
 import { EmptyState } from '../components/EmptyState';
-import { CloseIcon, LibraryIcon, PinIcon, SearchIcon } from '../components/icons';
+import { CloseIcon, LibraryIcon, PinIcon, SearchIcon, ShelfIcon } from '../components/icons';
 import { Screen } from '../components/Screen';
 import { db } from '../db/db';
 import { useLiveQuery } from '../db/useLiveQuery';
 import {
+  firstPresentCopy,
   matchesPlace,
   matchesQuery,
   matchesStatus,
@@ -105,6 +106,15 @@ export function LibraryScreen() {
 
       {data && places && total !== 0 && (
         <>
+          {places.byShelfId.size > 0 && (
+            <nav class="shortcuts" aria-label={fr.library.shortcuts}>
+              <a class="shortcut" href={routeHref('shelves')}>
+                <ShelfIcon size={22} />
+                {fr.library.shelves}
+              </a>
+            </nav>
+          )}
+
           <div class="search">
             <label class="visually-hidden" for="library-search">
               {fr.library.searchLabel}
@@ -230,8 +240,8 @@ function hasPlaceOption(value: string, places: PlaceIndex): boolean {
 
 function BookRow({ entry, places }: { entry: LibraryEntry; places: PlaceIndex }) {
   const { book, copies } = entry;
-  const first = copies[0];
-  const place = first ? places.byShelfId.get(first.shelfId)?.label : undefined;
+  const first = firstPresentCopy(entry);
+  const place = first ? places.byShelfId.get(first.shelfId)?.label : copies.length > 0 ? fr.library.lost : undefined;
   const read = book.status === 'read';
   return (
     <li>

@@ -26,7 +26,7 @@ export async function resolveFound(entryId: Id, metadata: BookMetadata, database
     }
     const book = newBook(bookFieldsFromMetadata(metadata));
     await database.books.add(book);
-    const copy = newCopy(book.id, entry.shelfId);
+    const copy = newCopy(book.id, entry.shelfId, entry.position);
     await database.copies.add(copy);
     await database.scanEntries.update(entryId, { status: 'added', bookId: book.id, copyId: copy.id, createdBook: true });
     return book.id;
@@ -46,6 +46,7 @@ export async function resolveUnknown(entryId: Id, database: LibraryDatabase = db
       sessionId: entry.sessionId,
       createdAt: Date.now(),
     };
+    if (entry.position !== undefined) item.position = entry.position;
     await database.pendingItems.add(item);
     await database.scanEntries.update(entryId, { status: 'pending', pendingItemId: item.id });
   });

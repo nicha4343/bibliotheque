@@ -12,6 +12,7 @@ import type {
   ScanSession,
   SettingsRecord,
   Shelf,
+  ShelfCheck,
   StoredBlob,
   Wish,
 } from './schema';
@@ -33,6 +34,7 @@ export class LibraryDatabase extends Dexie {
   blobs!: EntityTable<StoredBlob, 'id'>;
   settings!: EntityTable<SettingsRecord, 'id'>;
   backup!: EntityTable<BackupState, 'id'>;
+  shelfChecks!: EntityTable<ShelfCheck, 'id'>;
 
   constructor(name = DATABASE_NAME) {
     super(name);
@@ -58,6 +60,10 @@ export class LibraryDatabase extends Dexie {
     // Lot 2: Google Drive backup state (client, tokens, last backup).
     this.version(3).stores({
       backup: 'id',
+    });
+    // Lot 3: shelf checks. Copy.position and Copy.lostAt are not indexed: no other change.
+    this.version(4).stores({
+      shelfChecks: 'id, shelfId, startedAt',
     });
   }
 }

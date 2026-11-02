@@ -72,31 +72,38 @@ export async function renameShelf(id: Id, name: string, database: LibraryDatabas
   if (name.trim()) await database.shelves.update(id, { name: name.trim() });
 }
 
-/** Removes a shelf only when no copy, pending item or read refers to it. */
+/** Removes a shelf only when no copy, pending item or read refers to it; its checks go with it. */
 export async function deleteShelfIfEmpty(id: Id, database: LibraryDatabase = db): Promise<boolean> {
-  return database.transaction('rw', [database.shelves, database.copies, database.pendingItems], async () => {
+  return database.transaction('rw', [database.shelves, database.copies, database.pendingItems, database.shelfChecks], async () => {
     const used =
       (await database.copies.where('shelfId').equals(id).count()) +
       (await database.pendingItems.where('shelfId').equals(id).count());
     if (used > 0) return false;
+    await database.shelfChecks.where('shelfId').equals(id).delete();
     await database.shelves.delete(id);
     return true;
   });
 }
 
 export async function deleteRoomIfEmpty(id: Id, database: LibraryDatabase = db): Promise<boolean> {
-  return database.transaction('rw', [database.rooms, database.shelves, database.copies, database.pendingItems], async () => {
-    const shelves = await database.shelves.where('roomId').equals(id).toArray();
-    for (const shelf of shelves) {
-      const used =
-        (await database.copies.where('shelfId').equals(shelf.id).count()) +
-        (await database.pendingItems.where('shelfId').equals(shelf.id).count());
-      if (used > 0) return false;
-    }
-    await database.shelves.bulkDelete(shelves.map((shelf) => shelf.id));
-    await database.rooms.delete(id);
-    return true;
-  });
+  return database.transaction(
+    'rw',
+    [database.rooms, database.shelves, database.copies, database.pendingItems, database.shelfChecks],
+    async () => {
+      const shelves = await database.shelves.where('roomId').equals(id).toArray();
+      for (const shelf of shelves) {
+        const used =
+          (await database.copies.where('shelfId').equals(shelf.id).count()) +
+          (await database.pendingItems.where('shelfId').equals(shelf.id).count());
+        if (used > 0) return false;
+      }
+      const shelfIds = shelves.map((shelf) => shelf.id);
+      await database.shelfChecks.where('shelfId').anyOf(shelfIds).delete();
+      await database.shelves.bulkDelete(shelfIds);
+      await database.rooms.delete(id);
+      return true;
+    },
+  );
 }
 
 /** The shelf after this one in the same room, created (« Étagère N ») when it is the last. */

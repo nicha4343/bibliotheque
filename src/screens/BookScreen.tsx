@@ -19,7 +19,8 @@ import { CoverImage } from '../components/CoverImage';
 import { CameraIcon, ChevronLeftIcon, GalleryIcon, PencilIcon, PinIcon, PlusIcon, TrashIcon } from '../components/icons';
 import { Sheet } from '../components/Sheet';
 import { db } from '../db/db';
-import type { Book, Copy } from '../db/schema';
+import type { Book, Copy, Id } from '../db/schema';
+import { getSettings } from '../db/settings';
 import { useLiveQuery } from '../db/useLiveQuery';
 import { fetchCover, type CoverCandidate } from '../metadata/covers';
 import { joinAuthors, parseAuthors } from '../pending/pending';
@@ -27,21 +28,36 @@ import { loadPlaces, type PlaceIndex } from '../places/places';
 import { navigate, routeHref } from '../router';
 import { compressImage } from '../scan/camera';
 import { LocationPicker } from '../scan/LocationPicker';
-import { fr } from '../textes/fr';
+import { rankOf } from '../shelves/order';
+import { formatDate, fr } from '../textes/fr';
 
 interface BookData {
   book: Book | undefined;
   copies: Copy[];
   places: PlaceIndex;
+  /** Position of each copy on its shelf, when the order is remembered and known. */
+  ranks: Map<Id, number>;
 }
 
 async function loadBook(bookId: string): Promise<BookData> {
-  const [book, copies, places] = await Promise.all([
+  const [book, copies, places, settings] = await Promise.all([
     db.books.get(bookId),
     db.copies.where('bookId').equals(bookId).sortBy('addedAt'),
     loadPlaces(),
+    getSettings(),
   ]);
-  return { book, copies, places };
+  const ranks = new Map<Id, number>();
+  if (settings.rememberShelfOrder) {
+    for (const shelfId of new Set(copies.map((copy) => copy.shelfId))) {
+      const shelfCopies = await db.copies.where('shelfId').equals(shelfId).toArray();
+      const shelfRanks = rankOf(shelfCopies.filter((copy) => copy.lostAt === undefined));
+      for (const copy of copies) {
+        const rank = shelfRanks.get(copy.id);
+        if (rank !== undefined) ranks.set(copy.id, rank);
+      }
+    }
+  }
+  return { book, copies, places, ranks };
 }
 
 type Dialog =
@@ -73,7 +89,7 @@ export function BookScreen({ bookId }: { bookId: string }) {
   }, [data?.book]);
 
   if (!data) return <main class="screen" />;
-  const { book, copies, places } = data;
+  const { book, copies, places, ranks } = data;
   if (!book) {
     return (
       <main class="screen">
@@ -144,36 +160,59 @@ export function BookScreen({ bookId }: { bookId: string }) {
             {fr.book.copies(copies.length)}
           </h2>
           <ul class="card copy-list">
-            {copies.map((copy, index) => (
-              <li key={copy.id} class="copy">
-                <span class="copy__number" aria-hidden="true">
-                  {index + 1}
-                </span>
-                <button
-                  type="button"
-                  class="copy__place"
-                  aria-label={fr.book.move(placeOf(copy))}
-                  onClick={() => {
-                    setDialog({ kind: 'move', copy });
-                  }}
-                >
-                  <PinIcon size={16} />
-                  <span>{placeOf(copy)}</span>
-                </button>
-                {copies.length > 1 && (
+            {copies.map((copy, index) => {
+              const lost = copy.lostAt !== undefined;
+              const rank = ranks.get(copy.id);
+              const detail = lost
+                ? fr.book.lostOn(formatDate(new Date(copy.lostAt ?? 0)))
+                : rank === undefined
+                  ? undefined
+                  : fr.book.position(fr.common.ordinalFeminine(rank));
+              return (
+                <li key={copy.id} class="copy">
+                  <span class="copy__number" aria-hidden="true">
+                    {index + 1}
+                  </span>
+                  <span class="copy__text">
+                    {/* « Où se trouve … ? »: the shelf view points the copy out. */}
+                    {places.byShelfId.has(copy.shelfId) ? (
+                      <a class="copy__place" href={routeHref('shelf', copy.shelfId, copy.id)}>
+                        <PinIcon size={16} />
+                        <span>{placeOf(copy)}</span>
+                      </a>
+                    ) : (
+                      <span class="copy__place">
+                        <PinIcon size={16} />
+                        <span>{placeOf(copy)}</span>
+                      </span>
+                    )}
+                    {detail && <span class={lost ? 'copy__detail copy__detail--lost' : 'copy__detail'}>{detail}</span>}
+                  </span>
                   <button
                     type="button"
-                    class="icon-button copy__remove"
-                    aria-label={fr.book.removeCopy(placeOf(copy))}
+                    class="text-button copy__move"
+                    aria-label={lost ? fr.book.foundLabel(placeOf(copy)) : fr.book.move(placeOf(copy))}
                     onClick={() => {
-                      setDialog({ kind: 'removeCopy', copy });
+                      setDialog({ kind: 'move', copy });
                     }}
                   >
-                    <TrashIcon size={18} />
+                    {lost ? fr.book.found : fr.book.moveButton}
                   </button>
-                )}
-              </li>
-            ))}
+                  {copies.length > 1 && (
+                    <button
+                      type="button"
+                      class="icon-button copy__remove"
+                      aria-label={fr.book.removeCopy(placeOf(copy))}
+                      onClick={() => {
+                        setDialog({ kind: 'removeCopy', copy });
+                      }}
+                    >
+                      <TrashIcon size={18} />
+                    </button>
+                  )}
+                </li>
+              );
+            })}
             <li class="copy">
               <button
                 type="button"
@@ -220,7 +259,13 @@ export function BookScreen({ bookId }: { bookId: string }) {
       {(dialog?.kind === 'addCopy' || dialog?.kind === 'move') && (
         <LocationPicker
           places={places}
-          title={dialog.kind === 'addCopy' ? fr.book.addCopyTitle : fr.book.moveTitle}
+          title={
+            dialog.kind === 'addCopy'
+              ? fr.book.addCopyTitle
+              : dialog.copy.lostAt === undefined
+                ? fr.book.moveTitle
+                : fr.book.foundTitle
+          }
           currentShelfId={dialog.kind === 'move' ? dialog.copy.shelfId : undefined}
           onPick={(shelf) => {
             const label = places.byShelfId.get(shelf.id)?.label ?? shelf.name;

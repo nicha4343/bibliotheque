@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { ChevronLeftIcon } from '../components/icons';
 import { QrCode } from '../components/QrCode';
 import { Screen } from '../components/Screen';
@@ -9,14 +9,23 @@ import { routeHref } from '../router';
 import { shelfQrContent } from '../scan/reads';
 import { fr } from '../textes/fr';
 
-/** Shelf QR labels, printed from the browser: scanning one makes its shelf the current place. */
-export function LabelsScreen() {
+/**
+ * Shelf QR labels, printed from the browser: scanning one makes its shelf the current place. From a
+ * shelf view (shelfId), only that shelf's label is chosen at first.
+ */
+export function LabelsScreen({ shelfId }: { shelfId?: string | undefined }) {
   const places = useLiveQuery<PlaceIndex | undefined>(() => loadPlaces(), [], undefined);
   // Shelves left out by the user; every shelf is printed by default.
   const [excluded, setExcluded] = useState<ReadonlySet<Id>>(new Set());
 
   const shelves = places ? [...places.byShelfId.values()] : [];
   const chosen = shelves.filter(({ shelf }) => !excluded.has(shelf.id));
+  const from = shelfId ? places?.byShelfId.get(shelfId) : undefined;
+
+  const loaded = Boolean(places);
+  useEffect(() => {
+    if (loaded && shelfId) setExcluded(new Set(shelves.map(({ shelf }) => shelf.id).filter((id) => id !== shelfId)));
+  }, [loaded, shelfId]);
 
   const toggle = (id: Id, on: boolean) => {
     setExcluded((current) => {
@@ -30,9 +39,9 @@ export function LabelsScreen() {
   return (
     <Screen title={fr.labels.title}>
       <div class="back-bar no-print">
-        <a class="text-button back-bar__link" href={routeHref('settings')}>
+        <a class="text-button back-bar__link" href={from ? routeHref('shelf', from.shelf.id) : routeHref('settings')}>
           <ChevronLeftIcon size={20} />
-          {fr.labels.back}
+          {from ? from.label : fr.labels.back}
         </a>
       </div>
 

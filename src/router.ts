@@ -12,15 +12,20 @@ export type RouteId =
   | 'places'
   | 'labels'
   | 'import'
-  | 'backup';
+  | 'backup'
+  | 'shelves'
+  | 'shelf'
+  | 'check';
 
 /** The four tabs of the navigation bar. */
 export type TabId = 'library' | 'scan' | 'pending' | 'settings';
 
 export interface Route {
   id: RouteId;
-  /** Identifier following the route: a notice, an item to complete, a session. */
+  /** Identifier following the route: a notice, an item to complete, a session, a shelf. */
   param?: string;
+  /** Second identifier: the copy to point out on a shelf (« Où se trouve … ? »). */
+  detail?: string;
 }
 
 export const ROUTE_HASHES: Readonly<Record<RouteId, string>> = {
@@ -36,10 +41,17 @@ export const ROUTE_HASHES: Readonly<Record<RouteId, string>> = {
   import: '#/importer',
   /** Also where Google's sign-in page sends the user back (see backup/google.ts). */
   backup: '#/sauvegarde',
+  shelves: '#/etageres',
+  /** Followed by the shelf's id, or by the token of its QR label (see scan/reads.ts). */
+  shelf: '#/etagere',
+  check: '#/verifier',
 };
 
-export const routeHref = (id: RouteId, param?: string): string =>
-  param ? `${ROUTE_HASHES[id]}/${encodeURIComponent(param)}` : ROUTE_HASHES[id];
+export function routeHref(id: RouteId, param?: string, detail?: string): string {
+  if (!param) return ROUTE_HASHES[id];
+  const path = `${ROUTE_HASHES[id]}/${encodeURIComponent(param)}`;
+  return detail ? `${path}/${encodeURIComponent(detail)}` : path;
+}
 
 const DEFAULT_ROUTE: Route = { id: 'library' };
 const ROUTE_IDS = Object.keys(ROUTE_HASHES) as RouteId[];
@@ -49,15 +61,21 @@ export function parseHash(hash: string): Route {
     const base = ROUTE_HASHES[id];
     if (hash === base) return { id };
     if (hash.startsWith(`${base}/`)) {
-      const param = decodeURIComponent(hash.slice(base.length + 1));
-      return param ? { id, param } : { id };
+      const [param, detail] = hash
+        .slice(base.length + 1)
+        .split('/')
+        .map((part) => decodeURIComponent(part));
+      const route: Route = { id };
+      if (param) route.param = param;
+      if (param && detail) route.detail = detail;
+      return route;
     }
   }
   return DEFAULT_ROUTE;
 }
 
-export function navigate(id: RouteId, param?: string): void {
-  window.location.hash = routeHref(id, param);
+export function navigate(id: RouteId, param?: string, detail?: string): void {
+  window.location.hash = routeHref(id, param, detail);
 }
 
 export function useRoute(): Route {

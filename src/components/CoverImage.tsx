@@ -28,11 +28,15 @@ export function useBlobUrl(blobId: Id | undefined): string | undefined {
 // Muted colours of the mock-up, for books without a cover.
 const PLACEHOLDER_COLOURS = ['#3E5C3A', '#2F4858', '#1F5C7A', '#7A3E2E', '#5B4A7A', '#8A6A1F', '#1F3B57', '#6B4F3A'];
 
-function hash(text: string): number {
+export function hash(text: string): number {
   let value = 0;
   for (const char of text) value = (value * 31 + (char.codePointAt(0) ?? 0)) >>> 0;
   return value;
 }
+
+/** Colour of a book without a cover, also that of its spine on the shelf view. */
+export const placeholderColour = (title: string): string =>
+  PLACEHOLDER_COLOURS[hash(title) % PLACEHOLDER_COLOURS.length] ?? '#3E5C3A';
 
 /** « La Peste » → « LP » */
 export function initialsOf(title: string): string {
@@ -82,7 +86,7 @@ export function CoverImage({ book, class: className, photoBlobId }: CoverImagePr
   return (
     <span
       class={`cover cover--placeholder ${className}`}
-      style={{ background: PLACEHOLDER_COLOURS[hash(title) % PLACEHOLDER_COLOURS.length] }}
+      style={{ background: placeholderColour(title) }}
       aria-hidden="true"
     >
       {initialsOf(title)}

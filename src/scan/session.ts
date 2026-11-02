@@ -30,8 +30,16 @@ export async function setSessionShelf(sessionId: Id, shelfId: Id, database: Libr
   await database.scanSessions.update(sessionId, { shelfId });
 }
 
-export function newCopy(bookId: Id, shelfId: Id): Copy {
-  return { id: newId(), bookId, shelfId, addedAt: Date.now() };
+/** A position is given only when the order on the shelf is remembered. */
+export function newCopy(bookId: Id, shelfId: Id, position?: number): Copy {
+  const copy: Copy = { id: newId(), bookId, shelfId, addedAt: Date.now() };
+  if (position !== undefined) copy.position = position;
+  return copy;
+}
+
+export interface ReadOptions {
+  /** Position of the book on the shelf (« Mémoriser l’ordre sur l’étagère »): the time of the read. */
+  position?: number | undefined;
 }
 
 export type IsbnOutcome = 'searching' | 'asking' | 'extraCopy';
@@ -43,7 +51,7 @@ export type IsbnOutcome = 'searching' | 'asking' | 'extraCopy';
 export async function recordIsbn(
   session: ScanSession,
   isbn13: string,
-  options: { flagOwnedBooks: boolean },
+  options: ReadOptions & { flagOwnedBooks: boolean },
   database: LibraryDatabase = db,
 ): Promise<ScanEntry> {
   return database.transaction('rw', [database.books, database.copies, database.scanEntries], async () => {
@@ -56,13 +64,14 @@ export async function recordIsbn(
       status: 'searching',
       createdAt: Date.now(),
     };
+    if (options.position !== undefined) entry.position = options.position;
     const book = await database.books.where('isbn13').equals(isbn13).first();
     if (book) {
       entry.bookId = book.id;
       if (options.flagOwnedBooks) {
         entry.status = 'asking';
       } else {
-        const copy = newCopy(book.id, session.shelfId);
+        const copy = newCopy(book.id, session.shelfId, entry.position);
         await database.copies.add(copy);
         entry.status = 'extraCopy';
         entry.copyId = copy.id;
@@ -78,6 +87,7 @@ export async function recordIsbn(
 export async function recordNoBarcode(
   session: ScanSession,
   photo: Blob,
+  options: ReadOptions = {},
   database: LibraryDatabase = db,
 ): Promise<ScanEntry> {
   return database.transaction('rw', [database.blobs, database.pendingItems, database.scanEntries], async () => {
@@ -92,6 +102,7 @@ export async function recordNoBarcode(
       sessionId: session.id,
       createdAt: now,
     };
+    if (options.position !== undefined) item.position = options.position;
     await database.pendingItems.add(item);
     const entry: ScanEntry = {
       id: newId(),
@@ -122,7 +133,7 @@ export async function answerDuplicate(entryId: Id, addCopy: boolean, database: L
       await database.scanEntries.update(entryId, { status: 'notAdded' });
       return undefined;
     }
-    const copy = newCopy(entry.bookId, entry.shelfId);
+    const copy = newCopy(entry.bookId, entry.shelfId, entry.position);
     await database.copies.add(copy);
     const copyNumber = await database.copies.where('bookId').equals(entry.bookId).count();
     await database.scanEntries.update(entryId, { status: 'extraCopy', copyId: copy.id, copyNumber });

@@ -58,7 +58,9 @@ export function DuplicateDialog({ entry, places, onAnswer }: DuplicateDialogProp
             {copies.map((copy) => (
               <li key={copy.id} class="duplicate__place">
                 <PinIcon size={16} />
-                {places.byShelfId.get(copy.shelfId)?.label}
+                {copy.lostAt === undefined
+                  ? places.byShelfId.get(copy.shelfId)?.label
+                  : fr.duplicate.lostPlace(places.byShelfId.get(copy.shelfId)?.label ?? fr.library.noPlace)}
               </li>
             ))}
           </ul>

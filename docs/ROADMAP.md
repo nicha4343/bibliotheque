@@ -55,9 +55,16 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - Sauvegarde : `google.ts` (connexion par code d'autorisation avec PKCE, jeton de renouvellement, appels Drive), `snapshot.ts` (contenu, empreinte, restauration en une transaction), `backup.ts` (sauvegarde incrémentale des photographies, déclenchements automatiques lancés par `startBackups` dans `main.tsx`, restauration). Choix : client « Application Web » avec code secret saisi par l'utilisateur (Google l'exige même avec PKCE) plutôt que le jeton d'une heure de Google Identity Services, qui aurait obligé à une nouvelle connexion à chaque usage. CORS vérifié le 1er novembre 2026 sur `oauth2.googleapis.com/token` et l'API Drive.
 
 ## Lot 3 — Étagères
-- [ ] Option « Mémoriser l'ordre sur l'étagère »
-- [ ] Vue étagère (écran 8) et « Où se trouve … ? »
-- [ ] Vérification d'étagère
+- [x] Option « Mémoriser l'ordre sur l'étagère » (Paramètres ; position relevée au scan, de gauche à droite)
+- [x] Vue étagère (écran 8) et « Où se trouve … ? » ; raccourci « Étagères » de la bibliothèque ; étiquette QR lue par l'appareil photo du téléphone
+- [x] Vérification d'étagère : scan dédié, bilan et réponses, « Déclarer perdu »
+- [ ] Essai sur téléphone : scanner une étagère avec l'option active, la vérifier en déplaçant ou retirant un ouvrage, ouvrir une étiquette avec l'appareil photo
+
+### Reprise du lot 3 (2 novembre 2026)
+- Schéma version 4 : table `shelfChecks` ; `Copy.position` (clé de tri : heure de la lecture, renumérotée par une vérification) et `Copy.lostAt`, `ScanEntry.position`, `PendingItem.position`, non indexés.
+- Logique pure, testée (`src/shelves/shelves.test.ts`) : `src/shelves/order.ts` (tri, positions après une vérification) et `src/shelves/check.ts` (comparaison, puis enregistrement : ouverture, lectures, fin, réponses).
+- Écrans : `ShelvesScreen` (`#/etageres`), `ShelfScreen` (`#/etagere/<identifiant ou jeton>[/<exemplaire>]`), `ShelfCheckScreen` (`#/verifier/<étagère>`) ; viseur commun au scan et à la vérification (`src/scan/Viewfinder.tsx`) ; fiche ouvrage : lien de l'emplacement, position, « Déplacer » et « Retrouvé ».
+- Vérifié dans le navigateur de l'ordinateur avec des lectures simulées (pas de caméra) : ordre, « Où se trouve … ? », bilan et chacune des réponses.
 
 ## Lot 4 — Prêts
 - [ ] Prêter en scannant, emprunteurs, durées, rappels (écran 10)

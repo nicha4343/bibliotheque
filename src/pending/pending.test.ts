@@ -42,7 +42,7 @@ describe('saisie des auteurs', () => {
 
 describe('boîte « À compléter »', () => {
   it('crée la notice et son exemplaire, la photographie servant de couverture', async () => {
-    const entry = await recordNoBarcode(session, new Blob(['jpeg']), database);
+    const entry = await recordNoBarcode(session, new Blob(['jpeg']), {}, database);
     const itemId = entry.pendingItemId ?? '';
     const bookId = await completeItem(itemId, { title: ' Les Fleurs du mal ', authors: ['Charles Baudelaire'], publisher: '' }, shelf.id, database);
     const book = await database.books.get(bookId ?? '');

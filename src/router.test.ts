@@ -8,9 +8,23 @@ describe('routes', () => {
     expect(parseHash(routeHref('entry', 'x y'))).toEqual({ id: 'entry', param: 'x y' });
   });
 
+  it('distinguent la liste des étagères d’une étagère, désignée aussi par le jeton de son étiquette', () => {
+    expect(parseHash('#/etageres')).toEqual({ id: 'shelves' });
+    expect(parseHash('#/etagere/Ab3_x-9Zk2')).toEqual({ id: 'shelf', param: 'Ab3_x-9Zk2' });
+    expect(parseHash('https://exemple.org/#/etagere/Ab3_x-9Zk2'.replace(/^[^#]*/, ''))).toEqual({ id: 'shelf', param: 'Ab3_x-9Zk2' });
+  });
+
+  it('transmettent l’exemplaire à montrer sur une étagère', () => {
+    expect(parseHash(routeHref('shelf', 'etagere-1', 'exemplaire 2'))).toEqual({
+      id: 'shelf',
+      param: 'etagere-1',
+      detail: 'exemplaire 2',
+    });
+    expect(parseHash(routeHref('shelf', 'a/b'))).toEqual({ id: 'shelf', param: 'a/b' });
+  });
+
   it('ouvrent la bibliothèque par défaut', () => {
     expect(parseHash('')).toEqual({ id: 'library' });
     expect(parseHash('#/inconnu')).toEqual({ id: 'library' });
-    expect(parseHash('#/etagere/Ab3_x-9Zk2')).toEqual({ id: 'library' });
   });
 });

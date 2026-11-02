@@ -56,14 +56,19 @@ export function matchesQuery(entry: LibraryEntry, query: string): boolean {
 
 export type PlaceFilter = { kind: 'all' } | { kind: 'room'; shelfIds: ReadonlySet<Id> } | { kind: 'shelf'; shelfId: Id };
 
+/** First copy that is not declared lost: the list shows where it is. */
+export const firstPresentCopy = (entry: LibraryEntry): Copy | undefined => entry.copies.find((copy) => copy.lostAt === undefined);
+
+/** A copy declared lost is no longer in its room or on its shelf. */
 export function matchesPlace(entry: LibraryEntry, place: PlaceFilter): boolean {
+  const present = entry.copies.filter((copy) => copy.lostAt === undefined);
   switch (place.kind) {
     case 'all':
       return true;
     case 'room':
-      return entry.copies.some((copy) => place.shelfIds.has(copy.shelfId));
+      return present.some((copy) => place.shelfIds.has(copy.shelfId));
     case 'shelf':
-      return entry.copies.some((copy) => copy.shelfId === place.shelfId);
+      return present.some((copy) => copy.shelfId === place.shelfId);
   }
 }
 

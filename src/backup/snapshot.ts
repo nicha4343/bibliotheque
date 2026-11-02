@@ -2,7 +2,8 @@ import { db, type LibraryDatabase } from '../db/db';
 import type { Book, Copy, Id, PendingItem, Quote, Room, SettingsRecord, Shelf } from '../db/schema';
 
 // Contents of a backup: every record the user made, the photographs being saved as separate files.
-// Left out: the metadata cache and the scan sessions (rebuilt or short-lived), the backup state.
+// Left out: the metadata cache, the scan sessions and the shelf checks (rebuilt or short-lived), the
+// backup state.
 
 export const SNAPSHOT_FORMAT = 'ma-bibliotheque';
 export const SNAPSHOT_VERSION = 1;
@@ -91,10 +92,11 @@ export async function restoreSnapshot(snapshot: Snapshot, database: LibraryDatab
     database.blobs,
     database.scanSessions,
     database.scanEntries,
+    database.shelfChecks,
   ];
   await database.transaction('rw', tables, async () => {
-    // Scan sessions refer to the shelves and items replaced here.
-    await Promise.all([database.scanSessions.clear(), database.scanEntries.clear()]);
+    // Scan sessions and shelf checks refer to the shelves, copies and items replaced here.
+    await Promise.all([database.scanSessions.clear(), database.scanEntries.clear(), database.shelfChecks.clear()]);
     await database.rooms.clear();
     await database.rooms.bulkAdd(snapshot.rooms);
     await database.shelves.clear();

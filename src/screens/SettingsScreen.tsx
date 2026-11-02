@@ -195,7 +195,7 @@ function backupSummary(state: BackupState | undefined): string {
   return state.lastBackupAt ? fr.backup.rowLast(formatDateTime(new Date(state.lastBackupAt), new Date())) : fr.backup.rowNever;
 }
 
-/** Screen 7. « Mémoriser l’ordre sur l’étagère » comes with lot 3, which uses it. */
+/** Screen 7. */
 export function SettingsScreen() {
   const offline = useOfflineStatus();
   const storage = useStorageProtection();
@@ -252,6 +252,14 @@ export function SettingsScreen() {
             checked={settings.flagOwnedBooks}
             onChange={(flagOwnedBooks) => {
               set({ flagOwnedBooks });
+            }}
+          />
+          <SwitchRow
+            label={fr.settings.rememberOrder}
+            detail={fr.settings.rememberOrderDetail}
+            checked={settings.rememberShelfOrder}
+            onChange={(rememberShelfOrder) => {
+              set({ rememberShelfOrder });
             }}
           />
         </div>

@@ -69,8 +69,20 @@ export async function addCopy(bookId: Id, shelfId: Id, database: LibraryDatabase
   await database.copies.add(newCopy(bookId, shelfId));
 }
 
+/**
+ * Puts a copy on a shelf; a copy declared lost is thus found again. Its position on its former shelf
+ * means nothing on the new one: it comes last there until the shelf is scanned again.
+ */
 export async function moveCopy(copyId: Id, shelfId: Id, database: LibraryDatabase = db): Promise<void> {
-  await database.copies.update(copyId, { shelfId });
+  await database.transaction('rw', database.copies, async () => {
+    const copy = await database.copies.get(copyId);
+    if (!copy) return;
+    await database.copies.update(copyId, {
+      shelfId,
+      lostAt: undefined,
+      position: copy.shelfId === shelfId ? copy.position : undefined,
+    });
+  });
 }
 
 /** Removes one copy; the last one goes only with its notice (deleteBook). */

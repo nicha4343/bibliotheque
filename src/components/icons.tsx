@@ -210,6 +210,16 @@ export function QrIcon(props: IconProps) {
   );
 }
 
+/** Shelf with books, from the mock-up (« Étagères » shortcut). */
+export function ShelfIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="3" y="3" width="18" height="18" rx="1" />
+      <path d="M3 12h18M7 3v9M11 3v9M15 12v9M18 12v9" />
+    </Svg>
+  );
+}
+
 export function DownloadIcon(props: IconProps) {
   return (
     <Svg {...props}>

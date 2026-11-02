@@ -56,7 +56,8 @@ async function resolveItem(
       await database.books.add(book);
       bookId = book.id;
     }
-    await database.copies.add(newCopy(bookId, shelfId));
+    // The position read belongs to the shelf of the read, not to another one chosen meanwhile.
+    await database.copies.add(newCopy(bookId, shelfId, shelfId === item.shelfId ? item.position : undefined));
     await database.pendingItems.delete(item.id);
     return bookId;
   });
