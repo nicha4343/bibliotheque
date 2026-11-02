@@ -65,6 +65,7 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - Logique pure, testée (`src/shelves/shelves.test.ts`) : `src/shelves/order.ts` (tri, positions après une vérification) et `src/shelves/check.ts` (comparaison, puis enregistrement : ouverture, lectures, fin, réponses).
 - Écrans : `ShelvesScreen` (`#/etageres`), `ShelfScreen` (`#/etagere/<identifiant ou jeton>[/<exemplaire>]`), `ShelfCheckScreen` (`#/verifier/<étagère>`) ; viseur commun au scan et à la vérification (`src/scan/Viewfinder.tsx`) ; fiche ouvrage : lien de l'emplacement, position, « Déplacer » et « Retrouvé ».
 - Vérifié dans le navigateur de l'ordinateur avec des lectures simulées (pas de caméra) : ordre, « Où se trouve … ? », bilan et chacune des réponses.
+- Premier essai sur téléphone (2 novembre 2026) : presque tous les ouvrages de l'étagère déclarés « ISBN inconnu ». Cause probable : la BnF et Open Library ne les connaissent pas et Google Books, seul à les connaître, n'a pas répondu ; un ISBN était alors déclaré inconnu dès la première recherche incomplète. Corrigé : trois recherches espacées de trente secondes avant « À compléter », et bouton « Rechercher de nouveau les N ISBN inconnus » dans « À compléter » pour récupérer ceux de l'essai (leur position est conservée). À confirmer sur téléphone.
 
 ## Lot 4 — Prêts
 - [ ] Prêter en scannant, emprunteurs, durées, rappels (écran 10)

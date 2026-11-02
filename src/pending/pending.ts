@@ -83,7 +83,13 @@ export async function completeItem(
   return resolveItem(item, fields, shelfId, database);
 }
 
-export type RetryOutcome = { status: 'found'; bookId: Id; title: string } | { status: 'unknown' } | { status: 'unavailable' };
+export type RetryOutcome =
+  | { status: 'found'; bookId: Id; title: string }
+  | { status: 'unknown' }
+  /** No source could be reached. */
+  | { status: 'unavailable' }
+  /** Unknown to the sources that answered, but one did not: it may know the book. */
+  | { status: 'incomplete' };
 
 /** « Rechercher de nouveau »: an unknown ISBN may have been catalogued since, or a source was down. */
 export async function retryItem(itemId: Id, database: LibraryDatabase = db): Promise<RetryOutcome> {
@@ -92,7 +98,7 @@ export async function retryItem(itemId: Id, database: LibraryDatabase = db): Pro
   const isbn13 = item.isbn;
   const metadata: BookMetadata | undefined = await findMetadata(isbn13, () => Promise.resolve(), database);
   if (!metadata) return { status: 'unavailable' };
-  if (metadata.providers.length === 0) return { status: 'unknown' };
+  if (metadata.providers.length === 0) return { status: metadata.incomplete ? 'incomplete' : 'unknown' };
   // The item may have been completed by hand during the search.
   const current = await database.pendingItems.get(itemId);
   if (!current) return { status: 'unknown' };
@@ -102,15 +108,23 @@ export async function retryItem(itemId: Id, database: LibraryDatabase = db): Pro
   return { status: 'found', bookId, title: metadata.title ?? '' };
 }
 
-/** Every unknown ISBN searched again (after a Google Books key is entered); returns how many were found. */
-export async function retryAllUnknown(database: LibraryDatabase = db): Promise<{ found: number; unavailable: number }> {
+/**
+ * Every unknown ISBN searched again, one after the other (Google Books refuses bursts): after a
+ * Google Books key is entered, or from « À compléter ». Returns how many were found, and how many
+ * could not be searched in every source.
+ */
+export async function retryAllUnknown(
+  database: LibraryDatabase = db,
+  onProgress?: (done: number, total: number) => void,
+): Promise<{ found: number; unavailable: number }> {
   const items = await database.pendingItems.where('kind').equals('unknownIsbn').toArray();
   let found = 0;
   let unavailable = 0;
-  for (const item of items) {
+  for (const [index, item] of items.entries()) {
+    onProgress?.(index, items.length);
     const outcome = await retryItem(item.id, database);
     if (outcome.status === 'found') found += 1;
-    if (outcome.status === 'unavailable') unavailable += 1;
+    if (outcome.status === 'unavailable' || outcome.status === 'incomplete') unavailable += 1;
   }
   return { found, unavailable };
 }

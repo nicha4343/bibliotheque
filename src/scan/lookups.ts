@@ -12,6 +12,8 @@ import { newBook, newCopy } from './session';
 
 const CONCURRENCY = 3;
 const RETRY_DELAY_MS = 30_000;
+/** Searches found nothing while a source was silent: after this many, the ISBN is declared unknown. */
+const INCOMPLETE_ATTEMPTS = 3;
 
 /** First usable metadata: creates the notice and its copy, unless the read was cancelled meanwhile. */
 export async function resolveFound(entryId: Id, metadata: BookMetadata, database: LibraryDatabase = db): Promise<Id | undefined> {
@@ -113,7 +115,8 @@ export async function findMetadata(
   }
 }
 
-async function processEntry(entry: ScanEntry, database: LibraryDatabase): Promise<boolean> {
+/** Searches one code read; false when it must be searched again later. */
+export async function processEntry(entry: ScanEntry, database: LibraryDatabase = db): Promise<boolean> {
   if (!entry.isbn13) return true;
   let bookId: Id | undefined;
   const metadata = await findMetadata(
@@ -125,6 +128,13 @@ async function processEntry(entry: ScanEntry, database: LibraryDatabase): Promis
   );
   if (!metadata) return false;
   if (metadata.providers.length === 0) {
+    // Unknown to the sources that answered, but one did not (Google Books refusing a burst, for
+    // instance), and it may be the only one to know the book: searched again a little later.
+    const attempts = (entry.attempts ?? 0) + 1;
+    if (metadata.incomplete && attempts < INCOMPLETE_ATTEMPTS) {
+      await database.scanEntries.update(entry.id, { attempts, retryAt: Date.now() + RETRY_DELAY_MS });
+      return false;
+    }
     await resolveUnknown(entry.id, database);
     return true;
   }
@@ -151,11 +161,16 @@ export function wakeLookups(database: LibraryDatabase = db): void {
   clearTimeout(retryTimer);
   void (async () => {
     let failures = 0;
+    let deferred = 0;
     try {
       do {
         wakeAgain = false;
         if (!navigator.onLine) break;
-        const waiting = await database.scanEntries.where('status').equals('searching').sortBy('createdAt');
+        const searching = await database.scanEntries.where('status').equals('searching').sortBy('createdAt');
+        // A code searched again after a silent source waits for its time, even when a new read wakes the queue.
+        const now = Date.now();
+        const waiting = searching.filter((entry) => (entry.retryAt ?? 0) <= now);
+        deferred = searching.length - waiting.length;
         if (waiting.length === 0) break;
         failures = 0;
         const queue = [...waiting];
@@ -175,7 +190,7 @@ export function wakeLookups(database: LibraryDatabase = db): void {
       running = false;
     }
     // Some sources did not answer: try again a little later.
-    if (failures > 0) retryTimer = setTimeout(() => {
+    if (failures > 0 || deferred > 0) retryTimer = setTimeout(() => {
       wakeLookups(database);
     }, RETRY_DELAY_MS);
   })();

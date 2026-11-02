@@ -482,6 +482,27 @@ export const fr = {
     stillUnknown: 'Ce code demeure inconnu de toutes les sources : saisissez sa fiche.',
     unavailable: 'Les sources n’ont pu être jointes : réessayez lorsque le réseau sera disponible.',
     completeSeries: (value: number) => `Compléter en série · ${formatNumber(value)}`,
+    incomplete:
+      'Les sources qui ont répondu ne connaissent pas ce code, mais une autre n’a pu être jointe : réessayez dans quelques instants.',
+    retryAll: (value: number) =>
+      value === 1 ? 'Rechercher de nouveau l’ISBN inconnu' : `Rechercher de nouveau les ${formatNumber(value)} ISBN inconnus`,
+    retryingAll: (done: number, total: number) =>
+      `Nouvelle recherche des ISBN inconnus : ${formatNumber(done)} sur ${formatNumber(total)}…`,
+    retryAllDone: (found: number, unavailable: number) =>
+      [
+        found === 0
+          ? 'Aucun ouvrage n’a été retrouvé.'
+          : found === 1
+            ? '1 ouvrage a été retrouvé et ajouté à votre bibliothèque.'
+            : `${formatNumber(found)} ouvrages ont été retrouvés et ajoutés à votre bibliothèque.`,
+        unavailable === 0
+          ? ''
+          : unavailable === 1
+            ? '1 n’a pu être recherché dans toutes les sources : réessayez dans quelques instants.'
+            : `${formatNumber(unavailable)} n’ont pu être recherchés dans toutes les sources : réessayez dans quelques instants.`,
+      ]
+        .filter(Boolean)
+        .join(' '),
   },
 
   entry: {

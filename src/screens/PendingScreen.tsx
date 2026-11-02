@@ -7,12 +7,18 @@ import { ChevronRightIcon, PendingIcon, PinIcon, QuestionIcon, TrashIcon } from 
 import { Screen } from '../components/Screen';
 import type { Id, PendingItem } from '../db/schema';
 import { useLiveQuery } from '../db/useLiveQuery';
-import { deleteItem, listPendingItems, retryItem, setItemPhoto } from '../pending/pending';
+import { deleteItem, listPendingItems, retryAllUnknown, retryItem, setItemPhoto, type RetryOutcome } from '../pending/pending';
 import { loadPlaces, type PlaceIndex } from '../places/places';
 import { routeHref } from '../router';
 import { formatDate, formatNumber, fr } from '../textes/fr';
 
 type Filter = 'all' | PendingItem['kind'];
+
+const RETRY_MESSAGES: Record<Exclude<RetryOutcome['status'], 'found'>, string> = {
+  unknown: fr.pending.stillUnknown,
+  unavailable: fr.pending.unavailable,
+  incomplete: fr.pending.incomplete,
+};
 
 const FILTERS: { id: Filter; label: string }[] = [
   { id: 'all', label: fr.pending.filterAll },
@@ -29,6 +35,7 @@ export function PendingScreen() {
   const [searching, setSearching] = useState<ReadonlySet<Id>>(new Set());
   const [photographing, setPhotographing] = useState<Id>();
   const [removing, setRemoving] = useState<PendingItem>();
+  const [retryingAll, setRetryingAll] = useState(false);
 
   const all = items ?? [];
   const shown = filter === 'all' ? all : all.filter((item) => item.kind === filter);
@@ -38,14 +45,26 @@ export function PendingScreen() {
     setSearching((current) => new Set(current).add(item.id));
     try {
       const outcome = await retryItem(item.id);
-      if (outcome.status === 'found') setMessage(fr.pending.found(outcome.title || fr.common.untitled));
-      else setMessage(outcome.status === 'unknown' ? fr.pending.stillUnknown : fr.pending.unavailable);
+      setMessage(outcome.status === 'found' ? fr.pending.found(outcome.title || fr.common.untitled) : RETRY_MESSAGES[outcome.status]);
     } finally {
       setSearching((current) => {
         const next = new Set(current);
         next.delete(item.id);
         return next;
       });
+    }
+  };
+
+  /** Every unknown ISBN, one after the other: a source may have been silent during the scan. */
+  const retryAll = async () => {
+    setRetryingAll(true);
+    try {
+      const { found, unavailable } = await retryAllUnknown(undefined, (done, total) => {
+        setMessage(fr.pending.retryingAll(done, total));
+      });
+      setMessage(fr.pending.retryAllDone(found, unavailable));
+    } finally {
+      setRetryingAll(false);
     }
   };
 
@@ -85,6 +104,17 @@ export function PendingScreen() {
               </button>
             ))}
           </div>
+
+          {countOf('unknownIsbn') > 0 && (
+            <button
+              type="button"
+              class="button button--secondary button--large"
+              disabled={retryingAll || searching.size > 0}
+              onClick={() => void retryAll()}
+            >
+              {fr.pending.retryAll(countOf('unknownIsbn'))}
+            </button>
+          )}
 
           <ul class="pending-list">
             {shown.map((item) => (

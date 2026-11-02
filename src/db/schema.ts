@@ -125,6 +125,9 @@ export interface ScanEntry {
   createdAt: Timestamp;
   /** Position given to the copy created by this read, when the order on the shelf is remembered. */
   position?: number;
+  /** Searches that found nothing while a source did not answer; searched again from retryAt. */
+  attempts?: number;
+  retryAt?: Timestamp;
 }
 
 export interface ScanSession {
