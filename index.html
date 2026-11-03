@@ -2,7 +2,15 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>
+      // viewport-fit=cover only on iPhone and iPad, where the bars must clear the home indicator.
+      // On Android, Chrome drew the installed app taller than its window after a reload,
+      // hiding the navigation bar under the phone's buttons until the app was switched.
+      if (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+        document.querySelector('meta[name="viewport"]').content += ', viewport-fit=cover';
+      }
+    </script>
     <title>{{APP_NAME}}</title>
     <meta name="description" content="{{APP_DESCRIPTION}}" />
     <meta name="theme-color" content="#F4F5F7" />
