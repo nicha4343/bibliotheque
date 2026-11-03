@@ -7,7 +7,7 @@ import tseslint from 'typescript-eslint';
 const TEXTS_MESSAGE = 'Visible texts belong in src/textes/fr.ts, never hard-coded in components.';
 
 export default defineConfig(
-  { ignores: ['dist', 'dev-dist', 'node_modules'] },
+  { ignores: ['dist', 'dev-dist', 'node_modules', '.claude'] },
   {
     files: ['**/*.{ts,tsx}'],
     extends: [js.configs.recommended, tseslint.configs.strictTypeChecked, jsxA11y.flatConfigs.recommended],
