@@ -1,7 +1,10 @@
 /* App shell: the screen scrolls, the navigation bar stays at the bottom. */
 .app {
   height: 100vh;
-  height: 100dvh;
+  /* svh, not dvh: after a reload, Chrome on Android gave the installed app a 100dvh as tall as the
+     screen without the system navigation bar (758 px for a 702 px window), hiding the menu under the
+     phone's buttons until another application had been opened. 100svh stayed right. */
+  height: 100svh;
   display: grid;
   /* Never wider than the screen, whatever a long title asks for (it is cut by an ellipsis). */
   grid-template-columns: minmax(0, 1fr);

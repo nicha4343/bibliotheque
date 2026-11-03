@@ -82,7 +82,7 @@ Node 24. Installer les dépendances une fois : `npm install`.
 - **Fins de ligne** : le dépôt est en LF, la copie de travail Windows en CRLF (`core.autocrlf`) ; un script de remplacement doit en tenir compte.
 - **Service worker** : le nôtre, `src/sw/sw.ts` (Workbox, mode `injectManifest`, vérifié par `tsconfig.sw.json`) : cache hors connexion et rappels des prêts. Il lit la base sans Dexie (`src/sw/reminders.ts`) et ne doit jamais la créer ni la mettre à niveau. Absent en développement (`npm run dev`) : essayer avec `npm run preview`.
 - **Mises à jour** : jamais de rechargement automatique (il interromprait un scan) ; un bandeau propose « Mettre à jour » ou « Reporter ».
-- **`viewport-fit=cover`** est ajouté par `index.html` sur iPhone et iPad seulement : sur Android, Chrome affichait l'application installée plus haute que sa fenêtre après une actualisation, la barre de navigation cachée sous les boutons du téléphone.
+- **Hauteur de l'application** : `100svh`, jamais `100dvh` ni `100vh` seul (`.app`, `src/styles/app.css`). Après une actualisation, Chrome sur Android donnait à l'application installée un `100dvh` plus haut que sa fenêtre, de la hauteur des boutons du téléphone, et le menu passait dessous ; `100svh` et `innerHeight` restaient justes.
 - **Polices** embarquées (Fontsource), pas de Google Fonts : rendu identique hors connexion.
 - TypeScript reste en 6.x et ESLint en 9.x tant que typescript-eslint et eslint-plugin-jsx-a11y ne prennent pas en charge TypeScript 7 et ESLint 10.
 
