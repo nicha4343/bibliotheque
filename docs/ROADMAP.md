@@ -2,7 +2,7 @@
 
 Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est terminé qu'après un essai sur un vrai téléphone. Le détail de chaque écran est dans [SPEC.md](SPEC.md).
 
-**Lot en cours : 7 — Améliorations demandées** (lots 0 et 1 terminés le 1er novembre 2026, lot 2 le 2 novembre 2026, lots 3, 4, 5 et 6 le 3 novembre 2026)
+**Aucun lot en cours** : les lots 0 et 1 sont terminés le 1er novembre 2026, le lot 2 le 2 novembre 2026, les lots 3 à 7 le 3 novembre 2026. Le suivant est à choisir par l'utilisateur dans « Plus tard ».
 
 ## Lot 0 — Socle
 - [x] Projet Vite + TypeScript strict + Preact, ESLint, Vitest
@@ -126,7 +126,7 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 ## Lot 7 — Améliorations demandées
 - [x] Champ de recherche dans « Séries » (`#/series`), demandé par l'utilisateur le 3 novembre 2026 : retrouver une série par son nom ou celui de son auteur, recherche instantanée et locale, insensible aux accents, comme celle de la bibliothèque (écran 5). `matchesSeries` (`src/series/series.ts`, testé) ; vérifié dans le navigateur de l'ordinateur, à la largeur d'un téléphone : par nom, par auteur (« J.K. Rowling »), rien de trouvé, recherche conservée au retour d'une série, bouton d'effacement
 - [x] Ni « autrice » ni autre féminisation ou écriture inclusive dans les textes (demande de l'utilisateur du 3 novembre 2026) : règle de CLAUDE.md, vérifiée par `fr.test.ts` ; « Auteur ou autrice » (champ Auteur de la saisie en série) devient « Nom de l'auteur »
-- [ ] Essai sur téléphone
+- [x] Essai sur téléphone, validé le 3 novembre 2026 (« c'est bon sur le téléphone, lot 7 validé ») : recherche dans « Séries »
 
 ## Plus tard
 - Écran « Étagères » (`#/etageres`) : bouton « Pièces et étagères » en haut, pour créer, renommer ou supprimer d'un toucher ; « Retour » revient aux étagères, l'étagère créée mise en évidence (demande de l'utilisateur du 3 novembre 2026 ; maquette, avec la présentation à plusieurs lieux : https://claude.ai/artifact/97UNgEFurnaw88fy3fLx7j)
