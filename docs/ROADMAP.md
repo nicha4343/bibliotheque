@@ -2,7 +2,7 @@
 
 Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est terminé qu'après un essai sur un vrai téléphone. Le détail de chaque écran est dans [SPEC.md](SPEC.md).
 
-**Lot en cours : 6 — Reconnaissance de texte** (lots 0 et 1 terminés le 1er novembre 2026, lot 2 le 2 novembre 2026, lots 3, 4 et 5 le 3 novembre 2026)
+**Lot en cours : 7 — Améliorations demandées** (lots 0 et 1 terminés le 1er novembre 2026, lot 2 le 2 novembre 2026, lots 3, 4, 5 et 6 le 3 novembre 2026)
 
 ## Lot 0 — Socle
 - [x] Projet Vite + TypeScript strict + Preact, ESLint, Vitest
@@ -124,7 +124,7 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - Vérifié dans le navigateur de l'ordinateur avec une dictée simulée et les vrais catalogues : « le lotus bleu Hergé » donne en tête « Le lotus bleu · Hergé · Casterman » (Open Library) et « Le Lotus bleu · Éd. Moulinsart » (BnF) ; fiche remplie d'un toucher ; rien de trouvé (mots placés dans le titre) ; micro refusé. Google Books n'a pu être essayé (il refuse les appels sans clé depuis l'ordinateur). Non vérifiés : la vraie reconnaissance vocale du téléphone.
 
 ## Lot 7 — Améliorations demandées
-- [ ] Champ de recherche dans « Séries » (`#/series`), demandé par l'utilisateur le 3 novembre 2026 : retrouver une série par son nom ou celui de son auteur, recherche instantanée et locale, insensible aux accents, comme celle de la bibliothèque (écran 5)
+- [x] Champ de recherche dans « Séries » (`#/series`), demandé par l'utilisateur le 3 novembre 2026 : retrouver une série par son nom ou celui de son auteur, recherche instantanée et locale, insensible aux accents, comme celle de la bibliothèque (écran 5). `matchesSeries` (`src/series/series.ts`, testé) ; vérifié dans le navigateur de l'ordinateur, à la largeur d'un téléphone : par nom, par auteur (« J.K. Rowling »), rien de trouvé, recherche conservée au retour d'une série, bouton d'effacement
 - [x] Ni « autrice » ni autre féminisation ou écriture inclusive dans les textes (demande de l'utilisateur du 3 novembre 2026) : règle de CLAUDE.md, vérifiée par `fr.test.ts` ; « Auteur ou autrice » (champ Auteur de la saisie en série) devient « Nom de l'auteur »
 - [ ] Essai sur téléphone
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Book } from '../db/schema';
 import { newBook } from '../scan/session';
 import { missingWorks, parseAuthorWorks, workKey } from './authorWorks';
-import { authorKey, booksOfAuthor, groupSeries, seriesFromTitle, seriesKey, seriesOf, volumeCells } from './series';
+import { authorKey, booksOfAuthor, groupSeries, matchesSeries, seriesFromTitle, seriesKey, seriesOf, volumeCells } from './series';
 
 const book = (title: string, fields: Partial<Book> = {}): Book => newBook({ title, authors: ['René Goscinny'], ...fields });
 
@@ -85,6 +85,32 @@ describe('groupSeries', () => {
   it('classe les séries par nom, sans l’article', () => {
     const groups = groupSeries([book('Naruto T03'), book('Les Rougon-Macquart, tome 4'), book('Astérix - Tome 1')]);
     expect(groups.map((group) => group.name)).toEqual(['Astérix', 'Naruto', 'Les Rougon-Macquart']);
+  });
+});
+
+describe('recherche dans « Séries »', () => {
+  const groups = groupSeries([
+    book('Astérix le Gaulois', { seriesName: 'Astérix', seriesIndex: 1, authors: ['René Goscinny', 'Albert Uderzo'] }),
+    book('La Curée', { seriesName: 'Les Rougon-Macquart', seriesIndex: 2, authors: ['Émile Zola'] }),
+    book('Harry Potter à l’école des sorciers', { seriesName: 'Harry Potter', seriesIndex: 1, authors: ['J. K. Rowling'] }),
+  ]);
+  const found = (query: string) => groups.filter((group) => matchesSeries(group, query)).map((group) => group.name);
+
+  it('retrouve une série par son nom, sans tenir compte des accents ni des majuscules', () => {
+    expect(found('ASTERIX')).toEqual(['Astérix']);
+    expect(found('rougon macquart')).toEqual(['Les Rougon-Macquart']);
+    expect(found('Rougon-Macq')).toEqual(['Les Rougon-Macquart']);
+  });
+
+  it('retrouve une série par le nom de l’un de ses auteurs', () => {
+    expect(found('uderzo')).toEqual(['Astérix']);
+    expect(found('emile zola')).toEqual(['Les Rougon-Macquart']);
+    expect(found('J.K. Rowling')).toEqual(['Harry Potter']);
+  });
+
+  it('exige chaque mot et montre tout quand rien n’est saisi', () => {
+    expect(found('astérix zola')).toEqual([]);
+    expect(found('  ')).toHaveLength(3);
   });
 });
 

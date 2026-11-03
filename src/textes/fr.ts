@@ -1020,6 +1020,11 @@ export const fr = {
     emptyTitle: 'Aucune série n’a encore été reconnue',
     emptyText:
       'Les séries sont identifiées lorsque la source les référence, ou lorsque le titre indique le tome (« Astérix - Tome 3 »). Vous pouvez aussi indiquer la série d’un ouvrage depuis sa fiche, par « Modifier ».',
+    searchLabel: 'Rechercher une série',
+    searchPlaceholder: 'Nom de la série ou de l’auteur…',
+    clearSearch: 'Effacer la recherche',
+    noMatchTitle: 'Aucune série ne correspond à votre recherche',
+    noMatchText: 'Saisissez une partie du nom de la série ou de celui de l’un de ses auteurs.',
     rowOwned: (owned: number, total: number) => `${formatNumber(owned)} sur ${formatNumber(total)}`,
     rowBooks: (value: number) => count(value, 'ouvrage', 'ouvrages'),
     rowMissing: (value: number) => count(value, 'tome manquant', 'tomes manquants'),

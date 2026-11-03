@@ -181,3 +181,14 @@ export function seriesOfAuthor(groups: readonly SeriesGroup[], name: string): Se
   const key = authorKey(name);
   return groups.filter((group) => group.volumes.some(({ book }) => book.authors.some((author) => authorKey(author) === key)));
 }
+
+/**
+ * « Séries » search: every word must appear in the name of the series or of one of its authors, whatever
+ * the case, accents, points or hyphens (« rougon macquart », « j.k. rowling »).
+ */
+export function matchesSeries(group: SeriesGroup, query: string): boolean {
+  const words = authorKey(query).split(' ').filter(Boolean);
+  if (words.length === 0) return true;
+  const haystack = [group.name, ...group.volumes.flatMap(({ book }) => book.authors)].map(authorKey).join('\n');
+  return words.every((word) => haystack.includes(word));
+}

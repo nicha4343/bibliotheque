@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { BackLink } from '../components/BackLink';
 import { CoverImage } from '../components/CoverImage';
 import { EmptyState } from '../components/EmptyState';
-import { CheckIcon, ChevronRightIcon, HeartIcon, PlusIcon, SeriesIcon } from '../components/icons';
+import { CheckIcon, ChevronRightIcon, CloseIcon, HeartIcon, PlusIcon, SearchIcon, SeriesIcon } from '../components/icons';
 import { Screen } from '../components/Screen';
 import { Sheet } from '../components/Sheet';
 import { db } from '../db/db';
@@ -14,6 +14,7 @@ import {
   catalogIsStale,
   catalogVolume,
   groupSeries,
+  matchesSeries,
   seriesKey,
   seriesOf,
   volumeCells,
@@ -74,14 +75,23 @@ function missingText(missing: readonly number[]): string {
   return fr.series.missingSome(joinWithAnd(missing.map(formatNumber)));
 }
 
-/** « Séries », from the library: every series, leading to its page. */
+// Kept while the app is open: coming back from a series finds the same list.
+let savedQuery = '';
+
+/** « Séries », from the library: every series, leading to its page, with an instant local search. */
 export function SeriesListScreen() {
   const groups = useLiveQuery<SeriesGroup[] | undefined>(
     async () => groupSeries(await db.books.toArray(), await db.series.toArray()),
     [],
     undefined,
   );
+  const [query, setQuery] = useState(savedQuery);
   const searched = useRef(false);
+  const shown = useMemo(() => groups?.filter((group) => matchesSeries(group, query)), [groups, query]);
+  const search = (value: string) => {
+    savedQuery = value;
+    setQuery(value);
+  };
 
   // Series not searched at the BnF for a week, one after the other, in the background.
   useEffect(() => {
@@ -97,7 +107,44 @@ export function SeriesListScreen() {
     >
       <BackLink href={routeHref('library')} label={fr.series.back} />
       {groups?.length === 0 && <EmptyState icon={<SeriesIcon size={40} />} title={fr.series.emptyTitle} text={fr.series.emptyText} />}
-      {groups && groups.length > 0 && <SeriesLinks groups={groups} />}
+      {groups && groups.length > 0 && (
+        <div class="search">
+          <label class="visually-hidden" for="series-list-search">
+            {fr.series.searchLabel}
+          </label>
+          <span class="search__icon" aria-hidden="true">
+            <SearchIcon size={20} />
+          </span>
+          <input
+            id="series-list-search"
+            class="field__input search__input"
+            type="search"
+            value={query}
+            placeholder={fr.series.searchPlaceholder}
+            autocomplete="off"
+            enterKeyHint="search"
+            onInput={(event) => {
+              search(event.currentTarget.value);
+            }}
+          />
+          {query && (
+            <button
+              type="button"
+              class="icon-button search__clear"
+              aria-label={fr.series.clearSearch}
+              onClick={() => {
+                search('');
+              }}
+            >
+              <CloseIcon size={18} />
+            </button>
+          )}
+        </div>
+      )}
+      {groups && groups.length > 0 && shown?.length === 0 && (
+        <EmptyState icon={<SearchIcon size={40} />} title={fr.series.noMatchTitle} text={fr.series.noMatchText} />
+      )}
+      {shown && shown.length > 0 && <SeriesLinks groups={shown} />}
     </Screen>
   );
 }
