@@ -1,3 +1,5 @@
+import type { Rect } from './reads';
+
 export type CameraError = 'denied' | 'notFound' | 'unsupported' | 'failed';
 
 export class CameraUnavailable extends Error {
@@ -53,36 +55,35 @@ export async function setTorch(stream: MediaStream, on: boolean): Promise<boolea
   }
 }
 
-/** Compressed JPEG of the current video frame, without leaving the screen (no file picker). */
-export async function captureFrame(video: HTMLVideoElement, maxSize = 1280, quality = 0.82): Promise<Blob> {
-  return drawToJpeg(video, video.videoWidth, video.videoHeight, maxSize, quality);
+/**
+ * Compressed JPEG of the current video frame, without leaving the screen (no file picker); of a part
+ * of it only when region is given (the cover framed on the scan screen), in video pixels.
+ */
+export async function captureFrame(video: HTMLVideoElement, maxSize = 1280, quality = 0.82, region?: Rect): Promise<Blob> {
+  const area = region ?? { x: 0, y: 0, width: video.videoWidth, height: video.videoHeight };
+  return drawToJpeg(video, area, maxSize, quality);
 }
 
 /** Compressed JPEG of an image chosen in the gallery. */
 export async function compressImage(file: Blob, maxSize = 1280, quality = 0.82): Promise<Blob> {
   const bitmap = await createImageBitmap(file);
   try {
-    return await drawToJpeg(bitmap, bitmap.width, bitmap.height, maxSize, quality);
+    return await drawToJpeg(bitmap, { x: 0, y: 0, width: bitmap.width, height: bitmap.height }, maxSize, quality);
   } finally {
     bitmap.close();
   }
 }
 
-async function drawToJpeg(
-  source: CanvasImageSource,
-  width: number,
-  height: number,
-  maxSize: number,
-  quality: number,
-): Promise<Blob> {
-  if (width === 0 || height === 0) throw new Error('Empty image');
+async function drawToJpeg(source: CanvasImageSource, area: Rect, maxSize: number, quality: number): Promise<Blob> {
+  const { x, y, width, height } = area;
+  if (width <= 0 || height <= 0) throw new Error('Empty image');
   const scale = Math.min(1, maxSize / Math.max(width, height));
   const canvas = document.createElement('canvas');
   canvas.width = Math.round(width * scale);
   canvas.height = Math.round(height * scale);
   const context = canvas.getContext('2d');
   if (!context) throw new Error('No 2D context');
-  context.drawImage(source, 0, 0, canvas.width, canvas.height);
+  context.drawImage(source, x, y, width, height, 0, 0, canvas.width, canvas.height);
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {

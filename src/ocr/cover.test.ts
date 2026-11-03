@@ -108,6 +108,11 @@ describe('readCover', () => {
     expect(readCover(lines(['J.K.', 30], ['ROWLING', 40], ['HARRY POTTER', 120])).authors).toEqual(['J.K. Rowling']);
   });
 
+  it('leaves out a letter alone at the end of a line, but keeps the words of one letter', () => {
+    expect(readCover(lines(['L’étranger Æ', 90])).titles).toEqual(['L’étranger']);
+    expect(readCover(lines(['À L’ÉCOLE DES SORCIERS', 90])).titles).toEqual(['À l’école des sorciers']);
+  });
+
   it('suggests nothing from an unreadable cover', () => {
     expect(readCover(lines(['ÿ ee', 60, 30], ['vu', 40, 70], ['S', 90, 90]))).toEqual({ titles: [], authors: [], publishers: [] });
   });

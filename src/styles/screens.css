@@ -192,6 +192,22 @@ a.scan__round-button {
   box-shadow: 0 0 0 100vmax rgb(11 13 16 / 45%);
 }
 
+/* « Sans code-barres »: the shape of a cover, as large as the screen allows */
+.scan__aim--cover {
+  width: auto;
+  height: min(58dvh, 120vw);
+  max-width: 84vw;
+  aspect-ratio: 2 / 3;
+  box-shadow: 0 0 0 100vmax rgb(11 13 16 / 35%);
+}
+
+/* The session list gives way to the picture while the cover is framed. */
+.scan--shooting .scan__sheet-header,
+.scan--shooting .scan__rows,
+.scan--shooting .scan__empty {
+  display: none;
+}
+
 .scan__corner {
   position: absolute;
   width: 28px;

@@ -30,10 +30,12 @@ interface ViewfinderProps {
   /** Right of the top bar, after the torch. */
   actions?: ComponentChildren;
   counters: ComponentChildren;
+  /** Photograph of a book without a barcode: a frame of the shape of a cover, no sweeping line. */
+  cover?: boolean;
 }
 
 /** Camera picture, aiming frame, status banner and camera errors: screen 1 and the shelf check. */
-export function Viewfinder({ refs, camera, detectorAvailable, flash, hint, place, actions, counters }: ViewfinderProps) {
+export function Viewfinder({ refs, camera, detectorAvailable, flash, hint, place, actions, counters, cover = false }: ViewfinderProps) {
   const cameraMessage =
     camera.status === 'error'
       ? {
@@ -78,12 +80,12 @@ export function Viewfinder({ refs, camera, detectorAvailable, flash, hint, place
             {flash.detail && <span class="scan__flash-detail">{flash.detail}</span>}
           </span>
         </p>
-        <div class="scan__aim" ref={refs.aim} aria-hidden="true">
+        <div class={cover ? 'scan__aim scan__aim--cover' : 'scan__aim'} ref={refs.aim} aria-hidden="true">
           <span class="scan__corner scan__corner--tl" />
           <span class="scan__corner scan__corner--tr" />
           <span class="scan__corner scan__corner--bl" />
           <span class="scan__corner scan__corner--br" />
-          {camera.status === 'ready' && <span class="scan__sweep" />}
+          {camera.status === 'ready' && !cover && <span class="scan__sweep" />}
         </div>
         {cameraMessage ? (
           <div class="scan__message">

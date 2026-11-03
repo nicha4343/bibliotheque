@@ -69,7 +69,9 @@ const trimWord = (text: string): string =>
 function keptWords(line: TextLine): Word[] {
   const words = line.words
     .map((word) => ({ text: trimWord(word.text), confidence: word.confidence }))
-    .filter((word) => word.text && /^[\p{L}\p{N}.'’-]+$/u.test(word.text));
+    .filter((word) => word.text && /^[\p{L}\p{N}.'’-]+$/u.test(word.text))
+    // « étranger Æ »: a letter alone is a piece of a picture, unless it is a word (« À l’école »).
+    .filter((word) => word.text.length > 1 || !/\p{L}/u.test(word.text) || /^[aàyô]$/iu.test(word.text));
   const sure = words.some((word) => word.confidence >= 85 && letterCount(word.text) >= 1);
   const kept = words.filter((word) => word.confidence >= 60 || (sure && word.confidence >= 45 && letterCount(word.text) >= 3));
   // Figures alone are taken for pictures, except a year; beside words, they are a volume number.

@@ -14,7 +14,7 @@ import { DuplicateDialog } from '../scan/DuplicateDialog';
 import { beep, vibrate, type Signal } from '../scan/feedback';
 import { LocationPicker } from '../scan/LocationPicker';
 import { wakeLookups } from '../scan/lookups';
-import { classifyCode, RepeatFilter } from '../scan/reads';
+import { aimAreaInVideo, classifyCode, RepeatFilter } from '../scan/reads';
 import {
   answerDuplicate,
   deleteEntry,
@@ -30,6 +30,9 @@ import {
 import { useCamera, useCodeDetection } from '../scan/useCamera';
 import { Viewfinder, type Flash } from '../scan/Viewfinder';
 import { formatNumber, fr } from '../textes/fr';
+
+/** Largest side of the photograph of a cover framed during a scan: its letters must stay readable (lot 6). */
+const COVER_PHOTO_SIZE = 1600;
 
 interface Row {
   entry: ScanEntry;
@@ -66,6 +69,8 @@ export function ScanScreen() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [flash, setFlash] = useState<Flash>({ kind: 'info', text: fr.scan.ready });
   const [busy, setBusy] = useState(false);
+  /** « Sans code-barres »: the cover is framed and photographed, reads suspended meanwhile. */
+  const [shooting, setShooting] = useState(false);
   const filter = useRef(new RepeatFilter()).current;
   const starting = useRef(false);
 
@@ -166,7 +171,7 @@ export function ScanScreen() {
     });
   };
 
-  const detecting = camera.status === 'ready';
+  const detecting = camera.status === 'ready' && !shooting;
   const detectorAvailable = useCodeDetection(detecting, refs, onCode);
 
   const answer = async (addCopy: boolean) => {
@@ -191,14 +196,33 @@ export function ScanScreen() {
     setFlash({ kind: 'info', text: fr.scan.removed });
   };
 
+  const startShooting = () => {
+    setShooting(true);
+    setFlash({ kind: 'info', text: fr.scan.coverFlash });
+  };
+
+  const stopShooting = () => {
+    setShooting(false);
+    setFlash({ kind: 'info', text: fr.scan.ready });
+  };
+
+  /** Only the framed cover is kept: neither the neighbouring books nor the shelf (lot 6). */
   const photograph = async () => {
     const video = videoRef.current;
-    if (!session || !video || busy) return;
+    const view = refs.view.current?.getBoundingClientRect();
+    const aim = refs.aim.current?.getBoundingClientRect();
+    if (!session || !video || !view || !aim || busy) return;
     setBusy(true);
     try {
-      const photo = await captureFrame(video);
+      const region = aimAreaInVideo(
+        { width: video.videoWidth, height: video.videoHeight },
+        view,
+        { x: aim.left - view.left, y: aim.top - view.top, width: aim.width, height: aim.height },
+      );
+      const photo = await captureFrame(video, COVER_PHOTO_SIZE, undefined, region);
       await recordNoBarcode(session, photo, { position: settings.rememberShelfOrder ? Date.now() : undefined });
       signal('read');
+      setShooting(false);
       setFlash({ kind: 'warn', text: fr.scan.photographed });
     } finally {
       setBusy(false);
@@ -216,14 +240,15 @@ export function ScanScreen() {
   };
 
   return (
-    <main class="scan">
+    <main class={shooting ? 'scan scan--shooting' : 'scan'}>
       <h1 class="visually-hidden">{fr.scan.title}</h1>
       <Viewfinder
         refs={refs}
         camera={camera}
         detectorAvailable={detectorAvailable}
         flash={flash}
-        hint={settings.rememberShelfOrder ? fr.scan.hintOrdered : fr.scan.hint}
+        hint={shooting ? fr.scan.coverHint : settings.rememberShelfOrder ? fr.scan.hintOrdered : fr.scan.hint}
+        cover={shooting}
         place={
           <button
             type="button"
@@ -268,20 +293,37 @@ export function ScanScreen() {
             ))}
           </ul>
         )}
-        <div class="scan__actions">
-          <button
-            type="button"
-            class="button button--secondary button--large"
-            disabled={!session || camera.status !== 'ready' || busy}
-            onClick={() => void photograph()}
-          >
-            <CameraIcon size={20} />
-            {fr.scan.noBarcode}
-          </button>
-          <button type="button" class="button button--primary button--large" onClick={() => void finish()}>
-            {fr.scan.finish(rows.length)}
-          </button>
-        </div>
+        {shooting ? (
+          <div class="scan__actions">
+            <button type="button" class="button button--secondary button--large" onClick={stopShooting}>
+              {fr.common.cancel}
+            </button>
+            <button
+              type="button"
+              class="button button--primary button--large"
+              disabled={camera.status !== 'ready' || busy}
+              onClick={() => void photograph()}
+            >
+              <CameraIcon size={20} />
+              {fr.scan.shoot}
+            </button>
+          </div>
+        ) : (
+          <div class="scan__actions">
+            <button
+              type="button"
+              class="button button--secondary button--large"
+              disabled={!session || camera.status !== 'ready' || busy}
+              onClick={startShooting}
+            >
+              <CameraIcon size={20} />
+              {fr.scan.noBarcode}
+            </button>
+            <button type="button" class="button button--primary button--large" onClick={() => void finish()}>
+              {fr.scan.finish(rows.length)}
+            </button>
+          </div>
+        )}
       </section>
 
       {places && pickerOpen && (

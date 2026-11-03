@@ -77,3 +77,19 @@ export function isInAimArea(box: Rect, video: Size, view: Size, aim: Rect, margi
     centerY <= aim.y + aim.height + marginY
   );
 }
+
+/**
+ * The part of the video frame shown inside the aiming frame drawn on screen (object-fit: cover), in
+ * video pixels, enlarged by margin on each side and kept within the frame: the photograph of a cover
+ * keeps only the cover, not the neighbouring books.
+ */
+export function aimAreaInVideo(video: Size, view: Size, aim: Rect, margin = 0.04): Rect {
+  const scale = Math.max(view.width / video.width, view.height / video.height);
+  const offsetX = (view.width - video.width * scale) / 2;
+  const offsetY = (view.height - video.height * scale) / 2;
+  const left = Math.max(0, (aim.x - aim.width * margin - offsetX) / scale);
+  const top = Math.max(0, (aim.y - aim.height * margin - offsetY) / scale);
+  const right = Math.min(video.width, (aim.x + aim.width * (1 + margin) - offsetX) / scale);
+  const bottom = Math.min(video.height, (aim.y + aim.height * (1 + margin) - offsetY) / scale);
+  return { x: Math.round(left), y: Math.round(top), width: Math.round(right - left), height: Math.round(bottom - top) };
+}

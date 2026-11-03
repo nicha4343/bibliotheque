@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { classifyCode, isInAimArea, RepeatFilter, shelfQrContent } from './reads';
+import { aimAreaInVideo, classifyCode, isInAimArea, RepeatFilter, shelfQrContent } from './reads';
 
 describe('classifyCode', () => {
   it('reconnaît un ISBN', () => {
@@ -64,5 +64,23 @@ describe('isInAimArea', () => {
   it('refuse le code d’un ouvrage voisin', () => {
     expect(isInAimArea({ x: 1300, y: 500, width: 200, height: 80 }, video, view, aim)).toBe(false);
     expect(isInAimArea({ x: 860, y: 100, width: 200, height: 80 }, video, view, aim)).toBe(false);
+  });
+});
+
+describe('aimAreaInVideo', () => {
+  // A 1080×1920 portrait video shown in a 375×450 view: scale 375/1080, 108 px cut above and below.
+  const video = { width: 1080, height: 1920 };
+  const view = { width: 375, height: 450 };
+
+  it('garde la partie de l’image visible dans le cadre de la couverture', () => {
+    const area = aimAreaInVideo(video, view, { x: 87.5, y: 75, width: 200, height: 300 }, 0);
+    expect(area).toEqual({ x: 252, y: 528, width: 576, height: 864 });
+  });
+
+  it('ne dépasse pas de l’image avec la marge', () => {
+    const area = aimAreaInVideo(video, view, { x: 0, y: 0, width: 375, height: 450 });
+    expect(area.x).toBe(0);
+    expect(area.width).toBe(1080);
+    expect(area.y + area.height).toBeLessThanOrEqual(1920);
   });
 });
