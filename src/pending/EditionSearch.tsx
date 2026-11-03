@@ -81,36 +81,35 @@ export function EditionSearch({ onPick, onNothing }: EditionSearchProps) {
           {dictation.listening ? fr.entry.stopDictation : fr.entry.dictate}
         </button>
       )}
-      <div class="edition-search__row">
-        <input
-          class="field__input"
-          type="search"
-          aria-label={fr.entry.searchLabel}
-          placeholder={dictationSupported() ? fr.entry.searchPlaceholder : fr.entry.searchPlaceholderTyped}
-          autocomplete="off"
-          enterKeyHint="search"
-          value={dictation.listening ? dictation.heard : query}
-          onInput={(event) => {
-            setQuery(event.currentTarget.value);
-          }}
-          // Inside the entry form: Enter searches, it does not save the notice.
-          onKeyDown={(event) => {
-            if (event.key !== 'Enter') return;
-            event.preventDefault();
-            void search(query);
-          }}
-        />
-        <button
-          type="button"
-          class="icon-button edition-search__go"
-          aria-label={fr.entry.search}
-          disabled={!query.trim() || status.kind === 'searching'}
-          onClick={() => void search(query)}
-        >
-          {status.kind === 'searching' ? <span class="spinner" aria-hidden="true" /> : <SearchIcon size={20} />}
-        </button>
-      </div>
+      <input
+        class="field__input"
+        type="search"
+        aria-label={fr.entry.searchLabel}
+        placeholder={dictationSupported() ? fr.entry.searchPlaceholder : fr.entry.searchPlaceholderTyped}
+        autocomplete="off"
+        enterKeyHint="search"
+        value={dictation.listening ? dictation.heard : query}
+        onInput={(event) => {
+          setQuery(event.currentTarget.value);
+        }}
+        // Inside the entry form: Enter searches, it does not save the notice.
+        onKeyDown={(event) => {
+          if (event.key !== 'Enter') return;
+          event.preventDefault();
+          void search(query);
+        }}
+      />
       <p class="edition-search__hint">{fr.entry.keyboardHint}</p>
+      {/* Named in full: a magnifier alone, greyed until something is typed, went unnoticed on the phone. */}
+      <button
+        type="button"
+        class="button button--secondary button--large"
+        disabled={!query.trim() || status.kind === 'searching'}
+        onClick={() => void search(query)}
+      >
+        {status.kind === 'searching' ? <span class="spinner" aria-hidden="true" /> : <SearchIcon size={20} />}
+        {fr.entry.search}
+      </button>
       <p class="edition-search__status" role="status">
         {message}
       </p>

@@ -1024,21 +1024,6 @@ a.scan__round-button {
   font-weight: 600;
 }
 
-.edition-search__row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.edition-search__row .field__input {
-  flex: 1;
-  min-width: 0;
-}
-
-.edition-search__go {
-  color: var(--color-accent);
-}
-
 .edition-search__hint {
   margin-top: -4px;
   font-size: var(--text-caption);

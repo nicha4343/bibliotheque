@@ -110,6 +110,7 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - [x] Lecture des couvertures par OpenRouter validée sur téléphone le 3 novembre 2026 (clé enregistrée, « ça fonctionne »)
 - [x] **Photographie « Sans code-barres » en noir et blanc** sur le téléphone de l'utilisateur (signalé dès le premier essai) : corrigé le 3 novembre 2026, voir « Reprise du lot 6 » ; reste l'essai sur le téléphone
 - [x] Couleur validée sur le Doogee S89 le 3 novembre 2026 (« c'est en couleur maintenant, ça fonctionne ») ; lampe torche et bouton « Changer de caméra » non rapportés
+- [x] Essai sur téléphone (3 novembre 2026) : texte des passages photographiés et lecture des couvertures « ok » ; « Rechercher dans les catalogues » introuvable (une loupe sans texte, grisée tant que rien n'était saisi) : devenu un bouton nommé sous le champ, à essayer
 - [ ] Essai sur téléphone : compte et clé OpenRouter créés, clé saisie (« OpenRouter l'accepte »), couvertures photographiées lues (livres récents, anciens, bandes dessinées), « Confirmer », « Corriger », temps de lecture ; « Sans code-barres » (cadrage) ; recherche dans les catalogues ; passage photographié dans « Citations »
 
 ### Reprise du lot 6 (3 novembre 2026)
