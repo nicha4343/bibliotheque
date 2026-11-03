@@ -1,12 +1,15 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { CameraSheet } from '../components/CameraSheet';
 import { CoverImage } from '../components/CoverImage';
 import { CameraIcon, CheckIcon, ChevronDownIcon, CloseIcon, PinIcon } from '../components/icons';
 import { db } from '../db/db';
 import type { Id, PendingItem } from '../db/schema';
+import { DEFAULT_SETTINGS, getSettings } from '../db/settings';
 import { useLiveQuery } from '../db/useLiveQuery';
+import { awaitsReading, currentReading, preferCoverReading } from '../pending/coverReading';
 import { EditionSearch } from '../pending/EditionSearch';
 import { completeItem, joinAuthors, listPendingItems, parseAuthors, setItemPhoto } from '../pending/pending';
+import { useCoverReadingChanges } from '../pending/useCoverReading';
 import { loadPlaces, type PlaceIndex } from '../places/places';
 import { navigate, routeHref } from '../router';
 import { LocationPicker } from '../scan/LocationPicker';
@@ -47,6 +50,12 @@ export function EntryScreen({ itemId }: { itemId?: string | undefined }) {
   const places = useLiveQuery<PlaceIndex | undefined>(() => loadPlaces(), [], undefined);
   const remaining = useLiveQuery(() => db.pendingItems.count(), [], 0);
   const single = itemId !== undefined;
+  const settings = useLiveQuery(() => getSettings(), [], DEFAULT_SETTINGS);
+  const prefilled = useRef<Id | undefined>(undefined);
+  useCoverReadingChanges();
+  // Lot 6: what Gemini read on the photograph of the item.
+  const reading = item ? currentReading(item) : undefined;
+  const readingPending = item ? awaitsReading(item, settings.geminiKey) : false;
 
   useEffect(() => {
     document.title = fr.app.documentTitle(fr.entry.title);
@@ -62,6 +71,25 @@ export function EntryScreen({ itemId }: { itemId?: string | undefined }) {
     setTookPhoto(false);
     setShowError(false);
   }, [currentId]);
+
+  // The photograph of the item shown is read before the others.
+  useEffect(() => {
+    preferCoverReading(currentId);
+    return () => {
+      preferCoverReading(undefined);
+    };
+  }, [currentId]);
+
+  // The form starts from what Gemini read, once per item, unless the user has begun typing.
+  useEffect(() => {
+    if (!item || !reading?.title || prefilled.current === item.id) return;
+    prefilled.current = item.id;
+    setDraft((previous) =>
+      previous.title || previous.author || previous.publisher
+        ? previous
+        : { title: reading.title, author: joinAuthors(reading.authors), publisher: reading.publisher ?? '' },
+    );
+  }, [item, reading]);
 
   // An item completed elsewhere meanwhile (found by a new search) is skipped.
   useEffect(() => {
@@ -88,7 +116,9 @@ export function EntryScreen({ itemId }: { itemId?: string | undefined }) {
     setBusy(true);
     try {
       const authors = parseAuthors(draft.author);
-      await completeItem(item.id, { title: draft.title, authors, publisher: draft.publisher }, shelfId ?? item.shelfId);
+      // The series read on the cover goes with the title read, unless the title was changed.
+      const series = reading && reading.title === draft.title.trim() ? { seriesName: reading.seriesName, seriesIndex: reading.seriesIndex } : {};
+      await completeItem(item.id, { title: draft.title, authors, publisher: draft.publisher, ...series }, shelfId ?? item.shelfId);
       setSaved((value) => value + 1);
       advance();
     } finally {
@@ -198,7 +228,15 @@ export function EntryScreen({ itemId }: { itemId?: string | undefined }) {
             <div class="entry__meta">
               <p class="entry__kind">{item.kind === 'unknownIsbn' ? fr.pending.kindUnknown : fr.pending.kindNoBarcode}</p>
               {item.isbn && <p class="entry__isbn mono">{item.isbn}</p>}
-              <p class="entry__caption">{caption}</p>
+              <p class="entry__caption">
+                {caption}
+                {(readingPending || reading) && (
+                  <span class="entry__reading" role="status">
+                    {readingPending && <span class="spinner" aria-hidden="true" />}
+                    {readingPending ? fr.entry.readingPending : reading?.title ? fr.entry.readingDone : fr.entry.readingNothing}
+                  </span>
+                )}
+              </p>
               <p class="entry__place-label">{fr.entry.place}</p>
               <button
                 type="button"

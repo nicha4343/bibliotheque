@@ -11,6 +11,7 @@ import { DEFAULT_SETTINGS, getSettings, updateSettings } from '../db/settings';
 import { getStorageProtection, type StorageProtection } from '../db/storage';
 import { useLiveQuery } from '../db/useLiveQuery';
 import { disableLoanNotifications, enableLoanNotifications } from '../loans/reminders';
+import { checkGeminiKey } from '../metadata/gemini';
 import { checkGoogleBooksKey } from '../metadata/googleBooksKey';
 import { retryAllUnknown } from '../pending/pending';
 import { LIST_TABS, routeHref } from '../router';
@@ -122,6 +123,75 @@ function GoogleBooksKeyField({ saved }: { saved: string }) {
           spellcheck={false}
           enterKeyHint="done"
           aria-describedby="google-books-key-detail"
+          onInput={(event) => {
+            setDraft(event.currentTarget.value);
+          }}
+        />
+        <button type="submit" class="button button--primary" disabled={busy || draft.trim() === saved}>
+          {fr.settings.keySave}
+        </button>
+      </div>
+      <p class="setting__status" role="status">
+        {message}
+      </p>
+    </form>
+  );
+}
+
+const GEMINI_CHECKS = { valid: fr.settings.geminiValid, refused: fr.settings.geminiRefused, unverified: fr.settings.geminiUnverified };
+
+/** Where the user creates a free key (lot 6). */
+const AI_STUDIO_KEYS = 'https://aistudio.google.com/apikey';
+
+/** « Clé Gemini » (lot 6): checked once when saved; the covers photographed are then read. */
+function GeminiKeyField({ saved }: { saved: string }) {
+  const [draft, setDraft] = useState(saved);
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setDraft(saved);
+  }, [saved]);
+
+  const submit = async (event: Event) => {
+    event.preventDefault();
+    const key = draft.trim();
+    setBusy(true);
+    try {
+      await updateSettings({ geminiKey: key });
+      if (!key) {
+        setMessage(fr.settings.geminiRemoved);
+        return;
+      }
+      setMessage(fr.settings.keyChecking);
+      setMessage(GEMINI_CHECKS[await checkGeminiKey(key)]);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <form class="setting setting--stacked" onSubmit={(event) => void submit(event)}>
+      <label class="setting__label" for="gemini-key">
+        {fr.settings.geminiLabel}
+      </label>
+      <p class="setting__detail" id="gemini-key-detail">
+        {fr.settings.geminiDetail}{' '}
+        <a href={AI_STUDIO_KEYS} target="_blank" rel="noopener noreferrer">
+          {fr.settings.geminiCreate}
+        </a>
+      </p>
+      <div class="inline-form">
+        <input
+          id="gemini-key"
+          class="field__input mono inline-form__field"
+          type="text"
+          value={draft}
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck={false}
+          enterKeyHint="done"
+          aria-describedby="gemini-key-detail"
           onInput={(event) => {
             setDraft(event.currentTarget.value);
           }}
@@ -353,6 +423,15 @@ export function SettingsScreen() {
             );
           })}
           {settings.sources.googleBooks && <GoogleBooksKeyField saved={settings.googleBooksKey} />}
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="gemini-title">
+        <h2 class="section__title" id="gemini-title">
+          {fr.settings.geminiSection}
+        </h2>
+        <div class="card">
+          <GeminiKeyField saved={settings.geminiKey} />
         </div>
       </section>
 

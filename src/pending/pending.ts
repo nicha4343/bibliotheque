@@ -1,6 +1,6 @@
 import { db, type LibraryDatabase } from '../db/db';
 import { newId } from '../db/ids';
-import type { Book, BookMetadata, Cover, Id, PendingItem } from '../db/schema';
+import type { Book, BookMetadata, Cover, CoverReading, Id, PendingItem } from '../db/schema';
 import { getSettings } from '../db/settings';
 import { bookFieldsFromMetadata } from '../metadata/merge';
 import { attachAutoCover, completeFromMetadata, findMetadata } from '../scan/lookups';
@@ -67,6 +67,9 @@ export interface EntryFields {
   title: string;
   authors: string[];
   publisher: string;
+  /** Read on the cover by Gemini (lot 6). */
+  seriesName?: string | undefined;
+  seriesIndex?: number | undefined;
 }
 
 /** « Enregistrer » on screen 4. Returns the notice, or undefined when the item no longer exists. */
@@ -80,7 +83,32 @@ export async function completeItem(
   if (!item) return undefined;
   const fields: Pick<Book, 'title' | 'authors'> & Partial<Book> = { title: entry.title.trim(), authors: entry.authors };
   if (entry.publisher.trim()) fields.publisher = entry.publisher.trim();
+  if (entry.seriesName?.trim()) fields.seriesName = entry.seriesName.trim();
+  if (entry.seriesName?.trim() && entry.seriesIndex) fields.seriesIndex = entry.seriesIndex;
   return resolveItem(item, fields, shelfId, database);
+}
+
+/** What « Confirmer » records (screen 3): what Gemini read on the cover. */
+export function readingEntry(reading: CoverReading): EntryFields {
+  return {
+    title: reading.title,
+    authors: reading.authors,
+    publisher: reading.publisher ?? '',
+    seriesName: reading.seriesName,
+    seriesIndex: reading.seriesIndex,
+  };
+}
+
+/**
+ * « Confirmer » (screen 3): the notice is created with what was read on the photograph, the
+ * photograph for its cover. Returns its title, or undefined when nothing was read or the item is gone.
+ */
+export async function confirmReading(itemId: Id, database: LibraryDatabase = db): Promise<string | undefined> {
+  const item = await database.pendingItems.get(itemId);
+  const reading = item?.coverReading;
+  if (!item || !reading?.title || reading.photoBlobId !== item.photoBlobId) return undefined;
+  await completeItem(itemId, readingEntry(reading), item.shelfId, database);
+  return reading.title;
 }
 
 export type RetryOutcome =
@@ -137,7 +165,8 @@ export async function setItemPhoto(itemId: Id, photo: Blob, database: LibraryDat
     if (item.photoBlobId) await database.blobs.delete(item.photoBlobId);
     const photoBlobId = newId();
     await database.blobs.add({ id: photoBlobId, blob: photo, createdAt: Date.now() });
-    await database.pendingItems.update(itemId, { photoBlobId });
+    // What was read on the previous photograph no longer applies.
+    await database.pendingItems.update(itemId, { photoBlobId, coverReading: undefined });
   });
 }
 

@@ -14,6 +14,7 @@ import { startBackups } from './backup/backup';
 import { requestPersistentStorage } from './db/storage';
 import { startHistoryTracking } from './router';
 import { refreshLoanNotifications } from './loans/reminders';
+import { startCoverReading } from './pending/coverReading';
 import { unlockAudio } from './scan/feedback';
 import { startLookups } from './scan/lookups';
 import { startSeriesCompletion } from './series/completion';
@@ -25,6 +26,8 @@ startBackups();
 startLookups();
 // Series of the books already catalogued, asked once to the BnF.
 startSeriesCompletion();
+// Photographs of « À compléter » read by Gemini in the background, never during a scan (lot 6).
+startCoverReading();
 // « Notification à l’échéance »: the daily check of the loans is registered again.
 void refreshLoanNotifications();
 // Browsers only allow sound after a touch.

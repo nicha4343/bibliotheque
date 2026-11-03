@@ -344,3 +344,13 @@ export function MicIcon(props: IconProps) {
     </Svg>
   );
 }
+
+/** « Relevé sur la couverture » (lot 6): text read in a frame. */
+export function ReadTextIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2" />
+      <path d="M8 9h8M8 12h8M8 15h5" />
+    </Svg>
+  );
+}
