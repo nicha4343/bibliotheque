@@ -759,6 +759,40 @@ a.scan__round-button {
   color: var(--color-text-muted);
 }
 
+.pending-card__text--reading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Lot 6: title and author read on the photograph */
+.pending-card__reading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pending-card__reading-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.pending-card__title {
+  font-size: var(--text-input);
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.pending-card__details {
+  font-size: var(--text-secondary);
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
 .pending-card__place {
   display: flex;
   align-items: center;
@@ -872,8 +906,17 @@ a.scan__round-button {
   font-weight: 500;
 }
 
-.entry__caption {
+.entry__captions {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.entry__caption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: var(--text-secondary);
   line-height: 1.4;
   color: var(--color-text-muted);
@@ -929,6 +972,34 @@ a.scan__round-button {
 .entry--done .button {
   margin-top: 10px;
   padding: 0 28px;
+}
+
+/* Lot 6: words read on the cover, under each field */
+.reading-chips {
+  padding-top: 2px;
+}
+
+.reading-chip {
+  position: relative;
+  max-width: 100%;
+  border-color: var(--color-focus-ring);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-hover);
+  white-space: normal;
+  text-align: left;
+}
+
+/* 44 pixels to touch, without spreading the chips apart */
+.reading-chip::before {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
+}
+
+.reading-chip[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
 }
 
 /* Screen 5 · Library */
@@ -1305,6 +1376,11 @@ a.scan__round-button {
 
 .quote-photo__zoom {
   align-self: flex-end;
+}
+
+/* Lot 6: text read on the photograph of the passage */
+.quote-read {
+  align-self: flex-start;
 }
 
 .cover-choices {

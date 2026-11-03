@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { CameraSheet } from '../components/CameraSheet';
 import { ConfirmSheet } from '../components/ConfirmSheet';
 import { useBlobUrl } from '../components/CoverImage';
@@ -6,13 +6,20 @@ import { CameraIcon, PencilIcon, TrashIcon } from '../components/icons';
 import { Sheet } from '../components/Sheet';
 import type { Id, Quote } from '../db/schema';
 import { useLiveQuery } from '../db/useLiveQuery';
+import { textRecognitionSupported } from '../ocr/engine';
+import { readPassage } from '../ocr/reading';
 import { formatDate, fr } from '../textes/fr';
 import { addQuote, bookQuotes, deleteQuote, updateQuote } from './quotes';
 
 // A passage must stay legible: larger than a cover photograph.
 const PASSAGE_SIZE = 1920;
 
-type Dialog = { kind: 'camera' } | { kind: 'new' } | { kind: 'quote'; quoteId: Id } | { kind: 'delete'; quote: Quote };
+type Dialog =
+  | { kind: 'camera' }
+  | { kind: 'new' }
+  /** justTaken: the passage was just photographed, its text is read at once (lot 6). */
+  | { kind: 'quote'; quoteId: Id; justTaken?: boolean }
+  | { kind: 'delete'; quote: Quote };
 
 /** « Citations » (screen 6): photographed passages, whose text the user may type. */
 export function QuotesSection({ bookId, onMessage }: { bookId: Id; onMessage: (message: string) => void }) {
@@ -83,7 +90,7 @@ export function QuotesSection({ bookId, onMessage }: { bookId: Id; onMessage: (m
           maxSize={PASSAGE_SIZE}
           onCapture={async (photo) => {
             const quote = await addQuote(bookId, { photo });
-            setDialog({ kind: 'quote', quoteId: quote.id });
+            setDialog({ kind: 'quote', quoteId: quote.id, justTaken: true });
           }}
           // The sheet closes itself after the capture: the quote just opened must stay.
           onClose={() => {
@@ -95,6 +102,7 @@ export function QuotesSection({ bookId, onMessage }: { bookId: Id; onMessage: (m
         <QuoteSheet
           key={opened?.id ?? 'new'}
           quote={opened}
+          readAtOnce={dialog?.kind === 'quote' && dialog.justTaken === true}
           onSave={async (text) => {
             if (opened) await updateQuote(opened.id, text);
             else await addQuote(bookId, { text });
@@ -137,19 +145,63 @@ function QuotePhoto({ blobId, class: className }: { blobId: Id; class: string })
 interface QuoteSheetProps {
   /** Missing for a new quote, typed by hand. */
   quote: Quote | undefined;
+  readAtOnce: boolean;
   onSave: (text: string) => Promise<void>;
   onDelete: (() => void) | undefined;
   onClose: () => void;
 }
 
 /** The photographed passage, readable at full size, and its text. */
-function QuoteSheet({ quote, onSave, onDelete, onClose }: QuoteSheetProps) {
+function QuoteSheet({ quote, readAtOnce, onSave, onDelete, onClose }: QuoteSheetProps) {
   const photoUrl = useBlobUrl(quote?.photoBlobId);
   const [zoomed, setZoomed] = useState(false);
   const [text, setText] = useState(quote?.text ?? '');
   const [submitted, setSubmitted] = useState(false);
   // A photographed passage may stay without text; a typed quote may not.
   const textMissing = !quote?.photoBlobId && !text.trim();
+
+  // Lot 6: the text of the passage read on the photograph, to check and shorten.
+  const photoBlobId = quote?.photoBlobId;
+  const canRead = photoBlobId !== undefined && textRecognitionSupported();
+  const [reading, setReading] = useState<'idle' | 'reading' | 'read' | 'nothing' | 'failed'>('idle');
+  const typed = useRef(text);
+  typed.current = text;
+  const mounted = useRef(true);
+  useEffect(
+    () => () => {
+      mounted.current = false;
+    },
+    [],
+  );
+
+  /** Read at once, the text only fills an empty field; asked for, it replaces the field. */
+  const read = async (replace: boolean) => {
+    if (!photoBlobId) return;
+    setReading('reading');
+    try {
+      const found = await readPassage(photoBlobId);
+      if (!mounted.current) return;
+      if (found && (replace || !typed.current.trim())) setText(found);
+      setReading(found ? 'read' : 'nothing');
+    } catch (error) {
+      console.error(error);
+      if (mounted.current) setReading('failed');
+    }
+  };
+
+  useEffect(() => {
+    if (readAtOnce && canRead) void read(false);
+    // Once, when the sheet opens on the passage just photographed.
+  }, []);
+
+  const hint =
+    reading === 'read'
+      ? fr.book.passageRead
+      : reading === 'nothing'
+        ? fr.book.passageNothing
+        : reading === 'failed'
+          ? fr.book.passageFailed
+          : fr.book.quoteTextHint;
 
   const submit = async (event: Event) => {
     event.preventDefault();
@@ -194,9 +246,15 @@ function QuoteSheet({ quote, onSave, onDelete, onClose }: QuoteSheetProps) {
             }}
           />
           {quote?.photoBlobId && (
-            <p class="field__hint" id="quote-text-hint">
-              {fr.book.quoteTextHint}
+            <p class="field__hint" id="quote-text-hint" role="status">
+              {hint}
             </p>
+          )}
+          {canRead && (
+            <button type="button" class="small-button quote-read" disabled={reading === 'reading'} onClick={() => void read(true)}>
+              {reading === 'reading' && <span class="spinner" aria-hidden="true" />}
+              {reading === 'reading' ? fr.book.readingPassage : fr.book.readPassage}
+            </button>
           )}
           {submitted && textMissing && <p class="field__error">{fr.book.quoteTextRequired}</p>}
         </div>

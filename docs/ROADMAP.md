@@ -102,7 +102,16 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 
 ## Lot 6 — Reconnaissance de texte
 - [x] Choix de la technique : **Tesseract.js** (décision de l'utilisateur du 3 novembre 2026 : gratuit, dans le téléphone, hors connexion compris ; lecture approximative des couvertures acceptée, les suggestions se corrigent à la main). IA de vision payante écartée.
-- [ ] Suggestions titre et auteur dans « À compléter » et pastilles dans la saisie en série
+- [x] Suggestions titre et auteur dans « À compléter » (« Relevé sur la couverture », « Confirmer », « Corriger ») et pastilles dans la saisie en série
+- [x] Texte des passages photographiés (« Citations » de la fiche), prévu au lot 6 par la spécification
+- [ ] Essai sur téléphone : lecture de vraies couvertures photographiées (« Sans code-barres », puis « Photographier » sur un ISBN inconnu), « Confirmer », « Corriger », pastilles, passage photographié ; hors connexion après la mise à jour ; temps de lecture
+
+### Reprise du lot 6 (3 novembre 2026)
+- Aucune nouvelle version du schéma : `PendingItem.reading` (titres, auteurs, éditeurs relevés, avec l'identifiant de la photographie lue), non indexé ; effacé quand la photographie est reprise (`setItemPhoto`). La sauvegarde Google Drive l'emporte avec les éléments à compléter.
+- Moteur : `src/ocr/engine.ts` (Tesseract.js 7 chargé à la demande, un seul worker, tâches l'une après l'autre, libéré trente secondes après la dernière ; niveaux de gris et agrandissement jusqu'à 4 fois). Fichiers servis par l'application sous `ocr/` (greffon `ocrFiles` de `vite.config.ts`, en développement comme à la construction) et mis en cache par le service worker (limite de taille portée à 5 Mo) : Tesseract.js 7 ne sait pas recevoir le modèle directement (il transmet ses octets au lieu de son nom), d'où un dossier et des noms fixes.
+- Logique pure, testée : `src/ocr/cover.ts` (tri des lignes en titre, auteur, éditeur ; `src/ocr/names.ts` : prénoms, noms seuls, éditeurs), sur quinze lectures réelles de couvertures enregistrées dans `src/ocr/fixtures/covers.json` (Folio, Le Livre de Poche, Pocket, Casterman, Dupuis, Librio, Éditions du Triomphe) ; `src/ocr/passage.ts` (texte d'un passage).
+- File d'attente : `src/ocr/reading.ts` (`startCoverReading` dans `main.tsx` ; réveillée par la base, le changement d'écran et le retour du réseau ; suspendue sur les écrans de scan ; ouvrage affiché par l'écran 4 lu d'abord ; `readPassage` pour les citations). Écrans : `PendingScreen` (carte), `EntryScreen` (pastilles `ReadingChips`, champs remplis depuis « Corriger »), `QuotesSection` (« Relever le texte de la photographie »).
+- Vérifié dans le navigateur de l'ordinateur, avec des couvertures d'Amazon (images de 500 pixels de haut, plus petites qu'une photographie du téléphone) : Tintin, Camus, Tolkien, Flaubert, Pat'Apouf lus, « Confirmer », « Corriger » et pastilles, passage d'une page de Proust relu presque à l'identique ; construction (`npm run preview`) serveur arrêté, après « Mettre à jour » : couverture lue hors connexion. Environ 1,5 s par lecture sur l'ordinateur. Lecture approximative : selon l'image, « Casterman » ou « L'étranger » sont lus ou non ; les titres en lettres dessinées (Astérix, Harry Potter, Le Petit Prince) le sont mal ou pas du tout.
 
 ## Plus tard
 - Synchronisation entre appareils (piste : Google Drive ; même mécanisme que l'écriture à plusieurs dans un lieu partagé)

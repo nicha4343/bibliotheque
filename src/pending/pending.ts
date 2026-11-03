@@ -1,6 +1,6 @@
 import { db, type LibraryDatabase } from '../db/db';
 import { newId } from '../db/ids';
-import type { Book, BookMetadata, Cover, Id, PendingItem } from '../db/schema';
+import type { Book, BookMetadata, Cover, CoverReading, Id, PendingItem } from '../db/schema';
 import { getSettings } from '../db/settings';
 import { bookFieldsFromMetadata } from '../metadata/merge';
 import { attachAutoCover, completeFromMetadata, findMetadata } from '../scan/lookups';
@@ -129,7 +129,7 @@ export async function retryAllUnknown(
   return { found, unavailable };
 }
 
-/** Photograph taken on screen 4; replaces the previous one. */
+/** Photograph taken on screen 3 or 4; replaces the previous one, whose reading no longer applies. */
 export async function setItemPhoto(itemId: Id, photo: Blob, database: LibraryDatabase = db): Promise<void> {
   await database.transaction('rw', database.pendingItems, database.blobs, async () => {
     const item = await database.pendingItems.get(itemId);
@@ -137,8 +137,26 @@ export async function setItemPhoto(itemId: Id, photo: Blob, database: LibraryDat
     if (item.photoBlobId) await database.blobs.delete(item.photoBlobId);
     const photoBlobId = newId();
     await database.blobs.add({ id: photoBlobId, blob: photo, createdAt: Date.now() });
-    await database.pendingItems.update(itemId, { photoBlobId });
+    await database.pendingItems.update(itemId, { photoBlobId, reading: undefined });
   });
+}
+
+/** What « Confirmer » records (screen 3): the first title, author and publisher read on the cover. */
+export function readingEntry(reading: CoverReading): EntryFields {
+  return { title: reading.titles[0] ?? '', authors: reading.authors.slice(0, 1), publisher: reading.publishers[0] ?? '' };
+}
+
+/**
+ * « Confirmer » (screen 3): the notice is created with what was read on the photograph. Returns its
+ * title, or undefined when the item no longer exists or nothing was read.
+ */
+export async function confirmReading(itemId: Id, database: LibraryDatabase = db): Promise<string | undefined> {
+  const item = await database.pendingItems.get(itemId);
+  const reading = item?.reading;
+  if (!item || !reading || reading.photoBlobId !== item.photoBlobId || reading.titles.length === 0) return undefined;
+  const entry = readingEntry(reading);
+  await completeItem(itemId, entry, item.shelfId, database);
+  return entry.title;
 }
 
 /** Removes an item put aside by mistake (not a book, read twice), with its photograph. */

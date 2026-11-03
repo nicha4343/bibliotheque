@@ -3,7 +3,7 @@ import { newId } from '../db/ids';
 import type { Id, Quote } from '../db/schema';
 
 // « Citations » of the book sheet (screen 6): a photographed passage, its text typed by the user if
-// they wish (reading the text from the photograph comes with lot 6).
+// they wish; since lot 6, the text read on the photograph is offered (see ocr/reading.ts).
 
 export async function bookQuotes(bookId: Id, database: LibraryDatabase = db): Promise<Quote[]> {
   return database.quotes.where('bookId').equals(bookId).sortBy('createdAt');

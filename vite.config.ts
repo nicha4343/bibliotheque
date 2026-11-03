@@ -1,4 +1,7 @@
 /// <reference types="vitest/config" />
+import { createReadStream } from 'node:fs';
+import { readFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import preact from '@preact/preset-vite';
 import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -23,6 +26,42 @@ function htmlTexts(): Plugin {
   };
 }
 
+const require = createRequire(import.meta.url);
+
+/**
+ * Tesseract.js (lot 6): its worker, its engine (WebAssembly with SIMD, LSTM only) and the French model,
+ * served by the application under ocr/ and precached, never fetched from a CDN: text recognition works
+ * offline. Tesseract looks for the model by its name in a folder, hence fixed names.
+ */
+const OCR_FILES: Readonly<Record<string, string>> = {
+  'worker.min.js': require.resolve('tesseract.js/dist/worker.min.js'),
+  'tesseract-core-simd-lstm.wasm.js': require.resolve('tesseract.js-core/tesseract-core-simd-lstm.wasm.js'),
+  'fra.traineddata.gz': require.resolve('@tesseract.js-data/fra/4.0.0_best_int/fra.traineddata.gz'),
+};
+
+function ocrFiles(): Plugin {
+  return {
+    name: 'ocr-files',
+    configureServer(server) {
+      server.middlewares.use('/ocr', (request, response, next) => {
+        const name = (request.url ?? '').slice(1).split('?')[0] ?? '';
+        const source = OCR_FILES[name];
+        if (!source) {
+          next();
+          return;
+        }
+        response.setHeader('Content-Type', name.endsWith('.js') ? 'text/javascript' : 'application/octet-stream');
+        createReadStream(source).pipe(response);
+      });
+    },
+    async generateBundle() {
+      for (const [name, source] of Object.entries(OCR_FILES)) {
+        this.emitFile({ type: 'asset', fileName: `ocr/${name}`, source: await readFile(source) });
+      }
+    },
+  };
+}
+
 export default defineConfig({
   // Relative base: the same build works at the root of a domain or under a sub-path (GitHub Pages).
   base: './',
@@ -33,6 +72,7 @@ export default defineConfig({
   plugins: [
     preact(),
     htmlTexts(),
+    ocrFiles(),
     VitePWA({
       // Our own service worker (src/sw/sw.ts): Workbox's offline caching, plus the loan reminders (lot 4).
       strategies: 'injectManifest',
@@ -65,7 +105,9 @@ export default defineConfig({
         ],
       },
       injectManifest: {
-        globPatterns: ['**/*.{js,css,html,woff2,png,svg,ico,wasm}'],
+        globPatterns: ['**/*.{js,css,html,woff2,png,svg,ico,wasm,gz}'],
+        // The text recognition engine (ocr/, 3,9 Mo) is precached like the rest: it must work offline.
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         // A classic script, as Workbox generated before.
         rollupFormat: 'iife',
       },
