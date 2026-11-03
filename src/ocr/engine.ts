@@ -1,9 +1,9 @@
 // Text recognition by Tesseract.js (lot 6, chosen by the user on 3 November 2026: free, in the phone,
-// offline too), for photographed passages: it reads printed pages well, but not book covers (tried
+// offline too), for photographed passages and, at lot 9, the ISBN printed on old books: it reads printed pages well, but not book covers (tried
 // on the phone on 3 November 2026: nothing read; the title and author are dictated instead). Its three files are served by the application itself under ocr/ and precached by the
 // service worker (see vite.config.ts), never fetched from a CDN: the worker, the engine (WebAssembly
 // with SIMD, LSTM only) and the French model (« best_int », 0,7 Mo).
-import type { Worker as TesseractWorker } from 'tesseract.js';
+import type { PSM, Worker as TesseractWorker } from 'tesseract.js';
 
 /** A line of text found on an image, with its place. */
 export interface TextLine {
@@ -44,8 +44,12 @@ export function textRecognitionSupported(): boolean {
   }
 }
 
+/** A page of a book (passages), or a block of a few lines (the line of an ISBN, lot 9). */
+export type Layout = 'page' | 'block';
+
 interface Engine {
   worker: TesseractWorker;
+  modes: Record<Layout, PSM>;
 }
 
 let engine: Promise<Engine> | undefined;
@@ -67,9 +71,8 @@ async function startEngine(): Promise<Engine> {
     // Already kept by the service worker: Tesseract would store a second copy in IndexedDB.
     cacheMethod: 'none',
   });
-  // Columns and paragraphs, as on a page.
-  await worker.setParameters({ tessedit_pageseg_mode: tesseract.PSM.AUTO });
-  return { worker };
+  // Columns and paragraphs, as on a page; or one block of lines, read as such.
+  return { worker, modes: { page: tesseract.PSM.AUTO, block: tesseract.PSM.SINGLE_BLOCK } };
 }
 
 function releaseLater(): void {
@@ -99,8 +102,11 @@ async function withEngine<T>(job: (engine: Engine) => Promise<T>): Promise<T> {
   return run;
 }
 
-/** Grey levels, enlarged if needed: colours only disturb Tesseract. */
-async function prepare(photo: Blob): Promise<HTMLCanvasElement> {
+/**
+ * Grey levels, enlarged if needed: colours only disturb Tesseract. A smoothing (in pixels of the
+ * photograph) blurs the grain of a dim photograph, which Tesseract takes for letters.
+ */
+async function prepare(photo: Blob, smoothing: number): Promise<HTMLCanvasElement> {
   const bitmap = await createImageBitmap(photo);
   try {
     const scale = Math.min(MAX_ENLARGEMENT, Math.max(1, PAGE_SIZE / Math.max(bitmap.width, bitmap.height)));
@@ -110,7 +116,9 @@ async function prepare(photo: Blob): Promise<HTMLCanvasElement> {
     const context = canvas.getContext('2d', { willReadFrequently: true });
     if (!context) throw new Error('No 2D context');
     context.imageSmoothingQuality = 'high';
+    if (smoothing > 0) context.filter = `blur(${smoothing * scale}px)`;
     context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    context.filter = 'none';
     const image = context.getImageData(0, 0, canvas.width, canvas.height);
     const pixels = image.data;
     for (let index = 0; index < pixels.length; index += 4) {
@@ -127,9 +135,10 @@ async function prepare(photo: Blob): Promise<HTMLCanvasElement> {
 }
 
 /** Lines of text read on a photograph. */
-export async function recognizeLines(photo: Blob): Promise<RecognizedImage> {
-  const canvas = await prepare(photo);
-  return withEngine(async ({ worker }) => {
+export async function recognizeLines(photo: Blob, layout: Layout = 'page', smoothing = 0): Promise<RecognizedImage> {
+  const canvas = await prepare(photo, smoothing);
+  return withEngine(async ({ worker, modes }) => {
+    await worker.setParameters({ tessedit_pageseg_mode: modes[layout] });
     const { data } = await worker.recognize(canvas, {}, { blocks: true, text: false });
     const lines: TextLine[] = [];
     let paragraph = 0;

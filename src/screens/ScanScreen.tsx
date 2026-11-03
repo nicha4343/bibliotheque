@@ -7,6 +7,8 @@ import type { Book, ScanEntry, ScanSession, Shelf } from '../db/schema';
 import { DEFAULT_SETTINGS, getSettings } from '../db/settings';
 import { useLiveQuery } from '../db/useLiveQuery';
 import { loadPlaces, type PlaceIndex } from '../places/places';
+import { textRecognitionSupported } from '../ocr/engine';
+import { readPrintedIsbn } from '../ocr/printedIsbn';
 import { navigate } from '../router';
 import { captureFrame } from '../scan/camera';
 import type { DetectedCode } from '../scan/detector';
@@ -33,6 +35,12 @@ import { formatNumber, fr } from '../textes/fr';
 
 /** Largest side of the photograph of a cover framed during a scan: its letters must stay readable (lot 6). */
 const COVER_PHOTO_SIZE = 1600;
+/** The line of a printed ISBN (lot 9): its figures as sharp as the camera gives them. */
+const ISBN_PHOTO_SIZE = 2000;
+const ISBN_PHOTO_QUALITY = 0.92;
+
+/** What is photographed for a book without a barcode: its cover, or the line of its printed ISBN. */
+type Shot = 'cover' | 'isbn';
 
 interface Row {
   entry: ScanEntry;
@@ -69,8 +77,11 @@ export function ScanScreen() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [flash, setFlash] = useState<Flash>({ kind: 'info', text: fr.scan.ready });
   const [busy, setBusy] = useState(false);
-  /** « Sans code-barres »: the cover is framed and photographed, reads suspended meanwhile. */
+  /** « Sans code-barres »: the cover or the printed ISBN is framed and photographed, reads suspended meanwhile. */
   const [shooting, setShooting] = useState(false);
+  /** Kept from one book to the next: old books are often photographed one after the other. */
+  const [shot, setShot] = useState<Shot>('cover');
+  const canReadIsbn = useMemo(textRecognitionSupported, []);
   const filter = useRef(new RepeatFilter()).current;
   const starting = useRef(false);
 
@@ -146,6 +157,11 @@ export function ScanScreen() {
         });
       return;
     }
+    recordRead(meaning.isbn13, fr.scan.read(meaning.isbn13));
+  };
+
+  /** An ISBN read on a barcode or on its printed line: searched in the background, the scan goes on. */
+  const recordRead = (isbn13: string, readText: string) => {
     if (!session || pickerOpen) {
       if (!session) setFlash({ kind: 'warn', text: fr.scan.choosePlaceFirst });
       return;
@@ -157,9 +173,9 @@ export function ScanScreen() {
     }
     signal('read');
     const options = { flagOwnedBooks: settings.flagOwnedBooks, position: settings.rememberShelfOrder ? Date.now() : undefined };
-    void recordIsbn(session, meaning.isbn13, options).then((entry) => {
+    void recordIsbn(session, isbn13, options).then((entry) => {
       if (entry.status === 'searching') {
-        setFlash({ kind: 'info', text: navigator.onLine ? fr.scan.read(meaning.isbn13) : fr.scan.offline });
+        setFlash({ kind: 'info', text: navigator.onLine ? readText : fr.scan.offline });
         wakeLookups();
       } else if (entry.status === 'asking') {
         void db.books.get(entry.bookId ?? '').then((book) => {
@@ -196,9 +212,32 @@ export function ScanScreen() {
     setFlash({ kind: 'info', text: fr.scan.removed });
   };
 
+  const shotFlash = (kind: Shot): Flash => ({ kind: 'info', text: kind === 'isbn' ? fr.scan.isbnFlash : fr.scan.coverFlash });
+
   const startShooting = () => {
+    const kind = canReadIsbn ? shot : 'cover';
     setShooting(true);
-    setFlash({ kind: 'info', text: fr.scan.coverFlash });
+    setShot(kind);
+    setFlash(shotFlash(kind));
+  };
+
+  const chooseShot = (kind: Shot) => {
+    setShot(kind);
+    setFlash(shotFlash(kind));
+  };
+
+  /** Only the framed part of the picture. */
+  const captureAim = async (maxSize: number, quality?: number): Promise<Blob | undefined> => {
+    const video = videoRef.current;
+    const view = refs.view.current?.getBoundingClientRect();
+    const aim = refs.aim.current?.getBoundingClientRect();
+    if (!video || !view || !aim) return undefined;
+    const region = aimAreaInVideo(
+      { width: video.videoWidth, height: video.videoHeight },
+      view,
+      { x: aim.left - view.left, y: aim.top - view.top, width: aim.width, height: aim.height },
+    );
+    return captureFrame(video, maxSize, quality, region);
   };
 
   const stopShooting = () => {
@@ -208,22 +247,42 @@ export function ScanScreen() {
 
   /** Only the framed cover is kept: neither the neighbouring books nor the shelf (lot 6). */
   const photograph = async () => {
-    const video = videoRef.current;
-    const view = refs.view.current?.getBoundingClientRect();
-    const aim = refs.aim.current?.getBoundingClientRect();
-    if (!session || !video || !view || !aim || busy) return;
+    if (!session || busy) return;
     setBusy(true);
     try {
-      const region = aimAreaInVideo(
-        { width: video.videoWidth, height: video.videoHeight },
-        view,
-        { x: aim.left - view.left, y: aim.top - view.top, width: aim.width, height: aim.height },
-      );
-      const photo = await captureFrame(video, COVER_PHOTO_SIZE, undefined, region);
+      const photo = await captureAim(COVER_PHOTO_SIZE);
+      if (!photo) return;
       await recordNoBarcode(session, photo, { position: settings.rememberShelfOrder ? Date.now() : undefined });
       signal('read');
       setShooting(false);
       setFlash({ kind: 'warn', text: fr.scan.photographed });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /**
+   * The printed ISBN, read in the phone (lot 9): found, it is recorded as if its barcode had been read;
+   * otherwise the user frames it again, or photographs the cover.
+   */
+  const readIsbn = async () => {
+    if (!session || busy) return;
+    setBusy(true);
+    setFlash({ kind: 'info', text: fr.scan.isbnReading });
+    try {
+      const photo = await captureAim(ISBN_PHOTO_SIZE, ISBN_PHOTO_QUALITY);
+      const isbn13 = photo && (await readPrintedIsbn(photo));
+      if (!isbn13) {
+        signal('attention');
+        setFlash({ kind: 'warn', text: fr.scan.isbnNotFound });
+        return;
+      }
+      setShooting(false);
+      recordRead(isbn13, fr.scan.isbnRead(isbn13));
+    } catch (error) {
+      console.error(error);
+      signal('attention');
+      setFlash({ kind: 'warn', text: fr.scan.isbnFailed });
     } finally {
       setBusy(false);
     }
@@ -247,8 +306,16 @@ export function ScanScreen() {
         camera={camera}
         detectorAvailable={detectorAvailable}
         flash={flash}
-        hint={shooting ? fr.scan.coverHint : settings.rememberShelfOrder ? fr.scan.hintOrdered : fr.scan.hint}
-        cover={shooting}
+        hint={
+          shooting
+            ? shot === 'isbn'
+              ? fr.scan.isbnHint
+              : fr.scan.coverHint
+            : settings.rememberShelfOrder
+              ? fr.scan.hintOrdered
+              : fr.scan.hint
+        }
+        frame={shooting ? shot : 'code'}
         place={
           <button
             type="button"
@@ -294,20 +361,40 @@ export function ScanScreen() {
           </ul>
         )}
         {shooting ? (
-          <div class="scan__actions">
-            <button type="button" class="button button--secondary button--large" onClick={stopShooting}>
-              {fr.common.cancel}
-            </button>
-            <button
-              type="button"
-              class="button button--primary button--large"
-              disabled={camera.status !== 'ready' || busy}
-              onClick={() => void photograph()}
-            >
-              <CameraIcon size={20} />
-              {fr.scan.shoot}
-            </button>
-          </div>
+          <>
+            {canReadIsbn && (
+              <div class="scan__shots" role="group" aria-label={fr.scan.shotsLabel}>
+                {(['cover', 'isbn'] as const).map((kind) => (
+                  <button
+                    key={kind}
+                    type="button"
+                    class="chip chip--large"
+                    aria-pressed={shot === kind}
+                    disabled={busy}
+                    onClick={() => {
+                      chooseShot(kind);
+                    }}
+                  >
+                    {kind === 'isbn' ? fr.scan.shotIsbn : fr.scan.shotCover}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div class="scan__actions">
+              <button type="button" class="button button--secondary button--large" disabled={busy} onClick={stopShooting}>
+                {fr.common.cancel}
+              </button>
+              <button
+                type="button"
+                class="button button--primary button--large"
+                disabled={camera.status !== 'ready' || busy}
+                onClick={() => void (shot === 'isbn' ? readIsbn() : photograph())}
+              >
+                <CameraIcon size={20} />
+                {shot === 'isbn' ? fr.scan.readIsbn : fr.scan.shoot}
+              </button>
+            </div>
+          </>
         ) : (
           <div class="scan__actions">
             <button

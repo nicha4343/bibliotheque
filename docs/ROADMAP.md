@@ -2,7 +2,7 @@
 
 Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est terminé qu'après un essai sur un vrai téléphone. Le détail de chaque écran est dans [SPEC.md](SPEC.md).
 
-**Aucun lot en cours** : les lots 0 et 1 sont terminés le 1er novembre 2026, le lot 2 le 2 novembre 2026, les lots 3 à 8 le 3 novembre 2026. Le suivant est à choisir par l'utilisateur dans « Plus tard ».
+**Lot en cours : 9 — ISBN imprimé des livres anciens** (lots 0 et 1 terminés le 1er novembre 2026, lot 2 le 2 novembre 2026, lots 3 à 8 le 3 novembre 2026)
 
 ## Lot 0 — Socle
 - [x] Projet Vite + TypeScript strict + Preact, ESLint, Vitest
@@ -134,6 +134,13 @@ Choisi par l'utilisateur le 3 novembre 2026 parmi les améliorations « Plus tar
 - [x] « Retour » de « Pièces et étagères » revient à l'écran précédent (« Étagères » ou Paramètres) ; au retour sur « Étagères », la dernière étagère créée est amenée à l'écran et mise en évidence (`noteCreatedShelf`, `takeCreatedShelf` dans `src/places/places.ts`). Vérifié dans le navigateur de l'ordinateur, à la largeur d'un téléphone : étagère ajoutée à la dernière pièce, retour, étagère visible et mise en évidence ; rien de mis en évidence à la visite suivante ; depuis les Paramètres, « Retour » y revient
 - [x] Essai sur téléphone, validé le 3 novembre 2026 (« c'est bon sur le téléphone, lot 8 validé ») : bouton, retour, étagère créée mise en évidence
 
+## Lot 9 — ISBN imprimé des livres anciens
+Choisi par l'utilisateur le 3 novembre 2026 (« À décider par l'utilisateur ») : les livres anciens portent leur ISBN imprimé, sans code-barres. L'utilisateur pensait à OpenRouter ; Tesseract.js est essayé d'abord : il lit déjà bien les passages photographiés sur son téléphone, hors connexion, sans les 50 lectures par jour d'OpenRouter (partagées avec les couvertures), et la clé de contrôle de l'ISBN écarte ses erreurs.
+- [x] Relevé de l'ISBN dans le texte lu (`findPrintedIsbn`, `src/ocr/printedIsbn.ts`, testé : ISBN-10 et 13, tirets et espaces, confusions de lecture, numéro à la ligne suivante, clé fausse, numéro de téléphone) ; Tesseract.js en mode « bloc » (`recognizeLines(photo, 'block')`), seconde lecture lissée si la première échoue
+- [x] Scan : « Couverture » ou « ISBN imprimé » en prise de vue « Sans code-barres », cadre en bande, « Lire l'ISBN » ; ISBN lu traité comme un code-barres. Vérifié dans le navigateur de l'ordinateur avec une fausse caméra montrant une page : clé fausse refusée (on reste sur le cadre), « ISBN 2-07-036002-4 » lu en 0,2 seconde puis « L'Étranger — ajouté à votre bibliothèque » ; sur des images fabriquées, lignes nettes, floues, petites, inclinées ou peu contrastées lues, grain très fort rattrapé par la seconde lecture
+- [ ] Essai sur téléphone : livres anciens, ISBN au dos et sur les dernières pages ; lumière faible
+- [ ] Selon l'essai : si le téléphone lit trop mal, OpenRouter en secours (photographie mise de côté dans « À compléter », ISBN lu après le scan)
+
 ## Plus tard
 - Synchronisation entre appareils (piste : Google Drive ; même mécanisme que l'écriture à plusieurs dans un lieu partagé)
 - Photographie d'une étagère entière : lecture des tranches par IA
@@ -144,4 +151,4 @@ Choisi par l'utilisateur le 3 novembre 2026 parmi les améliorations « Plus tar
   - ajout et déplacement d'exemplaires par les invités, seulement si cela reste simple.
 
 ## À décider par l'utilisateur
-- Lecture par photographie de l'ISBN imprimé des livres anciens
+- (rien pour le moment)
