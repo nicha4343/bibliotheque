@@ -203,13 +203,13 @@
   color: var(--color-text);
 }
 
-.nav__link[aria-current='page'],
-.nav__link--scan,
-.nav__link--scan:hover {
+.nav__link[aria-current='page'] {
   color: var(--color-accent);
   font-weight: 700;
 }
 
+/* Green means "you are here": the Scanner pill stands out in dark grey
+   (the scan screen itself is full screen, without this bar). */
 .nav__scan-icon {
   width: 40px;
   height: 32px;
@@ -217,12 +217,12 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-control);
-  background: var(--color-accent);
+  background: var(--color-text);
   color: var(--color-on-accent);
 }
 
 .nav__link--scan[aria-current='page'] .nav__scan-icon {
-  box-shadow: 0 0 0 3px var(--color-focus-ring);
+  background: var(--color-accent);
 }
 
 /* Every icon sits in a box as tall as the Scanner pill, so the labels line up. */

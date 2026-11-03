@@ -82,7 +82,7 @@ Un livre (notice) peut avoir plusieurs exemplaires, chacun avec son propre empla
 - Raccourcis Étagères (lot 3, dès qu'une étagère existe), Séries (lot 5, dès qu'une série est connue), Prêts (lot 4, toujours affiché ; pastille du nombre de prêts arrivés à échéance), Listes (lot 5, toujours affiché).
 - **Rappel des prêts** (lot 4), en tête de l'écran dès qu'un prêt arrive à échéance : « Le prêt de « Bel-Ami » à Sam est arrivé à échéance. » (« N prêts sont arrivés à échéance. »), « Consulter les prêts » ; il disparaît quand l'utilisateur le ferme (« Masquer ce rappel ») ou ouvre l'écran des prêts, et reparaît pour le prêt suivant arrivé à échéance. La pastille du raccourci « Prêts » demeure tant que les ouvrages ne sont pas restitués.
 - Un ouvrage dont tous les exemplaires sont déclarés perdus porte la mention « Déclaré perdu » à la place de l'emplacement ; un exemplaire perdu n'appartient plus à sa pièce ni à son étagère pour le filtre.
-- Barre de navigation : Bibliothèque, Scanner, À compléter (pastille), Paramètres.
+- Barre de navigation : Bibliothèque, Scanner, À compléter (pastille), Paramètres. Le vert désigne l'écran affiché ; « Scanner » porte une pastille anthracite qui le distingue des autres onglets (choix de l'utilisateur du 3 novembre 2026 : dans la maquette, la pastille toujours verte faisait paraître deux onglets actifs). L'écran de scan, en plein écran, n'affiche pas la barre.
 
 ### 6 · Fiche ouvrage (version 1 pour l'essentiel)
 - Couverture et sa provenance (« Couverture automatique · Open Library », « Votre photographie · prioritaire »), titre, auteur, éditeur, ISBN.
