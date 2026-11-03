@@ -101,7 +101,7 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - Retour de l'utilisateur (3 novembre 2026) sur le nombre de tomes, laissé à sa saisie : « ça doit pouvoir se trouver ». La BnF relie chaque tome à la notice de sa série et liste ces notices (index `ens2bib`) : `src/series/catalog.ts` (testé sur deux réponses réelles enregistrées dans `src/series/fixtures/`), `SeriesRecord.catalog`, recherche à l'ouverture d'une série (`refreshCatalog`) et de « Séries » (`refreshCatalogs`). En l'étudiant : les réponses de la BnF étaient ignorées depuis le lot 1 (`format="UNIMARC"` en majuscules), donc ses séries et ses notices perdues ; corrigé (`unimarcRecords`), et rattrapage une fois par ouvrage des séries des ouvrages déjà catalogués (`src/series/completion.ts`, lancé au démarrage, `Book.seriesCheckedAt`). Vérifié dans le navigateur de l'ordinateur avec la vraie BnF : deux Pat'Apouf sans série la reçoivent, « Vous en possédez 2 sur 19 », titres des 17 tomes manquants, souhaits avec titre et ISBN, tome manquant reconnu en librairie sans réseau. Google Books donne aussi des séries (`seriesInfo`), mais il refuse les appels sans clé depuis l'ordinateur : non employé.
 
 ## Lot 6 — Reconnaissance de texte
-- [ ] Choix de la technique (Tesseract.js gratuit ou IA de vision payante) avec l'utilisateur
+- [x] Choix de la technique : **Tesseract.js** (décision de l'utilisateur du 3 novembre 2026 : gratuit, dans le téléphone, hors connexion compris ; lecture approximative des couvertures acceptée, les suggestions se corrigent à la main). IA de vision payante écartée.
 - [ ] Suggestions titre et auteur dans « À compléter » et pastilles dans la saisie en série
 
 ## Plus tard

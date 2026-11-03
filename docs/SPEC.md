@@ -60,7 +60,7 @@ Un livre (notice) peut avoir plusieurs exemplaires, chacun avec son propre empla
 - Liste des éléments avec filtre « Tous / ISBN inconnu / Sans code-barres » et compteur.
 - « Rechercher de nouveau les N ISBN inconnus » : tous les ISBN inconnus, l'un après l'autre (Google Books refuse les rafales), avec l'avancement et le bilan (« N ouvrages ont été retrouvés… », « N n'ont pu être recherchés dans toutes les sources : réessayez dans quelques instants. »). Un ouvrage retrouvé sur l'étagère de sa lecture y prend la position lue.
 - Carte : photographie ou icône, nature, ISBN éventuel, emplacement ; actions « Rechercher de nouveau » (ISBN inconnu : une source a pu le cataloguer depuis, ou être indisponible), « Photographier » (prise de vue sur place, sans quitter l'écran), « Saisir » (écran 4 pour cet élément seul) ; icône « Retirer » avec confirmation (élément mis de côté par erreur ; sa photographie est effacée).
-- Suggestion de titre et d'auteur lue sur la couverture (« Relevé sur la couverture », bouton « Confirmer ») : **lot 6** (reconnaissance de texte).
+- Suggestion de titre et d'auteur lue sur la couverture (« Relevé sur la couverture », bouton « Confirmer ») : **lot 6** (reconnaissance de texte par Tesseract.js, choisi par l'utilisateur le 3 novembre 2026 : gratuit, dans le téléphone, hors connexion compris ; lecture approximative, toujours modifiable).
 - « Compléter en série · N » ouvre l'écran 4.
 
 ### 4 · Saisie en série (version 1)
@@ -181,5 +181,4 @@ Décisions de l'utilisateur du 1er novembre 2026. Exemple : des parents partagen
 
 ## Questions ouvertes
 
-- Reconnaissance de texte sur les couvertures (lot 6) : Tesseract.js (gratuit, approximatif) ou IA de vision (fiable, payante à l'usage).
 - À décider par l'utilisateur : lecture par photographie de l'ISBN imprimé des livres anciens ; dictée du titre et de l'auteur.
