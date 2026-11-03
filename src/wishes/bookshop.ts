@@ -1,5 +1,5 @@
 import { db, type LibraryDatabase } from '../db/db';
-import type { Book, BookMetadata, Copy, Loan, SeriesRecord, Wish } from '../db/schema';
+import type { Book, BookMetadata, CatalogVolume, Copy, Loan, SeriesRecord, Wish } from '../db/schema';
 import { isActive } from '../loans/loans';
 import { groupSeries, seriesKey, seriesOf, type SeriesGroup, type SeriesPart } from '../series/series';
 import { findWish } from './wishes';
@@ -48,6 +48,20 @@ export interface BookshopDetails {
   wish?: Wish;
 }
 
+/** A volume of a series of the library, listed by the BnF with this ISBN: known without network. */
+export function catalogMatch(isbn13: string, groups: readonly SeriesGroup[]): { group: SeriesGroup; volume: CatalogVolume } | undefined {
+  for (const group of groups) {
+    const volume = group.catalog?.volumes.find((item) => item.isbn13 === isbn13);
+    if (volume) return { group, volume };
+  }
+  return undefined;
+}
+
+export async function loadCatalogMatch(isbn13: string, database: LibraryDatabase = db): Promise<ReturnType<typeof catalogMatch>> {
+  const [books, records] = await Promise.all([database.books.toArray(), database.series.toArray()]);
+  return catalogMatch(isbn13, groupSeries(books, records));
+}
+
 export function bookshopDetails(
   metadata: BookMetadata,
   books: readonly Book[],
@@ -55,12 +69,16 @@ export function bookshopDetails(
   records: readonly SeriesRecord[] = [],
 ): BookshopDetails {
   const title = metadata.title ?? '';
-  const series = seriesOf({ title, seriesName: metadata.seriesName, seriesIndex: metadata.seriesIndex });
+  const groups = groupSeries(books, records);
+  const listed = catalogMatch(metadata.isbn13, groups);
+  const series = listed
+    ? { name: listed.group.name, index: listed.volume.index }
+    : seriesOf({ title, seriesName: metadata.seriesName, seriesIndex: metadata.seriesIndex });
   const details: BookshopDetails = {};
   if (series) {
     details.series = series;
     const key = seriesKey(series.name);
-    const group = groupSeries(books, records).find((item) => item.key === key);
+    const group = groups.find((item) => item.key === key);
     if (group) details.group = group;
   }
   const wish = findWish(wishes, {

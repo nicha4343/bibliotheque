@@ -1,4 +1,4 @@
-import type { Book, SeriesRecord, Wish } from '../db/schema';
+import type { Book, CatalogVolume, SeriesCatalog, SeriesRecord, Wish } from '../db/schema';
 import { foldText, sortKey } from '../library/filter';
 
 // Séries (lot 5, screen 9): the volumes of a series are the notices bearing its name, given by a
@@ -56,7 +56,12 @@ export interface SeriesGroup {
   publisher?: string;
   /** « Nombre de tomes parus » declared by the user. */
   declaredTotal?: number;
-  /** Volumes 1 to total are expected: the declared number, or more when a later volume is owned. 0 when unknown. */
+  /** The volumes found at the BnF; its total is used unless the user declared one. */
+  catalog?: SeriesCatalog;
+  /**
+   * Volumes 1 to total are expected: the number declared, else found at the BnF, or more when a later
+   * volume is owned. 0 when unknown.
+   */
   total: number;
   /** Distinct volumes owned among 1 to total. */
   owned: number;
@@ -89,7 +94,8 @@ export function buildGroup(key: string, volumes: readonly SeriesVolume[], names:
   );
   const highest = Math.max(0, ...numbers);
   const sequence = highest <= MAX_SEQUENCE;
-  const total = sequence ? Math.max(record?.total ?? 0, highest) : 0;
+  const found = record?.catalog && record.catalog.total <= MAX_SEQUENCE ? record.catalog.total : 0;
+  const total = sequence ? Math.max(record?.total ?? found, highest) : 0;
   const missing: number[] = [];
   for (let index = 1; index <= total; index += 1) if (!numbers.has(index)) missing.push(index);
   const group: SeriesGroup = {
@@ -104,8 +110,19 @@ export function buildGroup(key: string, volumes: readonly SeriesVolume[], names:
   const publisher = mostFrequent(sorted.flatMap(({ book }) => (book.publisher ? [book.publisher] : [])))[0];
   if (publisher) group.publisher = publisher;
   if (record?.total !== undefined) group.declaredTotal = record.total;
+  if (record?.catalog) group.catalog = record.catalog;
   return group;
 }
+
+/** Title and ISBN of a volume, as the BnF lists it. */
+export const catalogVolume = (group: Pick<SeriesGroup, 'catalog'>, index: number): CatalogVolume | undefined =>
+  group.catalog?.volumes.find((volume) => volume.index === index);
+
+/** The catalogue is searched again after a week: a new volume may have come out. */
+export const CATALOG_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+export const catalogIsStale = (group: Pick<SeriesGroup, 'catalog'>, now = Date.now()): boolean =>
+  !group.catalog || now - group.catalog.checkedAt > CATALOG_MAX_AGE_MS;
 
 /** Every series of the library, by name. */
 export function groupSeries(books: readonly Book[], records: readonly SeriesRecord[] = []): SeriesGroup[] {

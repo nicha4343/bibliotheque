@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'preact/hooks';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { BackLink } from '../components/BackLink';
 import { CoverImage } from '../components/CoverImage';
 import { EmptyState } from '../components/EmptyState';
@@ -9,8 +9,18 @@ import { db } from '../db/db';
 import type { Book, Wish } from '../db/schema';
 import { useLiveQuery } from '../db/useLiveQuery';
 import { foldText } from '../library/filter';
-import { booksOfAuthor, groupSeries, seriesKey, seriesOf, volumeCells, volumeWish, type SeriesGroup } from '../series/series';
-import { setBookSeries, setSeriesTotal } from '../series/store';
+import {
+  booksOfAuthor,
+  catalogIsStale,
+  catalogVolume,
+  groupSeries,
+  seriesKey,
+  seriesOf,
+  volumeCells,
+  volumeWish,
+  type SeriesGroup,
+} from '../series/series';
+import { refreshCatalog, refreshCatalogs, setBookSeries, setSeriesTotal } from '../series/store';
 import { routeHref } from '../router';
 import { formatNumber, fr, joinWithAnd } from '../textes/fr';
 import { toggleVolumeWish, wishMissingVolumes } from '../wishes/wishes';
@@ -18,10 +28,37 @@ import { toggleVolumeWish, wishMissingVolumes } from '../wishes/wishes';
 const titleOf = (book: Book) => book.title || fr.common.untitled;
 
 /**
- * The volumes owned are counted against the total only when it is known: declared by the user, or
- * shown by a gap (volume 5 owned, not 4).
+ * The volumes owned are counted against the total only when it is known: declared by the user, found
+ * at the BnF, or shown by a gap (volume 5 owned, not 4).
  */
-const knowsTotal = (group: SeriesGroup): boolean => group.total > 0 && (group.declaredTotal !== undefined || group.missing.length > 0);
+const knowsTotal = (group: SeriesGroup): boolean =>
+  group.total > 0 && (group.declaredTotal !== undefined || (group.catalog?.total ?? 0) > 0 || group.missing.length > 0);
+
+type CatalogSearch = 'idle' | 'searching' | 'failed';
+
+/** The BnF is asked for the volumes of the series when the page opens, at most once a week. */
+function useCatalogSearch(group: SeriesGroup | undefined): CatalogSearch {
+  const [status, setStatus] = useState<CatalogSearch>('idle');
+  const stale = group ? catalogIsStale(group) : false;
+  useEffect(() => {
+    if (!group || !stale || !navigator.onLine) return;
+    setStatus('searching');
+    void refreshCatalog(group).then((done) => {
+      setStatus(done ? 'idle' : 'failed');
+    });
+    // The group changes at each change of the library: only its key and staleness matter.
+  }, [group?.key, stale]);
+  return status;
+}
+
+/** « Nombre de tomes parus : 19, d’après la BnF ». */
+function totalText(group: SeriesGroup, search: CatalogSearch): string {
+  if (group.declaredTotal !== undefined) return fr.series.totalDeclared(group.declaredTotal);
+  const found = group.catalog?.total ?? 0;
+  if (found > 0) return fr.series.totalFound(found);
+  if (search === 'searching') return fr.series.totalSearching;
+  return group.catalog ? fr.series.totalNotFound : fr.series.totalUnknown;
+}
 
 /** « 5 sur 7 · 2 tomes manquants », or the number of notices when the total is unknown. */
 export function seriesDetail(group: SeriesGroup): string {
@@ -44,6 +81,14 @@ export function SeriesListScreen() {
     [],
     undefined,
   );
+  const searched = useRef(false);
+
+  // Series not searched at the BnF for a week, one after the other, in the background.
+  useEffect(() => {
+    if (!groups || searched.current || !navigator.onLine) return;
+    searched.current = true;
+    void refreshCatalogs(groups);
+  }, [groups]);
 
   return (
     <Screen
@@ -92,12 +137,13 @@ export function SeriesScreen({ name }: { name: string }) {
   const [dialog, setDialog] = useState<Dialog>();
   const [message, setMessage] = useState('');
   const key = seriesKey(name);
+  const group = data?.groups.find((item) => item.key === key);
+  const search = useCatalogSearch(group);
   const close = () => {
     setDialog(undefined);
   };
 
   if (!data) return <main class="screen" />;
-  const group = data.groups.find((item) => item.key === key);
   if (!group) {
     return (
       <Screen title={name}>
@@ -133,7 +179,7 @@ export function SeriesScreen({ name }: { name: string }) {
           </div>
         )}
         <div class="series-progress__total">
-          <span>{group.declaredTotal === undefined ? fr.series.totalUnknown : fr.series.total(group.declaredTotal)}</span>
+          <span>{totalText(group, search)}</span>
           <button
             type="button"
             class="text-button"
@@ -175,13 +221,21 @@ export function SeriesScreen({ name }: { name: string }) {
                 );
               }
               const wished = Boolean(volumeWish(data.wishes, key, cell.index));
+              const listed = catalogVolume(group, cell.index)?.title;
+              const label = listed
+                ? wished
+                  ? fr.series.volumeUnwishTitledLabel(cell.index, listed)
+                  : fr.series.volumeWishTitledLabel(cell.index, listed)
+                : wished
+                  ? fr.series.volumeUnwishLabel(cell.index)
+                  : fr.series.volumeWishLabel(cell.index);
               return (
                 <li key={`missing-${cell.index}`}>
                   <button
                     type="button"
                     class={wished ? 'volume volume--missing volume--wished' : 'volume volume--missing'}
                     aria-pressed={wished}
-                    aria-label={wished ? fr.series.volumeUnwishLabel(cell.index) : fr.series.volumeWishLabel(cell.index)}
+                    aria-label={label}
                     onClick={() => void toggleVolumeWish(group, cell.index)}
                   >
                     <span class="volume__cover volume__cover--missing" aria-hidden="true">
@@ -189,7 +243,7 @@ export function SeriesScreen({ name }: { name: string }) {
                       <span class="volume__state">{wished ? fr.series.volumeWished : fr.series.volumeMissing}</span>
                     </span>
                     <span class="volume__title" aria-hidden="true">
-                      {fr.series.volume(cell.index)}
+                      {listed ?? fr.series.volume(cell.index)}
                     </span>
                   </button>
                 </li>

@@ -56,7 +56,9 @@ export function SharedListScreen({ payload }: { payload: string }) {
                 <span class="wish__cover" aria-hidden="true" />
                 <span class="wish__text">
                   <span class="wish__title">{wish.title || fr.wishes.unknownTitle}</span>
-                  {wish.author && <span class="wish__author">{wish.author}</span>}
+                  {(wish.author || wish.series) && (
+                    <span class="wish__author">{[wish.author, wish.series].filter(Boolean).join(' · ')}</span>
+                  )}
                   {wish.isbn && <span class="wish__isbn mono">{fr.sharedList.isbn(wish.isbn)}</span>}
                 </span>
               </li>

@@ -1,4 +1,5 @@
 import type { Wish } from '../db/schema';
+import { wishSeriesLabel } from './wishes';
 
 // « Partager » the wish list (screen 11) without a server: the list travels in the link itself, after
 // the « # », which browsers never send to the host. Relatives see the list, not the library. The link
@@ -8,6 +9,8 @@ export interface SharedWish {
   title: string;
   author?: string;
   isbn?: string;
+  /** « Pat’Apouf, tome 14 ». */
+  series?: string;
 }
 
 export interface SharedList {
@@ -20,12 +23,15 @@ export interface SharedList {
 
 const VERSION = 1;
 
-type Packed = { v: number; n?: string; d: string; w: [string, string?, string?][] };
+/** Each wish: its title, then its author, ISBN and series when known (empty strings keep the places). */
+type Packed = { v: number; n?: string; d: string; w: string[][] };
 
 export const toSharedWish = (wish: Wish): SharedWish => {
   const shared: SharedWish = { title: wish.title };
   if (wish.author) shared.author = wish.author;
   if (wish.isbn) shared.isbn = wish.isbn;
+  const series = wishSeriesLabel(wish);
+  if (series) shared.series = series;
   return shared;
 };
 
@@ -51,9 +57,8 @@ export async function encodeWishList(list: SharedList): Promise<string> {
     v: VERSION,
     d: list.date,
     w: list.wishes.map((wish) => {
-      const row: [string, string?, string?] = [wish.title];
-      if (wish.author || wish.isbn) row.push(wish.author ?? '');
-      if (wish.isbn) row.push(wish.isbn);
+      const row = [wish.title, wish.author ?? '', wish.isbn ?? '', wish.series ?? ''];
+      while (row.length > 1 && row.at(-1) === '') row.pop();
       return row;
     }),
   };
@@ -73,10 +78,11 @@ export async function decodeWishList(payload: string): Promise<SharedList | unde
     const wishes: SharedWish[] = [];
     for (const row of packed.w as unknown[]) {
       if (!Array.isArray(row) || !row.every(isText)) return undefined;
-      const [title = '', author, isbn] = row;
+      const [title = '', author, isbn, series] = row;
       const wish: SharedWish = { title };
       if (author) wish.author = author;
       if (isbn && /^\d{13}$/.test(isbn)) wish.isbn = isbn;
+      if (series) wish.series = series;
       wishes.push(wish);
     }
     return { name: isText(packed.n) ? packed.n : '', date: packed.d, wishes };

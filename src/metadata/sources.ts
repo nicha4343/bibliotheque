@@ -132,35 +132,48 @@ const decodeXml = (text: string): string =>
     .replaceAll('&apos;', "'")
     .replaceAll('&amp;', '&');
 
-interface Field {
+export interface UnimarcField {
   tag: string;
   subfields: { code: string; value: string }[];
 }
 
-/** UNIMARC data fields of the first record. The format is stable: no DOM needed (works in tests). */
-function unimarcFields(xml: string): Field[] {
-  const record = /<(?:\w+:)?record\b[^>]*format="Unimarc"[^>]*>([\s\S]*?)<\/(?:\w+:)?record>/.exec(xml)?.[1];
-  if (!record) return [];
-  const fields: Field[] = [];
-  for (const [, tag = '', body = ''] of record.matchAll(
-    /<(?:\w+:)?datafield\b[^>]*tag="(\d{3})"[^>]*>([\s\S]*?)<\/(?:\w+:)?datafield>/g,
-  )) {
-    const subfields = Array.from(
-      body.matchAll(/<(?:\w+:)?subfield\b[^>]*code="(\w)"[^>]*>([\s\S]*?)<\/(?:\w+:)?subfield>/g),
-      ([, code = '', value = '']) => ({ code, value: decodeXml(value) }),
-    );
-    fields.push({ tag, subfields });
-  }
-  return fields;
+/**
+ * UNIMARC data fields of every record of an answer. The format is stable: no DOM needed (works in
+ * tests). The BnF writes format="UNIMARC" (seen on 3 November 2026) or format="Unimarc": the case is ignored.
+ */
+export function unimarcRecords(xml: string): UnimarcField[][] {
+  return Array.from(xml.matchAll(/<(?:\w+:)?record\b[^>]*format="unimarc"[^>]*>([\s\S]*?)<\/(?:\w+:)?record>/gi), ([, record = '']) => {
+    const fields: UnimarcField[] = [];
+    for (const [, tag = '', body = ''] of record.matchAll(
+      /<(?:\w+:)?datafield\b[^>]*tag="(\d{3})"[^>]*>([\s\S]*?)<\/(?:\w+:)?datafield>/g,
+    )) {
+      const subfields = Array.from(
+        body.matchAll(/<(?:\w+:)?subfield\b[^>]*code="(\w)"[^>]*>([\s\S]*?)<\/(?:\w+:)?subfield>/g),
+        ([, code = '', value = '']) => ({ code, value: decodeXml(value) }),
+      );
+      fields.push({ tag, subfields });
+    }
+    return fields;
+  });
+}
+
+/** First value of a subfield in a record, cleaned. */
+export function unimarcValue(fields: readonly UnimarcField[], tag: string, code: string): string | undefined {
+  return clean(fields.find((field) => field.tag === tag)?.subfields.find((subfield) => subfield.code === code)?.value);
+}
+
+/** Volume of a series: « 4 », « G 11 », « H13 », « 12 bis » → its first number. */
+export function volumeNumber(text: string | undefined): number | undefined {
+  const match = text ? /\d+/.exec(text) : null;
+  return match ? Number(match[0]) : undefined;
 }
 
 export function parseBnf(xml: string): SourceRecord | undefined {
-  const fields = unimarcFields(xml);
+  const fields = unimarcRecords(xml)[0] ?? [];
   if (fields.length === 0) return undefined;
-  const sub = (tag: string, code: string) =>
-    clean(fields.find((field) => field.tag === tag)?.subfields.find((subfield) => subfield.code === code)?.value);
+  const sub = (tag: string, code: string) => unimarcValue(fields, tag, code);
   const all = (tag: string) => fields.filter((field) => field.tag === tag);
-  const value = (field: Field, code: string) => clean(field.subfields.find((subfield) => subfield.code === code)?.value);
+  const value = (field: UnimarcField, code: string) => clean(field.subfields.find((subfield) => subfield.code === code)?.value);
 
   // 700/701: authors (702 are translators, illustrators…); 710/711: corporate authors.
   const authors = [...all('700'), ...all('701')]
@@ -171,7 +184,7 @@ export function parseBnf(xml: string): SourceRecord | undefined {
   const isbn10 = sub('010', 'a')?.replace(/-/g, '');
   // 461 links to a series (bandes dessinées, multi-volume works); 225 is the publisher's collection
   // (« Folio ; 42 »), not a series.
-  const seriesIndex = Number.parseInt(sub('461', 'v') ?? '', 10);
+  const seriesIndex = volumeNumber(sub('461', 'v'));
 
   return withoutEmpty({
     provider: 'bnf',
@@ -182,7 +195,7 @@ export function parseBnf(xml: string): SourceRecord | undefined {
     year: yearOf(sub('210', 'd') ?? sub('214', 'd')),
     language: languageOf(sub('101', 'a')),
     seriesName: sub('461', 't'),
-    seriesIndex: Number.isFinite(seriesIndex) ? seriesIndex : undefined,
+    seriesIndex,
     isbn10: isbn10 && /^\d{9}[\dX]$/.test(isbn10) ? isbn10 : undefined,
   });
 }

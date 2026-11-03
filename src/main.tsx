@@ -16,12 +16,15 @@ import { startHistoryTracking } from './router';
 import { refreshLoanNotifications } from './loans/reminders';
 import { unlockAudio } from './scan/feedback';
 import { startLookups } from './scan/lookups';
+import { startSeriesCompletion } from './series/completion';
 
 void requestPersistentStorage();
 // Before the first rendering: a return from Google's sign-in page leads to the backup screen.
 startBackups();
 // Codes read offline or before the app was closed are searched again.
 startLookups();
+// Series of the books already catalogued, asked once to the BnF.
+startSeriesCompletion();
 // « Notification à l’échéance »: the daily check of the loans is registered again.
 void refreshLoanNotifications();
 // Browsers only allow sound after a touch.

@@ -56,6 +56,8 @@ export interface Book {
    */
   seriesName?: string;
   seriesIndex?: number;
+  /** The BnF was asked for the series of this book, once (see series/completion.ts). */
+  seriesCheckedAt?: Timestamp;
   /** Prix d’achat of one copy, in euros (lot 5, insurance inventory). */
   price?: number;
   cover?: Cover;
@@ -221,12 +223,30 @@ export interface Wish {
   createdAt: Timestamp;
 }
 
-/** What the user says of a series (lot 5); its volumes are the notices bearing its name. */
+/** A volume of a series as the BnF lists it. */
+export interface CatalogVolume {
+  index: number;
+  title: string;
+  isbn13?: string;
+}
+
+/** The volumes of a series found at the BnF (see series/catalog.ts). */
+export interface SeriesCatalog {
+  /** Highest volume number listed; 0 when the BnF does not know the series. */
+  total: number;
+  volumes: CatalogVolume[];
+  checkedAt: Timestamp;
+  source: 'bnf';
+}
+
+/** What is known of a series (lot 5); its volumes are the notices bearing its name. */
 export interface SeriesRecord {
   /** seriesKey() of the name. */
   id: string;
-  /** « Nombre de tomes parus », declared by the user; otherwise the highest volume owned. */
+  /** « Nombre de tomes parus », declared by the user: it wins over the catalogue. */
   total?: number;
+  /** Found at the BnF, searched again after a week. Not indexed: no new version of the schema. */
+  catalog?: SeriesCatalog;
 }
 
 /** Citation (lot 2). */

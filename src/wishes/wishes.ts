@@ -2,7 +2,7 @@ import { db, type LibraryDatabase } from '../db/db';
 import { newId } from '../db/ids';
 import type { Book, Id, Wish } from '../db/schema';
 import { workKey } from '../series/authorWorks';
-import { authorKey, seriesKey, seriesOf, type SeriesGroup } from '../series/series';
+import { authorKey, catalogVolume, seriesKey, seriesOf, type SeriesGroup } from '../series/series';
 import { fr } from '../textes/fr';
 
 // « Mes souhaits » (lot 5, screen 11): books the user would like, from a missing volume, the author
@@ -44,6 +44,13 @@ export function acquiredWishes(wishes: readonly Wish[], books: readonly Book[]):
 export function findWish(wishes: readonly Wish[], item: Parameters<typeof identities>[0]): Wish | undefined {
   const ids = new Set(identities(item));
   return wishes.find((wish) => identities(wish).some((id) => ids.has(id)));
+}
+
+/** « Pat’Apouf, tome 14 » under a missing volume whose title is known (the BnF lists it). */
+export function wishSeriesLabel(wish: Pick<Wish, 'title' | 'seriesName' | 'seriesIndex'>): string | undefined {
+  if (!wish.seriesName || wish.seriesIndex === undefined) return undefined;
+  const label = fr.wishes.volumeTitle(wish.seriesName, wish.seriesIndex);
+  return wish.title === label ? undefined : label;
 }
 
 /** Series volumes together and in order, then the other wishes by title. */
@@ -93,10 +100,18 @@ export async function removeAcquiredWishes(database: LibraryDatabase = db): Prom
   });
 }
 
+/** A missing volume: its title and ISBN when the BnF lists it, else « Astérix, tome 4 ». */
 const volumeFields = (group: SeriesGroup, index: number): WishFields => {
-  const fields: WishFields = { title: fr.wishes.volumeTitle(group.name, index), source: 'series', seriesName: group.name, seriesIndex: index };
+  const listed = catalogVolume(group, index);
+  const fields: WishFields = {
+    title: listed?.title ?? fr.wishes.volumeTitle(group.name, index),
+    source: 'series',
+    seriesName: group.name,
+    seriesIndex: index,
+  };
   const [author] = group.authors;
   if (author) fields.author = author;
+  if (listed?.isbn13) fields.isbn = listed.isbn13;
   return fields;
 };
 

@@ -13,7 +13,7 @@ import { classifyCode, RepeatFilter } from '../scan/reads';
 import { useCamera, useCodeDetection } from '../scan/useCamera';
 import { Viewfinder, type Flash } from '../scan/Viewfinder';
 import { formatNumber, fr } from '../textes/fr';
-import { loadBookshopCheck, loadBookshopDetails, type BookshopDetails, type BookshopVerdict } from '../wishes/bookshop';
+import { loadBookshopCheck, loadBookshopDetails, loadCatalogMatch, type BookshopDetails, type BookshopVerdict } from '../wishes/bookshop';
 import { addWish, removeWish } from '../wishes/wishes';
 
 type RowKind = 'owned' | 'wished' | 'absent';
@@ -81,10 +81,11 @@ export function BookshopScreen() {
   };
 
   /** Title, author and series of an absent book, from the sources (or the cache). */
-  const complete = async (isbn13: string) => {
+  const complete = async (isbn13: string, listed: boolean) => {
     const metadata = await findMetadata(isbn13, () => Promise.resolve()).catch(() => undefined);
     if (!metadata || metadata.providers.length === 0) {
-      updateRow(isbn13, { detail: metadata ? fr.bookshop.unknown : fr.bookshop.offline });
+      // A volume listed by the BnF keeps its title and series.
+      if (!listed) updateRow(isbn13, { detail: metadata ? fr.bookshop.unknown : fr.bookshop.offline });
       return;
     }
     const details = await loadBookshopDetails(metadata);
@@ -121,10 +122,22 @@ export function BookshopScreen() {
       setFlash({ kind: 'ok', text: fr.bookshop.wished(title) });
       return;
     }
-    setRows((current) => [{ isbn13, kind: 'absent', book: { title: '' }, title: isbn13, detail: fr.bookshop.searching }, ...current]);
-    setFlash({ kind: 'info', text: fr.bookshop.absent, detail: fr.bookshop.searching });
+    // A missing volume of a series of the library, listed by the BnF: known at once, even offline.
+    const listed = await loadCatalogMatch(isbn13);
+    if (listed) {
+      const { group, volume } = listed;
+      const detail = group.missing.includes(volume.index)
+        ? fr.bookshop.seriesMissing(group.name, volume.index)
+        : fr.bookshop.seriesOwned(group.name, group.volumes.length);
+      const series = { series: { name: group.name, index: volume.index }, group };
+      setRows((current) => [{ isbn13, kind: 'absent', book: { title: volume.title }, title: volume.title, detail, details: series }, ...current]);
+      setFlash({ kind: 'info', text: fr.bookshop.absentTitle(volume.title), detail });
+    } else {
+      setRows((current) => [{ isbn13, kind: 'absent', book: { title: '' }, title: isbn13, detail: fr.bookshop.searching }, ...current]);
+      setFlash({ kind: 'info', text: fr.bookshop.absent, detail: fr.bookshop.searching });
+    }
     // Searched in the background: the next book may be read meanwhile.
-    void complete(isbn13).catch((error: unknown) => {
+    void complete(isbn13, Boolean(listed)).catch((error: unknown) => {
       console.error(error);
       updateRow(isbn13, { detail: fr.bookshop.unknown });
     });
@@ -162,7 +175,8 @@ export function BookshopScreen() {
     const series = details?.group && details.series?.index !== undefined ? { seriesName: details.group.name, seriesIndex: details.series.index } : {};
     const author = metadata?.authors?.[0];
     const { wish } = await addWish({
-      title: metadata?.title ?? '',
+      // Without metadata, the title listed by the BnF; the ISBN shown instead of a title is not one.
+      title: metadata?.title ?? (row.title === row.isbn13 ? '' : row.title),
       isbn: row.isbn13,
       source: 'bookshop',
       ...(author ? { author } : {}),

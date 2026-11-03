@@ -11,7 +11,7 @@ import { toIsbn13 } from '../isbn/isbn';
 import { routeHref } from '../router';
 import { fr } from '../textes/fr';
 import { encodeWishList, sharedListUrl, toSharedWish } from '../wishes/share';
-import { addWish, removeAcquiredWishes, removeWish, sortWishes, updateWish } from '../wishes/wishes';
+import { addWish, removeAcquiredWishes, removeWish, sortWishes, updateWish, wishSeriesLabel } from '../wishes/wishes';
 
 type Dialog = { kind: 'edit'; wish?: Wish } | { kind: 'share' } | { kind: 'remove'; wish: Wish };
 
@@ -83,7 +83,9 @@ export function WishesTab() {
                 <span class="wish__cover" aria-hidden="true" />
                 <span class="wish__text">
                   <span class="wish__title">{titleOf(wish)}</span>
-                  {wish.author && <span class="wish__author">{wish.author}</span>}
+                  {(wish.author || wishSeriesLabel(wish)) && (
+                    <span class="wish__author">{[wish.author, wishSeriesLabel(wish)].filter(Boolean).join(' · ')}</span>
+                  )}
                 </span>
                 <span class="tag wish__source">{fr.wishes.sources[wish.source]}</span>
               </button>
