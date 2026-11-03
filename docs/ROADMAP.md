@@ -109,7 +109,7 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - [x] Texte des passages photographiés (« Citations » de la fiche) par Tesseract.js, prévu au lot 6 par la spécification
 - [x] Lecture des couvertures par OpenRouter validée sur téléphone le 3 novembre 2026 (clé enregistrée, « ça fonctionne »)
 - [x] **Photographie « Sans code-barres » en noir et blanc** sur le téléphone de l'utilisateur (signalé dès le premier essai) : corrigé le 3 novembre 2026, voir « Reprise du lot 6 » ; reste l'essai sur le téléphone
-- [ ] Essai sur le Doogee S89 : image en couleur à l'écran de scan et sur la photographie « Sans code-barres », lecture des codes, lampe torche, bouton « Changer de caméra »
+- [x] Couleur validée sur le Doogee S89 le 3 novembre 2026 (« c'est en couleur maintenant, ça fonctionne ») ; lampe torche et bouton « Changer de caméra » non rapportés
 - [ ] Essai sur téléphone : compte et clé OpenRouter créés, clé saisie (« OpenRouter l'accepte »), couvertures photographiées lues (livres récents, anciens, bandes dessinées), « Confirmer », « Corriger », temps de lecture ; « Sans code-barres » (cadrage) ; recherche dans les catalogues ; passage photographié dans « Citations »
 
 ### Reprise du lot 6 (3 novembre 2026)
