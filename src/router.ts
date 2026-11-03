@@ -15,7 +15,9 @@ export type RouteId =
   | 'backup'
   | 'shelves'
   | 'shelf'
-  | 'check';
+  | 'check'
+  | 'loans'
+  | 'lend';
 
 /** The four tabs of the navigation bar. */
 export type TabId = 'library' | 'scan' | 'pending' | 'settings';
@@ -45,7 +47,14 @@ export const ROUTE_HASHES: Readonly<Record<RouteId, string>> = {
   /** Followed by the shelf's id, or by the token of its QR label (see scan/reads.ts). */
   shelf: '#/etagere',
   check: '#/verifier',
+  /** Followed by LOAN_HISTORY for the returned loans. */
+  loans: '#/prets',
+  /** Scan of a book to lend, or given back. */
+  lend: '#/preter',
 };
+
+/** Parameter of the loans route showing the history. */
+export const LOAN_HISTORY = 'historique';
 
 export function routeHref(id: RouteId, param?: string, detail?: string): string {
   if (!param) return ROUTE_HASHES[id];

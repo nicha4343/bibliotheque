@@ -1,4 +1,4 @@
-import type { Book, Copy, Id, ReadingStatus } from '../db/schema';
+import type { Book, Copy, Id, Loan, ReadingStatus } from '../db/schema';
 
 /** « Éléphant » → « elephant »: comparisons ignore case and accents. */
 export function foldText(text: string): string {
@@ -21,22 +21,36 @@ export function sortKey(title: string): string {
 export interface LibraryEntry {
   book: Book;
   copies: Copy[];
+  /** Loans in progress of its copies, the earliest first. */
+  loans: Loan[];
   /** Folded title, authors, tags and ISBN, searched by the query. */
   haystack: string;
   sortKey: string;
 }
 
-export function toEntries(books: readonly Book[], copies: readonly Copy[]): LibraryEntry[] {
+/** Loans given back are left out by the caller or here: only those in progress count. */
+export function toEntries(books: readonly Book[], copies: readonly Copy[], loans: readonly Loan[] = []): LibraryEntry[] {
   const byBook = new Map<Id, Copy[]>();
+  const bookOfCopy = new Map<Id, Id>();
   for (const copy of copies) {
+    bookOfCopy.set(copy.id, copy.bookId);
     const list = byBook.get(copy.bookId);
     if (list) list.push(copy);
     else byBook.set(copy.bookId, [copy]);
+  }
+  const loansByBook = new Map<Id, Loan[]>();
+  for (const loan of [...loans].sort((a, b) => a.lentAt - b.lentAt)) {
+    const bookId = bookOfCopy.get(loan.copyId);
+    if (loan.returnedAt !== undefined || !bookId) continue;
+    const list = loansByBook.get(bookId);
+    if (list) list.push(loan);
+    else loansByBook.set(bookId, [loan]);
   }
   return books
     .map((book) => ({
       book,
       copies: (byBook.get(book.id) ?? []).sort((a, b) => a.addedAt - b.addedAt),
+      loans: loansByBook.get(book.id) ?? [],
       haystack: [foldText(book.title), ...book.authors.map(foldText), ...book.tags.map(foldText), book.isbn13 ?? '', book.isbn10 ?? ''].join(
         '\n',
       ),
@@ -72,7 +86,8 @@ export function matchesPlace(entry: LibraryEntry, place: PlaceFilter): boolean {
   }
 }
 
-export type StatusFilter = 'all' | ReadingStatus;
+/** Reading status, or « Prêtés » (lot 4): at least one copy lent. */
+export type StatusFilter = 'all' | ReadingStatus | 'lent';
 
 export const matchesStatus = (entry: LibraryEntry, status: StatusFilter): boolean =>
-  status === 'all' || entry.book.status === status;
+  status === 'all' || (status === 'lent' ? entry.loans.length > 0 : entry.book.status === status);

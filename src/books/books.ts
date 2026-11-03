@@ -1,6 +1,7 @@
 import { db, type LibraryDatabase } from '../db/db';
 import { newId } from '../db/ids';
 import type { Book, Cover, CoverProvider, Id } from '../db/schema';
+import { deleteLoansOf } from '../loans/loans';
 import { bookshopCandidates, type CoverCandidate, type FoundCover } from '../metadata/covers';
 import { openLibraryCoverUrl } from '../metadata/sources';
 import { attachAutoCover } from '../scan/lookups';
@@ -85,22 +86,24 @@ export async function moveCopy(copyId: Id, shelfId: Id, database: LibraryDatabas
   });
 }
 
-/** Removes one copy; the last one goes only with its notice (deleteBook). */
+/** Removes one copy and its loans; the last one goes only with its notice (deleteBook). */
 export async function removeCopy(copyId: Id, database: LibraryDatabase = db): Promise<boolean> {
-  return database.transaction('rw', database.copies, async () => {
+  return database.transaction('rw', database.copies, database.loans, async () => {
     const copy = await database.copies.get(copyId);
     if (!copy) return false;
     if ((await database.copies.where('bookId').equals(copy.bookId).count()) < 2) return false;
     await database.copies.delete(copyId);
+    await deleteLoansOf([copyId], database);
     return true;
   });
 }
 
-/** « Supprimer de ma bibliothèque »: the notice, its copies, its cover and its quotes. */
+/** « Supprimer de ma bibliothèque »: the notice, its copies and their loans, its cover and its quotes. */
 export async function deleteBook(bookId: Id, database: LibraryDatabase = db): Promise<void> {
-  await database.transaction('rw', [database.books, database.copies, database.quotes, database.blobs], async () => {
+  await database.transaction('rw', [database.books, database.copies, database.loans, database.quotes, database.blobs], async () => {
     const book = await database.books.get(bookId);
     if (book?.cover?.blobId) await database.blobs.delete(book.cover.blobId);
+    await deleteLoansOf(await database.copies.where('bookId').equals(bookId).primaryKeys(), database);
     await database.copies.where('bookId').equals(bookId).delete();
     await deleteBookQuotes(bookId, database);
     await database.books.delete(bookId);

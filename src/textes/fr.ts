@@ -44,6 +44,12 @@ export function formatDate(date: Date): string {
   return `${day === 1 ? '1er' : String(day)} ${month} ${date.getFullYear()}`;
 }
 
+/** « 1er septembre » this year, « 1er septembre 2025 » another year (local time). */
+export function formatNearDate(date: Date, now: Date): string {
+  const text = formatDate(date);
+  return date.getFullYear() === now.getFullYear() ? text.slice(0, text.lastIndexOf(' ')) : text;
+}
+
 /** « 21 h 40 », « 9 h 05 » (local time). */
 export function formatTime(date: Date): string {
   return `${date.getHours()} h ${String(date.getMinutes()).padStart(2, '0')}`;
@@ -114,7 +120,12 @@ export const fr = {
     showMore: (value: number) => `Afficher les ouvrages suivants · ${formatNumber(value)} restants`,
     shortcuts: 'Raccourcis',
     shelves: 'Étagères',
+    loans: 'Prêts',
+    /** Read by screen readers after « Prêts ». */
+    loansDue: (value: number) => count(value, 'prêt arrivé à échéance', 'prêts arrivés à échéance'),
     lost: 'Déclaré perdu',
+    filterLent: 'Prêtés',
+    lentTo: (name: string) => `Prêté à ${name}`,
   },
 
   book: {
@@ -200,6 +211,11 @@ export const fr = {
       `L’exemplaire rangé dans ${place} sera retiré de votre bibliothèque ; la fiche de l’ouvrage est conservée.`,
     removeCopyConfirm: 'Retirer l’exemplaire',
     copyRemoved: 'Exemplaire retiré',
+    lend: 'Prêter',
+    lendLabel: (place: string) => `Prêter l’exemplaire rangé dans ${place}`,
+    lentTo: (name: string, date: string) => `Prêté à ${name} le ${date}`,
+    giveBack: 'Restitué',
+    giveBackLabel: (name: string) => `Exemplaire restitué par ${name}`,
     delete: 'Supprimer de ma bibliothèque',
     deleteTitle: 'Supprimer cet ouvrage ?',
     deleteText: 'La fiche, ses exemplaires, sa couverture et ses citations seront effacés. Cette opération est définitive.',
@@ -437,6 +453,104 @@ export const fr = {
     willBePlaced: (place: string) => `Il sera rangé dans ${place}`,
     decline: 'Ne pas l’ajouter',
     lostPlace: (place: string) => `${place} · déclaré perdu`,
+    lentPlace: (place: string, name: string) => `${place} · prêté à ${name}`,
+  },
+
+  /** Screen 10: loans in progress, grouped by borrower. */
+  loans: {
+    title: 'Prêts',
+    back: 'Bibliothèque',
+    summary: (lent: number, late: number) =>
+      lent === 0
+        ? 'Aucun ouvrage prêté'
+        : `${count(lent, 'ouvrage prêté', 'ouvrages prêtés')}${late > 0 ? ` · ${formatNumber(late)} en retard` : ''}`,
+    lend: 'Prêter un ouvrage',
+    lendDetail: 'Scannez-le, puis indiquez l’emprunteur et la durée',
+    empty:
+      'Aucun ouvrage n’est prêté pour le moment. Vous pouvez aussi prêter un exemplaire depuis la fiche de l’ouvrage, avec le bouton « Prêter ».',
+    books: (value: number) => count(value, 'ouvrage', 'ouvrages'),
+    lentOn: (date: string) => `Prêté le ${date}`,
+    reminderOn: (date: string) => `Rappel le ${date}`,
+    dueToday: 'Retour prévu aujourd’hui',
+    late: (date: string) => `En retard · retour prévu le ${date}`,
+    courtesy: (name: string) => `Adresser un rappel courtois à ${name}`,
+    giveBack: 'Restitué',
+    giveBackLabel: (title: string, name: string) => `« ${title} » restitué par ${name}`,
+    givenBack: (title: string, place: string) => `« ${title} » restitué · à ranger dans ${place}`,
+    undo: 'Annuler',
+    undone: (title: string) => `Restitution de « ${title} » annulée`,
+    scanToGiveBack: 'Lors de la restitution, il suffit également de scanner à nouveau l’ouvrage.',
+    history: 'Historique des prêts',
+  },
+
+  /** « Prêter un ouvrage »: borrower and duration, from the lending scan or the book sheet. */
+  lend: {
+    title: 'Prêter un ouvrage',
+    scanned: 'Scanné à l’instant',
+    copy: 'Exemplaire',
+    borrower: 'Emprunteur',
+    newPerson: 'Nouvelle personne',
+    nameLabel: 'Nom de l’emprunteur',
+    namePlaceholder: 'Par exemple : Claire',
+    duration: 'Durée du prêt',
+    durations: { '2w': '2 semaines', '1m': '1 mois', '2m': '2 mois' },
+    confirm: (name: string) => `Prêter à ${name}`,
+    chooseBorrower: 'Veuillez choisir un emprunteur',
+    done: (title: string, name: string, date: string) => `« ${title} » prêté à ${name} · rappel le ${date}`,
+    failed: 'Cet exemplaire est déjà prêté.',
+  },
+
+  /** Scan opened by « Prêter un ouvrage »: a book at home is lent, a lent book is given back. */
+  lendScan: {
+    title: 'Prêter ou restituer',
+    quit: 'Revenir aux prêts',
+    ready: 'Présentez le code-barres de l’ouvrage à prêter ou restitué',
+    hint: 'Un ouvrage prêté qui vous est restitué est reconnu de même : scannez-le simplement.',
+    notOwned: 'Cet ouvrage ne figure pas dans votre bibliothèque',
+    shelfQr: 'Ce code QR désigne une étagère : présentez le code-barres d’un ouvrage',
+    lent: (value: number) => plural(value, 'prêté', 'prêtés'),
+    givenBack: (value: number) => plural(value, 'restitué', 'restitués'),
+    listTitle: 'Cette session',
+    empty: 'Les ouvrages prêtés ou restitués apparaîtront ici, le plus récent en tête.',
+    rowLent: (name: string, date: string) => `À ${name} · rappel le ${date}`,
+    rowGivenBack: (place: string) => `À ranger dans ${place}`,
+    statusLent: 'Prêté',
+    statusGivenBack: 'Restitué',
+    undoRow: (title: string) => `Annuler l’opération sur « ${title} »`,
+    undoneLend: (title: string) => `Prêt de « ${title} » annulé`,
+    undoneGiveBack: (title: string) => `Restitution de « ${title} » annulée`,
+    undoFailed: 'Cette opération ne peut plus être annulée : l’exemplaire a été prêté de nouveau.',
+    justLent: (title: string, name: string) => `${title} — vient d’être prêté à ${name}`,
+    justGivenBack: (title: string) => `${title} — vient d’être restitué`,
+    finish: 'Terminer',
+    chooseText: (value: number) =>
+      value === 1 ? 'Un exemplaire de cet ouvrage est prêté :' : `${formatNumber(value)} exemplaires de cet ouvrage sont prêtés :`,
+    givenBackBy: (name: string) => `Restitué par ${name}`,
+    lentSince: (date: string) => `Prêté le ${date}`,
+    lendAnother: 'Prêter un autre exemplaire',
+    ignore: 'Ne rien faire',
+  },
+
+  /** « Adresser un rappel courtois »: a message the user sends with the app of their choice. */
+  courtesy: {
+    title: (name: string) => `Rappel courtois à ${name}`,
+    label: 'Message',
+    hint: 'Vous pouvez le modifier avant de l’envoyer.',
+    message: (name: string, title: string, date: string) =>
+      `Bonjour ${name},\nJ’espère que vous avez apprécié « ${title} », que je vous ai prêté le ${date}. Pourriez-vous me le rapporter lorsque vous l’aurez terminé ? Je vous en remercie par avance.`,
+    send: 'Envoyer le message',
+    copy: 'Copier le message',
+    copied: 'Message copié : collez-le dans la messagerie de votre choix.',
+    copyFailed: 'Le message n’a pu être copié : sélectionnez-le, puis copiez-le.',
+  },
+
+  loanHistory: {
+    title: 'Historique des prêts',
+    back: 'Prêts',
+    summary: (value: number) => (value === 0 ? 'Aucun prêt terminé' : count(value, 'prêt terminé', 'prêts terminés')),
+    empty: 'Les prêts figureront ici une fois les ouvrages restitués.',
+    period: (name: string, from: string, to: string) => `${name} · du ${from} au ${to}`,
+    removed: 'Ouvrage retiré de votre bibliothèque',
   },
 
   recap: {

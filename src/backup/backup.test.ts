@@ -80,6 +80,7 @@ beforeEach(async () => {
   await database.copies.add(newCopy(book.id, shelf.id));
   await setUserCover(book.id, new Blob(['couverture']), database);
   await addQuote(book.id, { text: 'Le bacille de la peste ne meurt ni ne disparaît jamais.' }, database);
+  await database.loans.add({ id: 'pret', copyId: 'exemplaire', borrower: 'Sam', lentAt: 1, dueAt: 2 });
   await saveClient('client.apps.googleusercontent.com', 'secret', database);
   await updateBackupState({ refreshToken: 'refresh' }, database);
 });
@@ -90,7 +91,7 @@ afterEach(async () => {
 });
 
 describe('contenu d’une sauvegarde', () => {
-  it('restaure à l’identique les fiches, exemplaires, citations et photographies', async () => {
+  it('restaure à l’identique les fiches, exemplaires, prêts, citations et photographies', async () => {
     const snapshot = await buildSnapshot(database);
     const other = new LibraryDatabase(`test-${newId()}`);
     await other.blobs.bulkAdd([...(await database.blobs.toArray()), { id: 'orpheline', blob: new Blob(['x']), createdAt: 0 }]);
@@ -104,8 +105,13 @@ describe('contenu d’une sauvegarde', () => {
     const text = JSON.stringify(await buildSnapshot(database));
     expect(parseSnapshot(text)?.books).toHaveLength(1);
     expect(parseSnapshot('{"format":"autre"}')).toBeUndefined();
-    expect(parseSnapshot(text.replace('"version":1', '"version":99'))).toBeUndefined();
+    expect(parseSnapshot(text.replace('"version":2', '"version":99'))).toBeUndefined();
     expect(parseSnapshot('pas du JSON')).toBeUndefined();
+    // A backup made before the loans (lot 4) is still read.
+    const before = JSON.parse(text) as Record<string, unknown>;
+    delete before.loans;
+    expect(parseSnapshot(JSON.stringify({ ...before, version: 1 }))?.loans).toEqual([]);
+    expect(parseSnapshot(JSON.stringify({ ...before, version: 2 }))).toBeUndefined();
   });
 });
 

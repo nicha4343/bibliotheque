@@ -220,6 +220,17 @@ export function ShelfIcon(props: IconProps) {
   );
 }
 
+/** Book handed over (« Prêts » shortcut, lending scan). */
+export function LoanIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H15v13H5.5A1.5 1.5 0 0 0 4 17.5v-13z" />
+      <path d="M4 17.5A1.5 1.5 0 0 0 5.5 19H11" />
+      <path d="M14 19.5h7M18 16.5l3 3-3 3" />
+    </Svg>
+  );
+}
+
 export function DownloadIcon(props: IconProps) {
   return (
     <Svg {...props}>

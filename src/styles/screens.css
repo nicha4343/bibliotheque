@@ -1851,3 +1851,275 @@ a.copy__place:hover {
 .copy__move {
   flex-shrink: 0;
 }
+
+/* Book sheet: actions of a copy (move, lend, given back), under its place */
+.copy--actions {
+  align-items: flex-start;
+  padding-top: var(--space-2);
+}
+
+.copy--actions .copy__number {
+  margin-top: 9px;
+}
+
+
+.copy__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  padding-left: 18px;
+}
+
+/* Library: number of loans whose return day has come, on the « Prêts » shortcut */
+.shortcut {
+  position: relative;
+}
+
+.shortcut__badge {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--color-pending);
+  color: var(--color-on-accent);
+  font-size: var(--text-caption);
+  font-weight: 700;
+}
+
+/* Screen 10 · Loans */
+.lend-start {
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: var(--space-2) 18px;
+  border-radius: var(--radius-card);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  text-decoration: none;
+}
+
+.lend-start:hover {
+  background: var(--color-accent-hover);
+  color: var(--color-on-accent);
+}
+
+.lend-start__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lend-start__title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.lend-start__detail {
+  font-size: var(--text-small);
+}
+
+.status-line--with-action {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 var(--space-3);
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.status-line--with-action > span {
+  padding: var(--space-2) 0;
+}
+
+.loan-group__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 14px 14px 10px;
+}
+
+.loan-group__text {
+  display: flex;
+  flex-direction: column;
+}
+
+.loan-group__name {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.loan-group__count {
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  color: var(--color-on-accent);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* White text on each colour: contrast above 4.5:1. */
+.avatar--0 {
+  background: #0f766e;
+}
+
+.avatar--1 {
+  background: #5b4a7a;
+}
+
+.avatar--2 {
+  background: #b45309;
+}
+
+.avatar--3 {
+  background: #1f5c7a;
+}
+
+.avatar--4 {
+  background: #6e2f45;
+}
+
+.avatar--5 {
+  background: #2e5e4e;
+}
+
+.loan-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.loan {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px 14px;
+  border-top: 1px solid var(--color-divider-soft);
+}
+
+.card.loan-list > .loan:first-child {
+  border-top: 0;
+}
+
+.loan__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.loan__title {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: var(--text-body);
+  font-weight: 600;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+a.loan__title:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
+.loan__detail,
+.loan__state {
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.loan__state {
+  font-weight: 700;
+}
+
+.loan__state--late {
+  color: var(--color-pending-text);
+}
+
+.loan__courtesy {
+  min-height: 36px;
+  padding: 0;
+  font-size: var(--text-small);
+  font-weight: 700;
+  text-align: left;
+}
+
+.loan__back {
+  flex-shrink: 0;
+  min-height: 40px;
+}
+
+.loans__hint {
+  padding: 0 var(--space-1);
+  font-size: var(--text-caption);
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+
+/* « Prêter un ouvrage » sheet */
+.lend__book {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--color-background);
+}
+
+.lend__text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lend__flag {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.lend__title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.lend__detail {
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.lend__group {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.lend__group > legend {
+  margin-bottom: var(--space-2);
+  padding: 0;
+}

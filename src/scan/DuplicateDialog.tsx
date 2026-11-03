@@ -2,7 +2,7 @@ import { CopiesIcon, PinIcon } from '../components/icons';
 import { CoverImage } from '../components/CoverImage';
 import { Sheet } from '../components/Sheet';
 import { db } from '../db/db';
-import type { ScanEntry } from '../db/schema';
+import type { Copy, ScanEntry } from '../db/schema';
 import { useLiveQuery } from '../db/useLiveQuery';
 import type { PlaceIndex } from '../places/places';
 import { fr } from '../textes/fr';
@@ -25,7 +25,9 @@ export function DuplicateDialog({ entry, places, onAnswer }: DuplicateDialogProp
         db.books.get(entry.bookId),
         db.copies.where('bookId').equals(entry.bookId).sortBy('addedAt'),
       ]);
-      return { book, copies };
+      const loans = copies.length > 0 ? await db.loans.where('copyId').anyOf(copies.map((copy) => copy.id)).toArray() : [];
+      const borrowers = new Map(loans.filter((loan) => loan.returnedAt === undefined).map((loan) => [loan.copyId, loan.borrower]));
+      return { book, copies, borrowers };
     },
     [entry.bookId],
     undefined,
@@ -33,6 +35,12 @@ export function DuplicateDialog({ entry, places, onAnswer }: DuplicateDialogProp
   const book = data?.book;
   const copies = data?.copies ?? [];
   const here = places.byShelfId.get(entry.shelfId)?.label ?? '';
+  const placeLabel = (copy: Copy) => {
+    const label = places.byShelfId.get(copy.shelfId)?.label ?? fr.library.noPlace;
+    const borrower = data?.borrowers.get(copy.id);
+    if (borrower) return fr.duplicate.lentPlace(label, borrower);
+    return copy.lostAt === undefined ? label : fr.duplicate.lostPlace(label);
+  };
   const title = book?.title || fr.common.untitled;
 
   return (
@@ -58,9 +66,7 @@ export function DuplicateDialog({ entry, places, onAnswer }: DuplicateDialogProp
             {copies.map((copy) => (
               <li key={copy.id} class="duplicate__place">
                 <PinIcon size={16} />
-                {copy.lostAt === undefined
-                  ? places.byShelfId.get(copy.shelfId)?.label
-                  : fr.duplicate.lostPlace(places.byShelfId.get(copy.shelfId)?.label ?? fr.library.noPlace)}
+                {placeLabel(copy)}
               </li>
             ))}
           </ul>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseHash, routeHref } from './router';
+import { LOAN_HISTORY, parseHash, routeHref } from './router';
 
 describe('routes', () => {
   it('reconnaissent les onglets et leurs paramètres', () => {
@@ -21,6 +21,12 @@ describe('routes', () => {
       detail: 'exemplaire 2',
     });
     expect(parseHash(routeHref('shelf', 'a/b'))).toEqual({ id: 'shelf', param: 'a/b' });
+  });
+
+  it('distinguent les prêts, leur historique et le scan d’un ouvrage à prêter', () => {
+    expect(parseHash('#/prets')).toEqual({ id: 'loans' });
+    expect(parseHash(routeHref('loans', LOAN_HISTORY))).toEqual({ id: 'loans', param: 'historique' });
+    expect(parseHash('#/preter')).toEqual({ id: 'lend' });
   });
 
   it('ouvrent la bibliothèque par défaut', () => {

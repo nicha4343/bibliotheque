@@ -19,9 +19,11 @@ import { CoverImage } from '../components/CoverImage';
 import { CameraIcon, ChevronLeftIcon, GalleryIcon, PencilIcon, PinIcon, PlusIcon, TrashIcon } from '../components/icons';
 import { Sheet } from '../components/Sheet';
 import { db } from '../db/db';
-import type { Book, Copy, Id } from '../db/schema';
+import type { Book, Copy, Id, Loan } from '../db/schema';
 import { getSettings } from '../db/settings';
 import { useLiveQuery } from '../db/useLiveQuery';
+import { LendSheet } from '../loans/LendSheet';
+import { isActive, loanState, loanStateText, returnLoan } from '../loans/loans';
 import { fetchCover, type CoverCandidate } from '../metadata/covers';
 import { joinAuthors, parseAuthors } from '../pending/pending';
 import { loadPlaces, type PlaceIndex } from '../places/places';
@@ -29,7 +31,7 @@ import { navigate, routeHref } from '../router';
 import { compressImage } from '../scan/camera';
 import { LocationPicker } from '../scan/LocationPicker';
 import { rankOf } from '../shelves/order';
-import { formatDate, fr } from '../textes/fr';
+import { formatDate, formatNearDate, fr } from '../textes/fr';
 
 interface BookData {
   book: Book | undefined;
@@ -37,6 +39,8 @@ interface BookData {
   places: PlaceIndex;
   /** Position of each copy on its shelf, when the order is remembered and known. */
   ranks: Map<Id, number>;
+  /** Loan in progress of each lent copy. */
+  loans: Map<Id, Loan>;
 }
 
 async function loadBook(bookId: string): Promise<BookData> {
@@ -57,7 +61,13 @@ async function loadBook(bookId: string): Promise<BookData> {
       }
     }
   }
-  return { book, copies, places, ranks };
+  const loans = new Map<Id, Loan>();
+  if (copies.length > 0) {
+    for (const loan of await db.loans.where('copyId').anyOf(copies.map((copy) => copy.id)).toArray()) {
+      if (isActive(loan)) loans.set(loan.copyId, loan);
+    }
+  }
+  return { book, copies, places, ranks, loans };
 }
 
 type Dialog =
@@ -67,6 +77,7 @@ type Dialog =
   | { kind: 'addCopy' }
   | { kind: 'move'; copy: Copy }
   | { kind: 'removeCopy'; copy: Copy }
+  | { kind: 'lend'; copy: Copy }
   | { kind: 'delete' };
 
 const coverBadge = (book: Book): string => {
@@ -89,7 +100,8 @@ export function BookScreen({ bookId }: { bookId: string }) {
   }, [data?.book]);
 
   if (!data) return <main class="screen" />;
-  const { book, copies, places, ranks } = data;
+  const { book, copies, places, ranks, loans } = data;
+  const now = new Date();
   if (!book) {
     return (
       <main class="screen">
@@ -163,13 +175,14 @@ export function BookScreen({ bookId }: { bookId: string }) {
             {copies.map((copy, index) => {
               const lost = copy.lostAt !== undefined;
               const rank = ranks.get(copy.id);
+              const loan = loans.get(copy.id);
               const detail = lost
                 ? fr.book.lostOn(formatDate(new Date(copy.lostAt ?? 0)))
                 : rank === undefined
                   ? undefined
                   : fr.book.position(fr.common.ordinalFeminine(rank));
               return (
-                <li key={copy.id} class="copy">
+                <li key={copy.id} class="copy copy--actions">
                   <span class="copy__number" aria-hidden="true">
                     {index + 1}
                   </span>
@@ -187,17 +200,54 @@ export function BookScreen({ bookId }: { bookId: string }) {
                       </span>
                     )}
                     {detail && <span class={lost ? 'copy__detail copy__detail--lost' : 'copy__detail'}>{detail}</span>}
+                    {loan && (
+                      <>
+                        <span class="copy__detail">{fr.book.lentTo(loan.borrower, formatNearDate(new Date(loan.lentAt), now))}</span>
+                        <span class={loanState(loan, now) === 'running' ? 'copy__detail' : 'copy__detail copy__detail--lost'}>
+                          {loanStateText(loan, now)}
+                        </span>
+                      </>
+                    )}
+                    <span class="copy__actions">
+                      <button
+                        type="button"
+                        class="text-button"
+                        aria-label={lost ? fr.book.foundLabel(placeOf(copy)) : fr.book.move(placeOf(copy))}
+                        onClick={() => {
+                          setDialog({ kind: 'move', copy });
+                        }}
+                      >
+                        {lost ? fr.book.found : fr.book.moveButton}
+                      </button>
+                      {loan ? (
+                        <button
+                          type="button"
+                          class="text-button"
+                          aria-label={fr.book.giveBackLabel(loan.borrower)}
+                          onClick={() => {
+                            void returnLoan(loan.id).then((done) => {
+                              if (done) setMessage(fr.loans.givenBack(book.title || fr.common.untitled, placeOf(copy)));
+                            });
+                          }}
+                        >
+                          {fr.book.giveBack}
+                        </button>
+                      ) : (
+                        !lost && (
+                          <button
+                            type="button"
+                            class="text-button"
+                            aria-label={fr.book.lendLabel(placeOf(copy))}
+                            onClick={() => {
+                              setDialog({ kind: 'lend', copy });
+                            }}
+                          >
+                            {fr.book.lend}
+                          </button>
+                        )
+                      )}
+                    </span>
                   </span>
-                  <button
-                    type="button"
-                    class="text-button copy__move"
-                    aria-label={lost ? fr.book.foundLabel(placeOf(copy)) : fr.book.move(placeOf(copy))}
-                    onClick={() => {
-                      setDialog({ kind: 'move', copy });
-                    }}
-                  >
-                    {lost ? fr.book.found : fr.book.moveButton}
-                  </button>
                   {copies.length > 1 && (
                     <button
                       type="button"
@@ -279,6 +329,18 @@ export function BookScreen({ bookId }: { bookId: string }) {
                 setMessage(fr.book.copyMoved(label));
               });
             }
+          }}
+          onClose={close}
+        />
+      )}
+      {dialog?.kind === 'lend' && (
+        <LendSheet
+          book={book}
+          copies={[dialog.copy]}
+          places={places}
+          onLent={(loan) => {
+            close();
+            setMessage(fr.lend.done(book.title || fr.common.untitled, loan.borrower, formatNearDate(new Date(loan.dueAt), new Date())));
           }}
           onClose={close}
         />

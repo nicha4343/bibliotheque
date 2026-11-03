@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Book, Copy } from '../db/schema';
+import type { Book, Copy, Loan } from '../db/schema';
 import { foldText, matchesPlace, matchesQuery, matchesStatus, sortKey, toEntries } from './filter';
 
 const book = (id: string, title: string, authors: string[], extra: Partial<Book> = {}): Book => ({
@@ -62,5 +62,12 @@ describe('recherche dans la bibliothèque', () => {
     expect(matchesStatus(a, 'read')).toBe(true);
     expect(matchesStatus(b, 'read')).toBe(false);
     expect(matchesStatus(b, 'all')).toBe(true);
+  });
+
+  it('retient les ouvrages dont un exemplaire est prêté, et non ceux qui ont été restitués', () => {
+    const loan = (copyId: string, returnedAt?: number): Loan => ({ id: copyId, copyId, borrower: 'Sam', lentAt: 1, dueAt: 2, returnedAt });
+    const lent = toEntries(books, [copy('1', 'a', 'salon-1'), copy('3', 'b', 'salon-2')], [loan('1'), loan('3', 5), loan('inconnu')]);
+    expect(lent.filter((entry) => matchesStatus(entry, 'lent')).map((entry) => entry.book.id)).toEqual(['a']);
+    expect(lent.find((entry) => entry.book.id === 'a')?.loans.map((item) => item.borrower)).toEqual(['Sam']);
   });
 });

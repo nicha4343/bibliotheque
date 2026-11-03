@@ -1,12 +1,14 @@
 import { NavBar } from './components/NavBar';
 import { PwaNotices } from './components/PwaNotices';
-import { useRoute, type Route, type TabId } from './router';
+import { LOAN_HISTORY, useRoute, type Route, type TabId } from './router';
 import { BackupScreen } from './screens/BackupScreen';
 import { BookScreen } from './screens/BookScreen';
 import { EntryScreen } from './screens/EntryScreen';
 import { ImportScreen } from './screens/ImportScreen';
 import { LabelsScreen } from './screens/LabelsScreen';
+import { LendScanScreen } from './screens/LendScanScreen';
 import { LibraryScreen } from './screens/LibraryScreen';
+import { LoanHistoryScreen, LoansScreen } from './screens/LoansScreen';
 import { PendingScreen } from './screens/PendingScreen';
 import { PlacesScreen } from './screens/PlacesScreen';
 import { RecapScreen } from './screens/RecapScreen';
@@ -23,6 +25,7 @@ function tabOf(route: Route): TabId | undefined {
     case 'book':
     case 'shelves':
     case 'shelf':
+    case 'loans':
       return 'library';
     case 'pending':
       return 'pending';
@@ -61,6 +64,10 @@ function CurrentScreen({ route }: { route: Route }) {
       return route.param ? <ShelfScreen key={route.param} shelfRef={route.param} copyId={route.detail} /> : <ShelvesScreen />;
     case 'check':
       return route.param ? <ShelfCheckScreen key={route.param} shelfId={route.param} /> : <ShelvesScreen />;
+    case 'loans':
+      return route.param === LOAN_HISTORY ? <LoanHistoryScreen /> : <LoansScreen />;
+    case 'lend':
+      return <LendScanScreen />;
     case 'import':
       return <ImportScreen />;
     case 'backup':

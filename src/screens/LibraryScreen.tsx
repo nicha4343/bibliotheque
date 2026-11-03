@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { CoverImage } from '../components/CoverImage';
 import { EmptyState } from '../components/EmptyState';
-import { CloseIcon, LibraryIcon, PinIcon, SearchIcon, ShelfIcon } from '../components/icons';
+import { CloseIcon, LibraryIcon, LoanIcon, PinIcon, SearchIcon, ShelfIcon } from '../components/icons';
 import { Screen } from '../components/Screen';
 import { db } from '../db/db';
 import { useLiveQuery } from '../db/useLiveQuery';
@@ -15,6 +15,7 @@ import {
   type PlaceFilter,
   type StatusFilter,
 } from '../library/filter';
+import { dueLoans } from '../loans/loans';
 import { indexPlaces, type PlaceIndex } from '../places/places';
 import { ROUTE_HASHES, routeHref } from '../router';
 import { formatNumber, fr } from '../textes/fr';
@@ -22,16 +23,23 @@ import { formatNumber, fr } from '../textes/fr';
 interface LibraryData {
   entries: LibraryEntry[];
   places: PlaceIndex;
+  /** Loans whose return day has come: the reminder shown on the « Prêts » shortcut. */
+  due: number;
 }
 
 async function loadLibrary(): Promise<LibraryData> {
-  const [books, copies, rooms, shelves] = await Promise.all([
+  const [books, copies, rooms, shelves, loans] = await Promise.all([
     db.books.toArray(),
     db.copies.toArray(),
     db.rooms.toArray(),
     db.shelves.toArray(),
+    db.loans.toArray(),
   ]);
-  return { entries: toEntries(books, copies), places: indexPlaces(rooms, shelves) };
+  return {
+    entries: toEntries(books, copies, loans),
+    places: indexPlaces(rooms, shelves),
+    due: dueLoans(loans, new Date()).length,
+  };
 }
 
 interface Filters {
@@ -57,6 +65,7 @@ const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: 'all', label: fr.library.filterAll },
   { id: 'toread', label: fr.library.filterToRead },
   { id: 'read', label: fr.library.filterRead },
+  { id: 'lent', label: fr.library.filterLent },
 ];
 
 /** Screen 5: instant local search, filters by place and reading status. */
@@ -106,14 +115,24 @@ export function LibraryScreen() {
 
       {data && places && total !== 0 && (
         <>
-          {places.byShelfId.size > 0 && (
-            <nav class="shortcuts" aria-label={fr.library.shortcuts}>
+          <nav class="shortcuts" aria-label={fr.library.shortcuts}>
+            {places.byShelfId.size > 0 && (
               <a class="shortcut" href={routeHref('shelves')}>
                 <ShelfIcon size={22} />
                 {fr.library.shelves}
               </a>
-            </nav>
-          )}
+            )}
+            <a class="shortcut" href={routeHref('loans')}>
+              <LoanIcon size={22} />
+              {fr.library.loans}
+              {data.due > 0 && (
+                <span class="shortcut__badge">
+                  {formatNumber(data.due)}
+                  <span class="visually-hidden"> {fr.library.loansDue(data.due)}</span>
+                </span>
+              )}
+            </a>
+          </nav>
 
           <div class="search">
             <label class="visually-hidden" for="library-search">
@@ -239,9 +258,10 @@ function hasPlaceOption(value: string, places: PlaceIndex): boolean {
 }
 
 function BookRow({ entry, places }: { entry: LibraryEntry; places: PlaceIndex }) {
-  const { book, copies } = entry;
+  const { book, copies, loans } = entry;
   const first = firstPresentCopy(entry);
   const place = first ? places.byShelfId.get(first.shelfId)?.label : copies.length > 0 ? fr.library.lost : undefined;
+  const lentTo = loans[0]?.borrower;
   const read = book.status === 'read';
   return (
     <li>
@@ -251,7 +271,11 @@ function BookRow({ entry, places }: { entry: LibraryEntry; places: PlaceIndex })
           <span class="book-row__title">{book.title || fr.common.untitled}</span>
           <span class="book-row__author">{book.authors.join(', ') || fr.common.unknownAuthor}</span>
           <span class="book-row__tags">
-            <span class="tag">{place ?? fr.library.noPlace}</span>
+            {lentTo ? (
+              <span class="tag tag--pending">{fr.library.lentTo(lentTo)}</span>
+            ) : (
+              <span class="tag">{place ?? fr.library.noPlace}</span>
+            )}
             {copies.length > 1 && <span class="tag tag--accent">{fr.library.copies(copies.length)}</span>}
             <span class={read ? 'book-row__status book-row__status--read' : 'book-row__status'}>
               {read ? fr.library.statusRead : fr.library.statusToRead}
