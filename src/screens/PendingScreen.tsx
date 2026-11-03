@@ -8,7 +8,7 @@ import { Screen } from '../components/Screen';
 import type { Id, PendingItem } from '../db/schema';
 import { DEFAULT_SETTINGS, getSettings } from '../db/settings';
 import { useLiveQuery } from '../db/useLiveQuery';
-import { awaitsReading, currentReading, coverKeyRefused } from '../pending/coverReading';
+import { awaitsReading, coverKeyRefused, coverReadingPause, currentReading } from '../pending/coverReading';
 import {
   confirmReading,
   deleteItem,
@@ -24,6 +24,9 @@ import { routeHref } from '../router';
 import { formatDate, formatNumber, fr } from '../textes/fr';
 
 type Filter = 'all' | PendingItem['kind'];
+
+/** Where the free models are allowed for an OpenRouter account (lot 6). */
+const OPEN_ROUTER_PRIVACY = 'https://openrouter.ai/settings/privacy';
 
 const RETRY_MESSAGES: Record<Exclude<RetryOutcome['status'], 'found'>, string> = {
   unknown: fr.pending.stillUnknown,
@@ -81,7 +84,7 @@ export function PendingScreen() {
     }
   };
 
-  /** « Confirmer » (lot 6): the notice is created with what Mistral read on the cover. */
+  /** « Confirmer » (lot 6): the notice is created with what OpenRouter read on the cover. */
   const confirm = async (item: PendingItem) => {
     setSearching((current) => new Set(current).add(item.id));
     try {
@@ -97,7 +100,18 @@ export function PendingScreen() {
   };
 
   const photographed = all.some((item) => item.photoBlobId);
-  const keyHint = !photographed ? '' : !settings.mistralKey ? fr.pending.noKeyHint : coverKeyRefused(settings.mistralKey) ? fr.pending.keyRefusedHint : '';
+  const readingPause = coverReadingPause();
+  const keyHint: { text: string; link?: { href: string; label: string } } | undefined = !photographed
+    ? undefined
+    : !settings.openRouterKey
+      ? { text: fr.pending.noKeyHint, link: { href: routeHref('settings'), label: fr.pending.toSettings } }
+      : coverKeyRefused(settings.openRouterKey)
+        ? { text: fr.pending.keyRefusedHint, link: { href: routeHref('settings'), label: fr.pending.toSettings } }
+        : readingPause?.reason === 'policy'
+          ? { text: fr.pending.policyHint, link: { href: OPEN_ROUTER_PRIVACY, label: fr.pending.toPrivacy } }
+          : readingPause?.reason === 'daily'
+            ? { text: fr.pending.dailyHint }
+            : undefined;
 
   const remove = async (item: PendingItem) => {
     setRemoving(undefined);
@@ -122,8 +136,15 @@ export function PendingScreen() {
           <p class="screen__intro">{fr.pending.intro}</p>
           {keyHint && (
             <p class="pending-hint">
-              {keyHint}{' '}
-              <a href={routeHref('settings')}>{fr.pending.toSettings}</a>
+              {keyHint.text}
+              {keyHint.link && (
+                <>
+                  {' '}
+                  <a href={keyHint.link.href} {...(keyHint.link.href.startsWith('https:') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+                    {keyHint.link.label}
+                  </a>
+                </>
+              )}
             </p>
           )}
           <div class="chips chips--wrap" role="group" aria-label={fr.pending.filters}>
@@ -160,7 +181,7 @@ export function PendingScreen() {
                 item={item}
                 place={places?.byShelfId.get(item.shelfId)?.label}
                 searching={searching.has(item.id)}
-                reading={awaitsReading(item, settings.mistralKey)}
+                reading={awaitsReading(item, settings.openRouterKey)}
                 onRetry={() => void retry(item)}
                 onConfirm={() => void confirm(item)}
                 onPhotograph={() => {
@@ -210,7 +231,7 @@ interface PendingCardProps {
   item: PendingItem;
   place: string | undefined;
   searching: boolean;
-  /** Mistral has yet to read the photograph (lot 6). */
+  /** OpenRouter has yet to read the photograph (lot 6). */
   reading: boolean;
   onRetry: () => void;
   onConfirm: () => void;

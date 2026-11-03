@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LibraryDatabase } from '../db/db';
 import { newId } from '../db/ids';
 import type { ScanSession, Shelf } from '../db/schema';
-import type { ReadCover, ReadOutcome } from '../metadata/mistral';
+import type { ReadCover, ReadOutcome } from '../metadata/openRouter';
 import { createRoom } from '../places/places';
 import { recordNoBarcode, startSession } from '../scan/session';
 import { awaitsReading, currentReading, readItemCover } from './coverReading';
@@ -31,23 +31,23 @@ async function photographedItem(): Promise<string> {
   return entry.pendingItemId ?? '';
 }
 
-describe('lecture des couvertures de « À compléter » par Mistral', () => {
-  it('conserve ce que Mistral a lu, lié à la photographie lue', async () => {
+describe('lecture des couvertures de « À compléter » par OpenRouter', () => {
+  it('conserve ce que OpenRouter a lu, lié à la photographie lue', async () => {
     const itemId = await photographedItem();
     const before = await database.pendingItems.get(itemId);
     expect(before && awaitsReading(before, 'clé')).toBe(true);
     expect(before && awaitsReading(before, '')).toBe(false);
 
-    expect(await readItemCover(itemId, 'clé', database, read(LOTUS))).toBe('read');
+    expect((await readItemCover(itemId, 'clé', database, read(LOTUS))).status).toBe('read');
     const item = await database.pendingItems.get(itemId);
     expect(item && currentReading(item)).toMatchObject(LOTUS);
     expect(item && awaitsReading(item, 'clé')).toBe(false);
   });
 
-  it('ne garde rien quand Mistral est indisponible ou refuse la clé', async () => {
+  it('ne garde rien quand OpenRouter est indisponible ou refuse la clé', async () => {
     const itemId = await photographedItem();
-    expect(await readItemCover(itemId, 'clé', database, () => Promise.resolve({ status: 'busy' }))).toBe('busy');
-    expect(await readItemCover(itemId, 'clé', database, () => Promise.resolve({ status: 'refused' }))).toBe('refused');
+    expect((await readItemCover(itemId, 'clé', database, () => Promise.resolve({ status: 'busy' }))).status).toBe('busy');
+    expect((await readItemCover(itemId, 'clé', database, () => Promise.resolve({ status: 'refused' }))).status).toBe('refused');
     expect((await database.pendingItems.get(itemId))?.coverReading).toBeUndefined();
   });
 
@@ -74,7 +74,7 @@ describe('lecture des couvertures de « À compléter » par Mistral', () => {
     expect(await database.pendingItems.count()).toBe(0);
   });
 
-  it('« Confirmer » n’ajoute rien quand Mistral n’a lu aucun titre', async () => {
+  it('« Confirmer » n’ajoute rien quand OpenRouter n’a lu aucun titre', async () => {
     const itemId = await photographedItem();
     await readItemCover(itemId, 'clé', database, read({ title: '', authors: [] }));
     expect(await confirmReading(itemId, database)).toBeUndefined();

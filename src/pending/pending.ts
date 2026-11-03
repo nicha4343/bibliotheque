@@ -67,7 +67,7 @@ export interface EntryFields {
   title: string;
   authors: string[];
   publisher: string;
-  /** Read on the cover by Mistral (lot 6). */
+  /** Read on the cover by OpenRouter (lot 6). */
   seriesName?: string | undefined;
   seriesIndex?: number | undefined;
 }
@@ -88,7 +88,7 @@ export async function completeItem(
   return resolveItem(item, fields, shelfId, database);
 }
 
-/** What « Confirmer » records (screen 3): what Mistral read on the cover. */
+/** What « Confirmer » records (screen 3): what OpenRouter read on the cover. */
 export function readingEntry(reading: CoverReading): EntryFields {
   return {
     title: reading.title,

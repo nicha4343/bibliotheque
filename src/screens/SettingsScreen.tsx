@@ -11,7 +11,7 @@ import { DEFAULT_SETTINGS, getSettings, updateSettings } from '../db/settings';
 import { getStorageProtection, type StorageProtection } from '../db/storage';
 import { useLiveQuery } from '../db/useLiveQuery';
 import { disableLoanNotifications, enableLoanNotifications } from '../loans/reminders';
-import { checkMistralKey } from '../metadata/mistral';
+import { checkOpenRouterKey } from '../metadata/openRouter';
 import { checkGoogleBooksKey } from '../metadata/googleBooksKey';
 import { retryAllUnknown } from '../pending/pending';
 import { LIST_TABS, routeHref } from '../router';
@@ -138,13 +138,13 @@ function GoogleBooksKeyField({ saved }: { saved: string }) {
   );
 }
 
-const MISTRAL_CHECKS = { valid: fr.settings.mistralValid, refused: fr.settings.mistralRefused, unverified: fr.settings.mistralUnverified };
+const OPEN_ROUTER_CHECKS = { valid: fr.settings.openRouterValid, refused: fr.settings.openRouterRefused, unverified: fr.settings.openRouterUnverified };
 
 /** Where the user creates a free key (lot 6). */
-const MISTRAL_KEYS = 'https://console.mistral.ai/api-keys';
+const OPEN_ROUTER_KEYS = 'https://openrouter.ai/settings/keys';
 
-/** « Clé Mistral » (lot 6): checked once when saved; the covers photographed are then read. */
-function MistralKeyField({ saved }: { saved: string }) {
+/** « Clé OpenRouter » (lot 6): checked once when saved; the covers photographed are then read. */
+function OpenRouterKeyField({ saved }: { saved: string }) {
   const [draft, setDraft] = useState(saved);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -158,13 +158,13 @@ function MistralKeyField({ saved }: { saved: string }) {
     const key = draft.trim();
     setBusy(true);
     try {
-      await updateSettings({ mistralKey: key });
+      await updateSettings({ openRouterKey: key });
       if (!key) {
-        setMessage(fr.settings.mistralRemoved);
+        setMessage(fr.settings.openRouterRemoved);
         return;
       }
       setMessage(fr.settings.keyChecking);
-      setMessage(MISTRAL_CHECKS[await checkMistralKey(key)]);
+      setMessage(OPEN_ROUTER_CHECKS[await checkOpenRouterKey(key)]);
     } finally {
       setBusy(false);
     }
@@ -172,18 +172,18 @@ function MistralKeyField({ saved }: { saved: string }) {
 
   return (
     <form class="setting setting--stacked" onSubmit={(event) => void submit(event)}>
-      <label class="setting__label" for="mistral-key">
-        {fr.settings.mistralLabel}
+      <label class="setting__label" for="open-router-key">
+        {fr.settings.openRouterLabel}
       </label>
-      <p class="setting__detail" id="mistral-key-detail">
-        {fr.settings.mistralDetail}{' '}
-        <a href={MISTRAL_KEYS} target="_blank" rel="noopener noreferrer">
-          {fr.settings.mistralCreate}
+      <p class="setting__detail" id="open-router-key-detail">
+        {fr.settings.openRouterDetail}{' '}
+        <a href={OPEN_ROUTER_KEYS} target="_blank" rel="noopener noreferrer">
+          {fr.settings.openRouterCreate}
         </a>
       </p>
       <div class="inline-form">
         <input
-          id="mistral-key"
+          id="open-router-key"
           class="field__input mono inline-form__field"
           type="text"
           value={draft}
@@ -191,7 +191,7 @@ function MistralKeyField({ saved }: { saved: string }) {
           autocapitalize="off"
           spellcheck={false}
           enterKeyHint="done"
-          aria-describedby="mistral-key-detail"
+          aria-describedby="open-router-key-detail"
           onInput={(event) => {
             setDraft(event.currentTarget.value);
           }}
@@ -428,10 +428,10 @@ export function SettingsScreen() {
 
       <section class="section" aria-labelledby="cover-reading-title">
         <h2 class="section__title" id="cover-reading-title">
-          {fr.settings.mistralSection}
+          {fr.settings.openRouterSection}
         </h2>
         <div class="card">
-          <MistralKeyField saved={settings.mistralKey} />
+          <OpenRouterKeyField saved={settings.openRouterKey} />
         </div>
       </section>
 

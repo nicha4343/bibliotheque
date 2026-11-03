@@ -26,7 +26,7 @@ startBackups();
 startLookups();
 // Series of the books already catalogued, asked once to the BnF.
 startSeriesCompletion();
-// Photographs of « À compléter » read by Mistral in the background, never during a scan (lot 6).
+// Photographs of « À compléter » read by OpenRouter in the background, never during a scan (lot 6).
 startCoverReading();
 // « Notification à l’échéance »: the daily check of the loans is registered again.
 void refreshLoanNotifications();

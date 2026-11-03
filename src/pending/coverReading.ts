@@ -2,25 +2,27 @@ import { liveQuery } from 'dexie';
 import { db, type LibraryDatabase } from '../db/db';
 import type { CoverReading, Id, PendingItem } from '../db/schema';
 import { getSettings } from '../db/settings';
-import { readCoverWithMistral, type ReadOutcome } from '../metadata/mistral';
+import { readCoverWithOpenRouter, type ReadOutcome } from '../metadata/openRouter';
 import { parseHash, type RouteId } from '../router';
 
-// The photographs of « À compléter » are read by Mistral in the background, one after the other,
+// The photographs of « À compléter » are read by OpenRouter in the background, one after the other,
 // whatever the screen shown (lot 6): their title, author and publisher wait on the item (screens 3
 // and 4). Never during a scan, which must not slow down; online only, with the user's key.
 
 /** Screens reading barcodes. */
 const SCANNING_ROUTES: ReadonlySet<RouteId> = new Set<RouteId>(['scan', 'check', 'lend', 'giveBack', 'bookshop']);
-/** Mistral's free mode limits the requests per second and the words per minute: one photograph at a time, unhurried. */
+/** The free models allow 20 requests a minute: one photograph at a time, unhurried. */
 const SPACING_MS = 4000;
-/** Quota exhausted, service or network unavailable: asked again after this delay. */
+/** Over a limit, service or network unavailable, privacy settings to change: asked again after this delay. */
 const BUSY_DELAY_MS = 60_000;
-/** A photograph Mistral failed to read twice is left until the next start. */
+/** A photograph that could not be read twice is left until the next start. */
 const MAX_FAILURES = 2;
 
 const failures = new Map<Id, number>();
-/** The key Mistral refused: nothing is sent until another one is entered. */
+/** The key OpenRouter refused: nothing is sent until another one is entered. */
 let refusedKey: string | undefined;
+/** Why the reading waits, for the screens: the account forbids the free models, or the day's 50 are spent. */
+let pause: { reason: 'policy' } | { reason: 'daily'; until: number } | undefined;
 const listeners = new Set<() => void>();
 const notify = () => {
   listeners.forEach((listener) => {
@@ -38,14 +40,16 @@ export function subscribeCoverReading(listener: () => void): () => void {
 
 export const coverKeyRefused = (key: string): boolean => key.trim() !== '' && key.trim() === refusedKey;
 
+export const coverReadingPause = (): typeof pause => (pause?.reason === 'daily' && pause.until <= Date.now() ? undefined : pause);
+
 /** What was read on the item's current photograph, if it has been read. */
 export const currentReading = (item: PendingItem): CoverReading | undefined =>
   item.photoBlobId && item.coverReading?.photoBlobId === item.photoBlobId ? item.coverReading : undefined;
 
-/** Whether the photograph of the item waits for Mistral (never without a key Mistral accepts). */
-export const awaitsReading = (item: PendingItem, mistralKey: string): boolean =>
-  mistralKey.trim() !== '' &&
-  !coverKeyRefused(mistralKey) &&
+/** Whether the photograph of the item waits to be read (never without a key OpenRouter accepts). */
+export const awaitsReading = (item: PendingItem, openRouterKey: string): boolean =>
+  openRouterKey.trim() !== '' &&
+  !coverKeyRefused(openRouterKey) &&
   !!item.photoBlobId &&
   !currentReading(item) &&
   (failures.get(item.photoBlobId) ?? 0) < MAX_FAILURES;
@@ -57,19 +61,19 @@ export async function readItemCover(
   itemId: Id,
   key: string,
   database: LibraryDatabase = db,
-  read: Read = readCoverWithMistral,
-): Promise<ReadOutcome['status']> {
+  read: Read = readCoverWithOpenRouter,
+): Promise<ReadOutcome> {
   const item = await database.pendingItems.get(itemId);
   const photoBlobId = item?.photoBlobId;
   const photo = photoBlobId ? await database.blobs.get(photoBlobId) : undefined;
-  if (!photoBlobId || !photo) return 'failed';
+  if (!photoBlobId || !photo) return { status: 'failed' };
   const outcome = await read(photo.blob, key);
-  if (outcome.status !== 'read') return outcome.status;
+  if (outcome.status !== 'read') return outcome;
   await database.transaction('rw', database.pendingItems, async () => {
     const current = await database.pendingItems.get(itemId);
     if (current?.photoBlobId === photoBlobId) await database.pendingItems.update(itemId, { coverReading: { photoBlobId, ...outcome.cover } });
   });
-  return 'read';
+  return outcome;
 }
 
 let running = false;
@@ -82,10 +86,17 @@ let retryTimer: ReturnType<typeof setTimeout> | undefined;
 let preferred: Id | undefined;
 
 const scanning = (): boolean => SCANNING_ROUTES.has(parseHash(window.location.hash).id);
-const pause = (milliseconds: number) =>
+const wait = (milliseconds: number) =>
   new Promise((resolve) => {
     setTimeout(resolve, milliseconds);
   });
+
+function retryLater(delay: number, database: LibraryDatabase): void {
+  clearTimeout(retryTimer);
+  retryTimer = setTimeout(() => {
+    wakeCoverReading(database);
+  }, delay);
+}
 
 function wakeCoverReading(database: LibraryDatabase = db): void {
   if (running) {
@@ -99,31 +110,32 @@ function wakeCoverReading(database: LibraryDatabase = db): void {
         wakeAgain = false;
         for (;;) {
           if (scanning() || !navigator.onLine) break;
-          const key = (await getSettings(database)).mistralKey.trim();
+          const key = (await getSettings(database)).openRouterKey.trim();
           if (!key || coverKeyRefused(key)) break;
           const waiting = (await database.pendingItems.orderBy('createdAt').toArray()).filter((item) => awaitsReading(item, key));
           const item = waiting.find((candidate) => candidate.id === preferred) ?? waiting[0];
           if (!item?.photoBlobId) break;
-          await pause(Math.max(0, lastRequestAt + SPACING_MS - Date.now()));
+          await wait(Math.max(0, lastRequestAt + SPACING_MS - Date.now()));
           if (scanning()) break;
           lastRequestAt = Date.now();
-          const status = await readItemCover(item.id, key, database).catch((error: unknown) => {
+          const outcome = await readItemCover(item.id, key, database).catch((error: unknown): ReadOutcome => {
             console.error(error);
-            return 'failed' as const;
+            return { status: 'failed' };
           });
-          if (status === 'refused') {
+          const before = pause;
+          pause = outcome.status === 'policy' ? { reason: 'policy' } : outcome.status === 'busy' && outcome.retryAt ? { reason: 'daily', until: outcome.retryAt } : undefined;
+          if (pause !== before) notify();
+          if (outcome.status === 'refused') {
             refusedKey = key;
             notify();
             break;
           }
-          if (status === 'busy') {
-            clearTimeout(retryTimer);
-            retryTimer = setTimeout(() => {
-              wakeCoverReading(database);
-            }, BUSY_DELAY_MS);
+          // The privacy settings may be changed on OpenRouter's site, the key staying the same.
+          if (outcome.status === 'policy' || outcome.status === 'busy') {
+            retryLater(Math.max(BUSY_DELAY_MS, (outcome.status === 'busy' ? outcome.retryAt ?? 0 : 0) - Date.now()), database);
             break;
           }
-          if (status === 'failed') {
+          if (outcome.status === 'failed') {
             failures.set(item.photoBlobId, (failures.get(item.photoBlobId) ?? 0) + 1);
             notify();
           }
