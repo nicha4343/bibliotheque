@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
+import { BackAnchor } from '../components/BackLink';
 import { ConfirmSheet } from '../components/ConfirmSheet';
-import { ChevronLeftIcon, PencilIcon, PlusIcon, QrIcon, TrashIcon } from '../components/icons';
+import { PencilIcon, PlusIcon, QrIcon, TrashIcon } from '../components/icons';
 import { Screen } from '../components/Screen';
 import { Sheet } from '../components/Sheet';
 import { db } from '../db/db';
@@ -12,6 +13,7 @@ import {
   deleteRoomIfEmpty,
   deleteShelfIfEmpty,
   loadPlaces,
+  noteCreatedShelf,
   renameRoom,
   renameShelf,
   type PlaceIndex,
@@ -54,20 +56,24 @@ export function PlacesScreen() {
     setMessage(done ? '' : fr.places.notEmpty);
   };
 
+  // « Étagères » points out the shelf created here when the user comes back to it.
+  const addShelf = async (roomId: Id) => {
+    const shelf = await createShelf(roomId);
+    noteCreatedShelf(shelf.id);
+  };
+
   const addRoom = async (event: Event) => {
     event.preventDefault();
     if (!draft.trim()) return;
-    await createRoom(draft);
+    const { shelf } = await createRoom(draft);
+    noteCreatedShelf(shelf.id);
     setDraft('');
   };
 
   return (
     <Screen title={fr.places.screenTitle}>
       <div class="back-bar">
-        <a class="text-button back-bar__link" href={routeHref('settings')}>
-          <ChevronLeftIcon size={20} />
-          {fr.places.back}
-        </a>
+        <BackAnchor href={routeHref('settings')} label={fr.places.back} />
         <a class="text-button" href={routeHref('labels')}>
           <QrIcon size={18} />
           {fr.settings.labels}
@@ -139,7 +145,7 @@ export function PlacesScreen() {
                 );
               })}
               <li class="place-shelf">
-                <button type="button" class="place-shelf__add" onClick={() => void createShelf(room.id)}>
+                <button type="button" class="place-shelf__add" onClick={() => void addShelf(room.id)}>
                   <PlusIcon size={18} />
                   {fr.places.newShelf}
                 </button>

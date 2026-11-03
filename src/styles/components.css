@@ -100,6 +100,13 @@
   cursor: default;
 }
 
+/* A text button set apart, at the right of a back bar: « Pièces et étagères ». */
+.text-button--soft {
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-soft);
+}
+
 .text-button--center {
   justify-content: center;
   font-size: var(--text-body);
@@ -713,6 +720,28 @@ select.field__input {
 
 .link-row svg {
   color: var(--color-text-muted);
+}
+
+/* The shelf just created, pointed out on return to « Étagères ». */
+.link-row--new {
+  animation: link-row-new 2.4s ease-out;
+}
+
+@keyframes link-row-new {
+  from,
+  40% {
+    background: var(--color-accent-soft);
+  }
+  to {
+    background: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link-row--new {
+    animation: none;
+    background: var(--color-accent-soft);
+  }
 }
 
 .link-row--detail {

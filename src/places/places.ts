@@ -37,6 +37,20 @@ export async function createShelf(roomId: Id, name?: string, database: LibraryDa
   });
 }
 
+// The shelf created last on « Pièces et étagères »: « Étagères » points it out when the user comes back.
+let createdShelf: Id | undefined;
+
+export function noteCreatedShelf(id: Id): void {
+  createdShelf = id;
+}
+
+/** The shelf to point out, once. */
+export function takeCreatedShelf(): Id | undefined {
+  const id = createdShelf;
+  createdShelf = undefined;
+  return id;
+}
+
 /** A new room comes with its first shelf, « Étagère 1 ». */
 export async function createRoom(name: string, database: LibraryDatabase = db): Promise<{ room: Room; shelf: Shelf }> {
   return database.transaction('rw', database.rooms, database.shelves, async () => {

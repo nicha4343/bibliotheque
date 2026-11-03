@@ -1,9 +1,10 @@
-import { ChevronLeftIcon, ChevronRightIcon } from '../components/icons';
+import { useEffect, useState } from 'preact/hooks';
+import { ChevronLeftIcon, ChevronRightIcon, PencilIcon } from '../components/icons';
 import { Screen } from '../components/Screen';
 import { db } from '../db/db';
 import type { Id, Timestamp } from '../db/schema';
 import { useLiveQuery } from '../db/useLiveQuery';
-import { loadPlaces, type PlaceIndex } from '../places/places';
+import { loadPlaces, takeCreatedShelf, type PlaceIndex } from '../places/places';
 import { routeHref } from '../router';
 import { formatDate, fr } from '../textes/fr';
 
@@ -26,10 +27,21 @@ async function loadShelves(): Promise<ShelvesData> {
   return { places, counts, checkedAt };
 }
 
-/** « Étagères », from the library: every shelf by room, leading to its view (screen 8). */
+const rowId = (shelfId: Id) => `shelf-row-${shelfId}`;
+
+/**
+ * « Étagères », from the library: every shelf by room, leading to its view (screen 8), and « Pièces et
+ * étagères » to create, rename or delete them; the shelf created there is pointed out on return.
+ */
 export function ShelvesScreen() {
   const data = useLiveQuery<ShelvesData | undefined>(() => loadShelves(), [], undefined);
   const places = data?.places;
+  const [created] = useState(takeCreatedShelf);
+  const shown = Boolean(data);
+
+  useEffect(() => {
+    if (shown && created) document.getElementById(rowId(created))?.scrollIntoView({ block: 'center' });
+  }, [shown, created]);
 
   return (
     <Screen title={fr.shelves.title} subtitle={places && fr.shelves.summary(places.byShelfId.size)}>
@@ -37,6 +49,10 @@ export function ShelvesScreen() {
         <a class="text-button back-bar__link" href={routeHref('library')}>
           <ChevronLeftIcon size={20} />
           {fr.shelves.back}
+        </a>
+        <a class="text-button text-button--soft" href={routeHref('places')}>
+          <PencilIcon size={16} />
+          {fr.shelves.manage}
         </a>
       </div>
 
@@ -57,7 +73,12 @@ export function ShelvesScreen() {
                 const checked = data.checkedAt.get(shelf.id);
                 const books = fr.shelves.books(data.counts.get(shelf.id) ?? 0);
                 return (
-                  <a key={shelf.id} class="link-row link-row--detail" href={routeHref('shelf', shelf.id)}>
+                  <a
+                    key={shelf.id}
+                    id={rowId(shelf.id)}
+                    class={shelf.id === created ? 'link-row link-row--detail link-row--new' : 'link-row link-row--detail'}
+                    href={routeHref('shelf', shelf.id)}
+                  >
                     <span class="setting__text">
                       <span class="setting__label">{shelf.name}</span>
                       <span class="setting__detail">

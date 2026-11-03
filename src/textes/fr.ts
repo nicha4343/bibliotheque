@@ -325,6 +325,7 @@ export const fr = {
     summary: (value: number) => (value === 0 ? 'Aucune étagère pour le moment' : count(value, 'étagère', 'étagères')),
     books: (value: number) => (value === 0 ? 'Vide' : count(value, 'ouvrage', 'ouvrages')),
     checkedOn: (date: string) => `vérifiée le ${date}`,
+    manage: 'Pièces et étagères',
     empty: 'Créez d’abord vos pièces et étagères :',
   },
 
