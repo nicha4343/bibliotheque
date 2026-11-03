@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseCsv } from './csv';
-import { readDate, readLibraryFile } from './read';
+import { parsePrice, readDate, readLibraryFile } from './read';
 
 const read = (text: string) => readLibraryFile(parseCsv(text));
 
@@ -86,6 +86,15 @@ describe('fichier de l’application', () => {
     ]);
     expect(result.books[1]?.copies).toEqual([{ room: 'Salon' }]);
     expect(result.books[2]?.copies).toEqual([{}]);
+  });
+
+  it('relit le prix d’achat, écrit à la française ou non', () => {
+    const result = read(['Titre;Prix d’achat', 'La Peste;12,50', 'Noces;7.9 €', 'Carnet;gratuit'].join('\r\n'));
+    if (!result.ok) throw new Error(result.error);
+    expect(result.books.map((book) => book.fields.price)).toEqual([12.5, 7.9, undefined]);
+    expect(parsePrice('1 234,5')).toBe(1234.5);
+    expect(parsePrice('$12.99')).toBe(12.99);
+    expect(parsePrice('')).toBeUndefined();
   });
 });
 

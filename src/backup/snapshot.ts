@@ -1,13 +1,15 @@
 import { db, type LibraryDatabase } from '../db/db';
-import type { Book, Copy, Id, Loan, PendingItem, Quote, Room, SettingsRecord, Shelf } from '../db/schema';
+import type { Book, Copy, Id, Loan, PendingItem, Quote, Room, SeriesRecord, SettingsRecord, Shelf, Wish } from '../db/schema';
 
 // Contents of a backup: every record the user made, the photographs being saved as separate files.
 // Left out: the metadata cache, the scan sessions and the shelf checks (rebuilt or short-lived), the
 // backup state.
 
 export const SNAPSHOT_FORMAT = 'ma-bibliotheque';
-/** 2: loans (lot 4). A version 1 backup is read as having no loans. */
-export const SNAPSHOT_VERSION = 2;
+/**
+ * 2: loans (lot 4); 3: wishes and series (lot 5). An older backup is read as having none of them.
+ */
+export const SNAPSHOT_VERSION = 3;
 
 export interface Snapshot {
   format: typeof SNAPSHOT_FORMAT;
@@ -20,6 +22,8 @@ export interface Snapshot {
   pendingItems: PendingItem[];
   quotes: Quote[];
   loans: Loan[];
+  wishes: Wish[];
+  series: SeriesRecord[];
   settings: SettingsRecord[];
   /** Photographs (covers, books without a barcode, quotes), each saved as photo-<id>.jpg. */
   blobIds: Id[];
@@ -38,6 +42,8 @@ export async function buildSnapshot(database: LibraryDatabase = db, now = Date.n
       database.pendingItems,
       database.quotes,
       database.loans,
+      database.wishes,
+      database.series,
       database.settings,
       database.blobs,
     ],
@@ -52,6 +58,8 @@ export async function buildSnapshot(database: LibraryDatabase = db, now = Date.n
       pendingItems: byId(await database.pendingItems.toArray()),
       quotes: byId(await database.quotes.toArray()),
       loans: byId(await database.loans.toArray()),
+      wishes: byId(await database.wishes.toArray()),
+      series: byId(await database.series.toArray()),
       settings: await database.settings.toArray(),
       blobIds: (await database.blobs.toCollection().primaryKeys()).sort(),
     }),
@@ -65,13 +73,17 @@ export async function snapshotHash(snapshot: Snapshot): Promise<string> {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-const LISTS = ['rooms', 'shelves', 'books', 'copies', 'pendingItems', 'quotes', 'loans', 'settings', 'blobIds'] as const;
+const LISTS = ['rooms', 'shelves', 'books', 'copies', 'pendingItems', 'quotes', 'loans', 'wishes', 'series', 'settings', 'blobIds'] as const;
 
 /** A file read from Drive, checked before it replaces anything. */
 export function parseSnapshot(text: string): Snapshot | undefined {
   try {
     const value = JSON.parse(text) as Partial<Snapshot> | null;
-    if (value?.version === 1) value.loans ??= [];
+    if (typeof value?.version === 'number' && value.version < 2) value.loans ??= [];
+    if (typeof value?.version === 'number' && value.version < 3) {
+      value.wishes ??= [];
+      value.series ??= [];
+    }
     if (value?.format !== SNAPSHOT_FORMAT || typeof value.version !== 'number' || value.version > SNAPSHOT_VERSION)
       return undefined;
     if (typeof value.createdAt !== 'number' || !LISTS.every((key) => Array.isArray(value[key]))) return undefined;
@@ -94,6 +106,8 @@ export async function restoreSnapshot(snapshot: Snapshot, database: LibraryDatab
     database.pendingItems,
     database.quotes,
     database.loans,
+    database.wishes,
+    database.series,
     database.settings,
     database.blobs,
     database.scanSessions,
@@ -117,6 +131,10 @@ export async function restoreSnapshot(snapshot: Snapshot, database: LibraryDatab
     await database.quotes.bulkAdd(snapshot.quotes);
     await database.loans.clear();
     await database.loans.bulkAdd(snapshot.loans);
+    await database.wishes.clear();
+    await database.wishes.bulkAdd(snapshot.wishes);
+    await database.series.clear();
+    await database.series.bulkAdd(snapshot.series);
     await database.settings.clear();
     await database.settings.bulkAdd(snapshot.settings);
     const kept = new Set(snapshot.blobIds);

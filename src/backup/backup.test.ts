@@ -105,13 +105,29 @@ describe('contenu d’une sauvegarde', () => {
     const text = JSON.stringify(await buildSnapshot(database));
     expect(parseSnapshot(text)?.books).toHaveLength(1);
     expect(parseSnapshot('{"format":"autre"}')).toBeUndefined();
-    expect(parseSnapshot(text.replace('"version":2', '"version":99'))).toBeUndefined();
+    expect(parseSnapshot(text.replace('"version":3', '"version":99'))).toBeUndefined();
     expect(parseSnapshot('pas du JSON')).toBeUndefined();
-    // A backup made before the loans (lot 4) is still read.
+    // A backup made before the loans (lot 4), or before the wishes and series (lot 5), is still read.
     const before = JSON.parse(text) as Record<string, unknown>;
     delete before.loans;
-    expect(parseSnapshot(JSON.stringify({ ...before, version: 1 }))?.loans).toEqual([]);
+    delete before.wishes;
+    delete before.series;
+    expect(parseSnapshot(JSON.stringify({ ...before, version: 1 }))).toMatchObject({ loans: [], wishes: [], series: [] });
     expect(parseSnapshot(JSON.stringify({ ...before, version: 2 }))).toBeUndefined();
+    expect(parseSnapshot(JSON.stringify({ ...before, loans: [], version: 2 }))).toMatchObject({ wishes: [], series: [] });
+    expect(parseSnapshot(JSON.stringify({ ...before, loans: [], version: 3 }))).toBeUndefined();
+  });
+
+  it('conserve les souhaits et le nombre de tomes des séries', async () => {
+    await database.wishes.add({ id: 'souhait', title: 'Les Choses', source: 'manual', createdAt: 1 });
+    await database.series.put({ id: 'asterix', total: 39 });
+    const snapshot = await buildSnapshot(database);
+    expect(snapshot.version).toBe(3);
+    const other = new LibraryDatabase(`test-${newId()}`);
+    await restoreSnapshot(snapshot, other);
+    expect(await other.wishes.toArray()).toEqual([{ id: 'souhait', title: 'Les Choses', source: 'manual', createdAt: 1 }]);
+    expect(await other.series.get('asterix')).toEqual({ id: 'asterix', total: 39 });
+    await other.delete();
   });
 });
 

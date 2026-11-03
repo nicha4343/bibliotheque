@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { CoverImage } from '../components/CoverImage';
 import { EmptyState } from '../components/EmptyState';
-import { CloseIcon, LibraryIcon, LoanIcon, PinIcon, SearchIcon, ShelfIcon } from '../components/icons';
+import { CloseIcon, LibraryIcon, ListIcon, LoanIcon, PinIcon, SearchIcon, SeriesIcon, ShelfIcon } from '../components/icons';
 import { Screen } from '../components/Screen';
 import { db } from '../db/db';
 import { useLiveQuery } from '../db/useLiveQuery';
@@ -18,6 +18,7 @@ import {
 import { dueLoans, markDueLoansSeen, unseenDueLoans } from '../loans/loans';
 import { indexPlaces, type PlaceIndex } from '../places/places';
 import { ROUTE_HASHES, routeHref } from '../router';
+import { seriesOf } from '../series/series';
 import { formatNumber, fr } from '../textes/fr';
 
 interface LibraryData {
@@ -27,6 +28,8 @@ interface LibraryData {
   due: number;
   /** Those not yet seen: the reminder at the top of the screen. */
   reminders: Reminder[];
+  /** At least one series is known: the « Séries » shortcut is shown. */
+  hasSeries: boolean;
 }
 
 interface Reminder {
@@ -53,6 +56,7 @@ async function loadLibrary(): Promise<LibraryData> {
       title: titles.get(bookOfCopy.get(loan.copyId) ?? '') || fr.common.untitled,
       borrower: loan.borrower,
     })),
+    hasSeries: books.some((book) => seriesOf(book) !== undefined),
   };
 }
 
@@ -137,6 +141,12 @@ export function LibraryScreen() {
                 {fr.library.shelves}
               </a>
             )}
+            {data.hasSeries && (
+              <a class="shortcut" href={routeHref('series')}>
+                <SeriesIcon size={22} />
+                {fr.library.series}
+              </a>
+            )}
             <a class="shortcut" href={routeHref('loans')}>
               <LoanIcon size={22} />
               {fr.library.loans}
@@ -146,6 +156,10 @@ export function LibraryScreen() {
                   <span class="visually-hidden"> {fr.library.loansDue(data.due)}</span>
                 </span>
               )}
+            </a>
+            <a class="shortcut" href={routeHref('lists')}>
+              <ListIcon size={22} />
+              {fr.library.lists}
             </a>
           </nav>
 

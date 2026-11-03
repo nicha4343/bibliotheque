@@ -9,10 +9,12 @@ import {
   setAutoCover,
   setUserCover,
   updateBook,
+  type BookChanges,
 } from '../books/books';
 import { QuotesSection } from '../books/QuotesSection';
 import { ReadingSection } from '../books/ReadingSection';
 import { TagsSection } from '../books/TagsSection';
+import { BackAnchor } from '../components/BackLink';
 import { CameraSheet } from '../components/CameraSheet';
 import { ConfirmSheet } from '../components/ConfirmSheet';
 import { CoverImage } from '../components/CoverImage';
@@ -25,13 +27,17 @@ import { useLiveQuery } from '../db/useLiveQuery';
 import { LendSheet } from '../loans/LendSheet';
 import { isActive, loanState, loanStateText, returnLoan } from '../loans/loans';
 import { fetchCover, type CoverCandidate } from '../metadata/covers';
+import { formatCsvPrice } from '../csv/export';
+import { parsePrice } from '../csv/read';
 import { joinAuthors, parseAuthors } from '../pending/pending';
 import { loadPlaces, type PlaceIndex } from '../places/places';
 import { navigate, routeHref } from '../router';
 import { compressImage } from '../scan/camera';
 import { LocationPicker } from '../scan/LocationPicker';
+import { seriesOf } from '../series/series';
+import { loadSeriesGroups } from '../series/store';
 import { rankOf } from '../shelves/order';
-import { formatDate, formatNearDate, fr } from '../textes/fr';
+import { formatDate, formatNearDate, formatPrice, fr } from '../textes/fr';
 
 interface BookData {
   book: Book | undefined;
@@ -118,15 +124,13 @@ export function BookScreen({ bookId }: { bookId: string }) {
 
   const placeOf = (copy: Copy) => places.byShelfId.get(copy.shelfId)?.label ?? fr.library.noPlace;
   const details = [book.publisher, book.year ? String(book.year) : undefined].filter(Boolean).join(' · ');
+  const series = seriesOf(book);
 
   return (
     <main class="screen">
       <div class="screen__inner">
         <div class="book__bar">
-          <a class="text-button book__back" href={routeHref('library')}>
-            <ChevronLeftIcon size={20} />
-            {fr.book.back}
-          </a>
+          <BackAnchor class="text-button book__back" href={routeHref('library')} label={fr.book.back} />
           <button
             type="button"
             class="text-button"
@@ -143,8 +147,25 @@ export function BookScreen({ bookId }: { bookId: string }) {
           <CoverImage book={book} class="cover--book" />
           <div class="book__info">
             <h1 class="book__title">{book.title || fr.common.untitled}</h1>
-            <p class="book__author">{book.authors.join(', ') || fr.common.unknownAuthor}</p>
+            <p class="book__author">
+              {book.authors.length === 0
+                ? fr.common.unknownAuthor
+                : book.authors.map((author, index) => (
+                    <span key={author}>
+                      {index > 0 && ', '}
+                      <a class="book__author-link" href={routeHref('author', author)} aria-label={fr.book.authorPage(author)}>
+                        {author}
+                      </a>
+                    </span>
+                  ))}
+            </p>
+            {series && (
+              <a class="book__series" href={routeHref('series', series.name)}>
+                {series.index === undefined ? fr.book.series(series.name) : fr.book.seriesVolume(series.name, series.index)}
+              </a>
+            )}
             {details && <p class="book__details">{details}</p>}
+            {book.price !== undefined && <p class="book__details">{fr.book.price(formatPrice(book.price))}</p>}
             {book.isbn13 && <p class="book__isbn mono">{book.isbn13}</p>}
             <span class={book.cover ? (book.cover.source === 'user' ? 'tag tag--pending' : 'tag tag--accent') : 'tag'}>
               {coverBadge(book)}
@@ -508,20 +529,37 @@ function EditSheet({ book, onSaved, onClose }: { book: Book; onSaved: (message: 
   const [authors, setAuthors] = useState(joinAuthors(book.authors));
   const [publisher, setPublisher] = useState(book.publisher ?? '');
   const [year, setYear] = useState(book.year ? String(book.year) : '');
+  const initialSeries = seriesOf(book);
+  const [series, setSeries] = useState(initialSeries?.name ?? '');
+  const [volume, setVolume] = useState(initialSeries?.index === undefined ? '' : String(initialSeries.index));
+  const [price, setPrice] = useState(book.price === undefined ? '' : formatCsvPrice(book.price));
   const [submitted, setSubmitted] = useState(false);
+  const seriesNames = useLiveQuery<string[]>(async () => (await loadSeriesGroups()).map((group) => group.name), [], []);
   const titleMissing = !title.trim();
   const yearInvalid = year.trim() !== '' && !/^\d{4}$/.test(year.trim());
+  const volumeInvalid = volume.trim() !== '' && !/^\d{1,4}$/.test(volume.trim());
+  const priceValue = parsePrice(price);
+  const priceInvalid = price.trim() !== '' && priceValue === undefined;
 
   const submit = async (event: Event) => {
     event.preventDefault();
     setSubmitted(true);
-    if (titleMissing || yearInvalid) return;
-    await updateBook(book.id, {
+    if (titleMissing || yearInvalid || volumeInvalid || priceInvalid) return;
+    const changes: BookChanges = {
       title: title.trim(),
       authors: parseAuthors(authors),
       publisher: publisher.trim() || undefined,
       year: year.trim() ? Number(year.trim()) : undefined,
-    });
+      price: priceValue,
+    };
+    // A series read from the title stays so while unchanged; emptied, it is taken off for good.
+    const seriesName = series.trim();
+    const seriesIndex = seriesName && volume.trim() ? Number(volume.trim()) : undefined;
+    if (seriesName !== (initialSeries?.name ?? '') || seriesIndex !== initialSeries?.index) {
+      changes.seriesName = seriesName;
+      changes.seriesIndex = seriesIndex;
+    }
+    await updateBook(book.id, changes);
     onSaved(fr.book.saved);
     onClose();
   };
@@ -598,6 +636,74 @@ function EditSheet({ book, onSaved, onClose }: { book: Book; onSaved: (message: 
             }}
           />
           {submitted && yearInvalid && <p class="field__error">{fr.book.yearInvalid}</p>}
+        </div>
+        <div class="field-pair">
+          <div class="field">
+            <label class="field__label" for="edit-series">
+              {fr.book.seriesLabel}
+            </label>
+            <input
+              id="edit-series"
+              class="field__input"
+              type="text"
+              list="edit-series-names"
+              value={series}
+              autocomplete="off"
+              aria-describedby="edit-series-hint"
+              onInput={(event) => {
+                setSeries(event.currentTarget.value);
+              }}
+            />
+            <datalist id="edit-series-names">
+              {seriesNames.map((name) => (
+                <option key={name} value={name} />
+              ))}
+            </datalist>
+          </div>
+          <div class="field field--narrow">
+            <label class="field__label" for="edit-volume">
+              {fr.book.volumeLabel}
+            </label>
+            <input
+              id="edit-volume"
+              class="field__input"
+              type="text"
+              inputMode="numeric"
+              maxLength={4}
+              value={volume}
+              autocomplete="off"
+              aria-invalid={submitted && volumeInvalid}
+              onInput={(event) => {
+                setVolume(event.currentTarget.value);
+              }}
+            />
+          </div>
+        </div>
+        <p class="field__hint field__hint--pair" id="edit-series-hint">
+          {fr.book.seriesHint}
+        </p>
+        {submitted && volumeInvalid && <p class="field__error">{fr.book.volumeInvalid}</p>}
+        <div class="field">
+          <label class="field__label" for="edit-price">
+            {fr.book.priceLabel}
+          </label>
+          <input
+            id="edit-price"
+            class="field__input"
+            type="text"
+            inputMode="decimal"
+            value={price}
+            autocomplete="off"
+            aria-describedby="edit-price-hint"
+            aria-invalid={submitted && priceInvalid}
+            onInput={(event) => {
+              setPrice(event.currentTarget.value);
+            }}
+          />
+          <p class="field__hint" id="edit-price-hint">
+            {fr.book.priceHint}
+          </p>
+          {submitted && priceInvalid && <p class="field__error">{fr.book.priceInvalid}</p>}
         </div>
         <button type="submit" class="button button--primary button--large">
           {fr.common.save}

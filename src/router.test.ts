@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LOAN_HISTORY, parseHash, routeHref } from './router';
+import { LIST_TABS, LOAN_HISTORY, parseHash, routeHref } from './router';
 
 describe('routes', () => {
   it('reconnaissent les onglets et leurs paramètres', () => {
@@ -28,6 +28,17 @@ describe('routes', () => {
     expect(parseHash(routeHref('loans', LOAN_HISTORY))).toEqual({ id: 'loans', param: 'historique' });
     expect(parseHash('#/preter')).toEqual({ id: 'lend' });
     expect(parseHash('#/restituer')).toEqual({ id: 'giveBack' });
+  });
+
+  it('mènent aux séries, aux auteurs, aux listes et à une liste de souhaits partagée', () => {
+    expect(parseHash('#/series')).toEqual({ id: 'series' });
+    expect(parseHash(routeHref('series', 'Astérix'))).toEqual({ id: 'series', param: 'Astérix' });
+    expect(parseHash(routeHref('author', 'J.K. Rowling'))).toEqual({ id: 'author', param: 'J.K. Rowling' });
+    expect(parseHash(routeHref('lists', LIST_TABS.insurance))).toEqual({ id: 'lists', param: 'assurance' });
+    expect(parseHash('#/librairie')).toEqual({ id: 'bookshop' });
+    expect(parseHash('#/souhaits/q1Yq-U7_Iy1')).toEqual({ id: 'sharedList', param: 'q1Yq-U7_Iy1' });
+    // A malformed escape does not break the application.
+    expect(parseHash('#/auteur/100%')).toEqual({ id: 'author', param: '100%' });
   });
 
   it('ouvrent la bibliothèque par défaut', () => {

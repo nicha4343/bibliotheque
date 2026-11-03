@@ -23,7 +23,7 @@ export interface LibraryEntry {
   copies: Copy[];
   /** Loans in progress of its copies, the earliest first. */
   loans: Loan[];
-  /** Folded title, authors, tags and ISBN, searched by the query. */
+  /** Folded title, authors, tags, series and ISBN, searched by the query. */
   haystack: string;
   sortKey: string;
 }
@@ -51,9 +51,15 @@ export function toEntries(books: readonly Book[], copies: readonly Copy[], loans
       book,
       copies: (byBook.get(book.id) ?? []).sort((a, b) => a.addedAt - b.addedAt),
       loans: loansByBook.get(book.id) ?? [],
-      haystack: [foldText(book.title), ...book.authors.map(foldText), ...book.tags.map(foldText), book.isbn13 ?? '', book.isbn10 ?? ''].join(
-        '\n',
-      ),
+      // A series read from the title is already in the title.
+      haystack: [
+        foldText(book.title),
+        ...book.authors.map(foldText),
+        ...book.tags.map(foldText),
+        foldText(book.seriesName ?? ''),
+        book.isbn13 ?? '',
+        book.isbn10 ?? '',
+      ].join('\n'),
       sortKey: sortKey(book.title),
     }))
     .sort((a, b) => a.sortKey.localeCompare(b.sortKey, 'fr') || a.book.createdAt - b.book.createdAt);

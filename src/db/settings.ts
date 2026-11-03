@@ -12,6 +12,7 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   googleBooksKey: '',
   loanNotifications: false,
   loanCalendar: false,
+  wishListName: '',
 };
 
 /** Stored values over the defaults, so a setting added later gets its default value. */

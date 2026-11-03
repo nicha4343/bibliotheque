@@ -1,0 +1,445 @@
+/* Lot 5: screen 9 (series and author), screen 11 (lists), additions to the book sheet. */
+
+.screen__kicker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-small);
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+/* Screen 9 · Series */
+.series-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: 14px;
+  border-radius: var(--radius-field);
+  background: var(--color-surface);
+}
+
+.series-progress__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+}
+
+.series-progress__owned {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.series-progress__missing {
+  font-size: var(--text-small);
+  font-weight: 600;
+  color: var(--color-pending-text);
+}
+
+.series-progress__bar {
+  height: 8px;
+  border-radius: 4px;
+}
+
+.series-progress__bar .progress__bar {
+  border-radius: 4px;
+}
+
+.series-progress__total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: -10px;
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.volumes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.volume {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-tag-text);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+
+.volume:hover {
+  color: var(--color-tag-text);
+}
+
+.volume__cover {
+  position: relative;
+  height: 112px;
+  display: block;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.cover--volume {
+  width: 100%;
+  height: 100%;
+  border-radius: 5px;
+  font-size: 13px;
+}
+
+.volume__number {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: rgb(21 23 28 / 72%);
+  color: var(--color-on-accent);
+  font-size: var(--text-small);
+  font-weight: 700;
+}
+
+.volume__check {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.volume__cover--missing {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 8px;
+  box-sizing: border-box;
+  border: 2px dashed var(--color-pending);
+  background: var(--color-surface);
+  color: var(--color-pending-text);
+}
+
+.volume__cover--missing .volume__number {
+  position: static;
+  align-self: flex-start;
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 22px;
+}
+
+.volume--wished .volume__cover--missing {
+  background: var(--color-pending-soft);
+}
+
+.volume__state {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.volume__title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.series__all-wished {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 52px;
+  font-weight: 700;
+}
+
+.pick-list {
+  max-height: 50dvh;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.pick-list__item {
+  width: 100%;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 6px 0;
+  border: 0;
+  border-bottom: 1px solid var(--color-divider-soft);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+}
+
+.pick-list__text,
+.work__text,
+.wish__text,
+.duplicate-row__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pick-list__title,
+.work__title,
+.wish__title,
+.duplicate-row__title {
+  font-size: var(--text-body);
+  font-weight: 600;
+}
+
+.pick-list__detail,
+.work__detail,
+.wish__author {
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+/* Screen 9 · Author */
+.work-list,
+.wish-list,
+.duplicate-list {
+  list-style: none;
+}
+
+.work {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px 6px 6px var(--space-4);
+}
+
+.work + .work,
+.wish-list > li + li,
+.duplicate-row + .duplicate-row {
+  border-top: 1px solid var(--color-divider-soft);
+}
+
+.wish-toggle {
+  color: var(--color-pending);
+}
+
+.wish-toggle--on {
+  border-color: var(--color-pending);
+  background: var(--color-pending-soft);
+  color: var(--color-pending-text);
+}
+
+.wish-toggle--on:hover {
+  color: var(--color-pending-text);
+}
+
+/* Screen 11 · Lists */
+.segmented--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.list-card {
+  gap: var(--space-3);
+  padding: 14px;
+}
+
+.list-card__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.list-card__title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.list-card__detail {
+  font-size: var(--text-small);
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+
+.list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.list-head__title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.list-head__summary {
+  font-size: var(--text-small);
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.wish {
+  width: 100%;
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+}
+
+.wish__cover {
+  width: 34px;
+  height: 48px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border: 2px dashed var(--color-pending);
+  border-radius: var(--radius-cover);
+  background: var(--color-pending-soft);
+}
+
+.wish__source {
+  flex-shrink: 0;
+  align-self: center;
+  font-size: 11px;
+}
+
+.wish__isbn {
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.duplicate-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 8px 14px;
+}
+
+.duplicate-row__link {
+  flex: 1;
+  min-width: 0;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.duplicate-row__link:hover {
+  color: var(--color-text);
+}
+
+.duplicate-row__count {
+  color: var(--color-accent);
+  white-space: nowrap;
+}
+
+.duplicate-row__places {
+  font-size: var(--text-caption);
+  line-height: 1.35;
+  color: var(--color-text-muted);
+}
+
+.give-toggle[aria-pressed='true'] {
+  border-color: var(--color-pending);
+  background: var(--color-pending-soft);
+  color: var(--color-pending-text);
+  font-weight: 700;
+}
+
+.inventory-card {
+  gap: var(--space-1);
+  padding: var(--space-4);
+}
+
+.inventory-card__kicker {
+  font-size: var(--text-small);
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.inventory-card__count {
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.inventory-card__detail {
+  font-size: var(--text-small);
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+
+.inventory-ready {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Book sheet: author pages, series, purchase price */
+.book__author-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--color-border);
+  text-underline-offset: 3px;
+}
+
+.book__author-link:hover {
+  color: var(--color-accent);
+}
+
+.book__series {
+  align-self: flex-start;
+  font-size: var(--text-secondary);
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.field-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px;
+  gap: var(--space-3);
+}
+
+.field__hint--pair {
+  margin-top: -6px;
+}

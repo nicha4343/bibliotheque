@@ -10,7 +10,9 @@ import { deleteBookQuotes } from './quotes';
 
 // Changes made on the book sheet (screen 6).
 
-export type BookChanges = Partial<Pick<Book, 'title' | 'authors' | 'publisher' | 'year' | 'status' | 'rating' | 'review'>>;
+export type BookChanges = Partial<
+  Pick<Book, 'title' | 'authors' | 'publisher' | 'year' | 'status' | 'rating' | 'review' | 'seriesName' | 'seriesIndex' | 'price'>
+>;
 
 /** An empty optional field is removed from the notice. */
 export async function updateBook(bookId: Id, changes: BookChanges, database: LibraryDatabase = db): Promise<void> {

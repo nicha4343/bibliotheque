@@ -18,7 +18,12 @@ export type RouteId =
   | 'check'
   | 'loans'
   | 'lend'
-  | 'giveBack';
+  | 'giveBack'
+  | 'series'
+  | 'author'
+  | 'lists'
+  | 'bookshop'
+  | 'sharedList';
 
 /** The four tabs of the navigation bar. */
 export type TabId = 'library' | 'scan' | 'pending' | 'settings';
@@ -54,10 +59,24 @@ export const ROUTE_HASHES: Readonly<Record<RouteId, string>> = {
   lend: '#/preter',
   /** Scan of the books given back. */
   giveBack: '#/restituer',
+  /** The series of the library, or one of them by its name. */
+  series: '#/series',
+  /** Followed by the author's name. */
+  author: '#/auteur',
+  /** Followed by one of LIST_TABS. */
+  lists: '#/listes',
+  /** « En librairie »: scan of books to check before buying them. */
+  bookshop: '#/librairie',
+  /** A wish list shared by link, followed by the list itself (see wishes/share.ts). */
+  sharedList: '#/souhaits',
 };
 
 /** Parameter of the loans route showing the history. */
 export const LOAN_HISTORY = 'historique';
+
+/** Tabs of the lists screen (screen 11). */
+export const LIST_TABS = { wishes: 'souhaits', duplicates: 'doublons', insurance: 'assurance' } as const;
+export type ListTab = keyof typeof LIST_TABS;
 
 export function routeHref(id: RouteId, param?: string, detail?: string): string {
   if (!param) return ROUTE_HASHES[id];
@@ -68,6 +87,14 @@ export function routeHref(id: RouteId, param?: string, detail?: string): string 
 const DEFAULT_ROUTE: Route = { id: 'library' };
 const ROUTE_IDS = Object.keys(ROUTE_HASHES) as RouteId[];
 
+const decode = (part: string): string => {
+  try {
+    return decodeURIComponent(part);
+  } catch {
+    return part;
+  }
+};
+
 export function parseHash(hash: string): Route {
   for (const id of ROUTE_IDS) {
     const base = ROUTE_HASHES[id];
@@ -76,7 +103,7 @@ export function parseHash(hash: string): Route {
       const [param, detail] = hash
         .slice(base.length + 1)
         .split('/')
-        .map((part) => decodeURIComponent(part));
+        .map(decode);
       const route: Route = { id };
       if (param) route.param = param;
       if (param && detail) route.detail = detail;
@@ -103,3 +130,33 @@ export function useRoute(): Route {
   }, []);
   return route;
 }
+
+// Depth of the current entry in the history of the application, kept in the entry itself so that it
+// survives a reload: « Retour » goes back only to a screen of the application.
+let depth = 0;
+
+const depthOf = (state: unknown): number | undefined => {
+  const value = (state as { depth?: unknown } | null)?.depth;
+  return typeof value === 'number' ? value : undefined;
+};
+
+function recordDepth(): void {
+  const known = depthOf(window.history.state);
+  if (known !== undefined) {
+    depth = known;
+    return;
+  }
+  // A new entry (a link followed); going back or forward finds the depth recorded before.
+  depth += 1;
+  window.history.replaceState({ ...(window.history.state as object | null), depth }, '');
+}
+
+export function startHistoryTracking(): void {
+  const known = depthOf(window.history.state);
+  if (known === undefined) window.history.replaceState({ ...(window.history.state as object | null), depth: 0 }, '');
+  depth = known ?? 0;
+  window.addEventListener('hashchange', recordDepth);
+}
+
+/** A screen of the application lies behind the current one. */
+export const canGoBack = (): boolean => depth > 0;

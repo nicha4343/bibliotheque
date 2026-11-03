@@ -7,10 +7,12 @@ import './styles/base.css';
 import './styles/app.css';
 import './styles/components.css';
 import './styles/screens.css';
+import './styles/lists.css';
 import { render } from 'preact';
 import { App } from './app';
 import { startBackups } from './backup/backup';
 import { requestPersistentStorage } from './db/storage';
+import { startHistoryTracking } from './router';
 import { refreshLoanNotifications } from './loans/reminders';
 import { unlockAudio } from './scan/feedback';
 import { startLookups } from './scan/lookups';
@@ -24,6 +26,9 @@ startLookups();
 void refreshLoanNotifications();
 // Browsers only allow sound after a touch.
 document.addEventListener('pointerdown', unlockAudio, { passive: true });
+
+// « Retour » goes back only to a screen of the application.
+startHistoryTracking();
 
 const root = document.getElementById('app');
 if (root) render(<App />, root);

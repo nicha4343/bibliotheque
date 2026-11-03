@@ -29,9 +29,13 @@ const COLUMNS: readonly Column[] = [
   'tags',
   'addedAt',
   'note',
+  'price',
 ];
 
 const STATUS_TEXTS: Record<ReadingStatus, string> = { read: fr.csv.statusRead, toread: fr.csv.statusToRead };
+
+/** 12.5 → « 12,50 »: a decimal comma, as French spreadsheets expect. */
+export const formatCsvPrice = (price: number): string => price.toFixed(2).replace('.', ',');
 
 /** 2026-11-01 (local date): sorted correctly and recognised by spreadsheets. */
 export function isoDate(timestamp: Timestamp): string {
@@ -60,6 +64,7 @@ function rowOf(book: Book, copy: Copy | undefined, places: PlaceIndex): string[]
     tags: book.tags.join(', '),
     addedAt: isoDate(copy?.addedAt ?? book.createdAt),
     note: copy?.note ?? '',
+    price: book.price === undefined ? '' : formatCsvPrice(book.price),
   };
   return COLUMNS.map((column) => values[column]);
 }
@@ -106,7 +111,12 @@ export async function exportLibrary(database: LibraryDatabase = db): Promise<Exp
 
 /** Saves the text as a file through the browser (« Téléchargements » on Android). */
 export function downloadText(fileName: string, text: string, type = 'text/csv;charset=utf-8'): void {
-  const url = URL.createObjectURL(new Blob([text], { type }));
+  downloadBlob(fileName, new Blob([text], { type }));
+}
+
+/** Saves a file through the browser (« Téléchargements » on Android). */
+export function downloadBlob(fileName: string, blob: Blob): void {
+  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
   link.download = fileName;

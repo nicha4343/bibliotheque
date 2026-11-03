@@ -84,10 +84,19 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - Vérifié dans le navigateur de l'ordinateur avec une caméra et un lecteur de codes simulés : prêt, restitution par scan, choix entre restitution et second exemplaire, lectures répétées sans effet, annulations, rappel courtois (sans partage sur l'ordinateur : « Copier le message » seul).
 
 ## Lot 5 — Séries et listes
-- [ ] Séries et tomes manquants ; page auteur (écran 9)
-- [ ] Liste de souhaits partageable ; vérification en librairie (écran 11)
-- [ ] Doublons à donner
-- [ ] Inventaire PDF pour l'assurance
+- [x] Séries et tomes manquants ; page auteur (écran 9)
+- [x] Liste de souhaits partageable ; vérification en librairie (écran 11)
+- [x] Doublons à donner
+- [x] Inventaire PDF pour l'assurance
+- [ ] Essai sur téléphone : séries (dont « Nombre de tomes parus »), page auteur, souhaits et lien partagé ouvert sur un autre téléphone, « En librairie », doublons, PDF enregistré et envoyé
+
+### Reprise du lot 5 (3 novembre 2026)
+- Schéma version 5 : table `series` (nombre de tomes déclaré) ; `Book.price`, champs de `Wish` (`source` élargie, `seriesName`, `seriesIndex`, `createdAt`) non indexés ; paramètre `wishListName`. Sauvegarde Google Drive au format 3 (souhaits et séries ; les formats 1 et 2 se restaurent sans eux). Export et import CSV : colonne « Prix d'achat », `price` de Libib.
+- Logique pure, testée : `src/series/series.ts` (série lue dans le titre, regroupement, tomes manquants, auteurs), `src/series/authorWorks.ts` (Open Library), `src/wishes/` (`wishes.ts` souhaits et souhaits réalisés, `share.ts` liste compressée dans le lien, `bookshop.ts` vérification en librairie), `src/lists/duplicates.ts`, `src/insurance/inventory.ts` (contenu de l'inventaire, caractères des polices du PDF).
+- Écrans : `SeriesScreen` (`#/series[/<nom>]`), `AuthorScreen` (`#/auteur/<nom>`), `ListsScreen` (`#/listes/<onglet>`, onglets dans `src/lists/`), `BookshopScreen` (`#/librairie`), `SharedListScreen` (`#/souhaits/<liste>`, plein écran). Fiche : liens auteur et série, champs Série, Tome, Prix d'achat. Bibliothèque : raccourcis « Séries » et « Listes ». Paramètres : « Inventaire pour l'assurance (PDF) ».
+- PDF : `src/insurance/pdf.ts` avec pdf-lib (nouvelle dépendance, chargée seulement à la génération et mise en cache pour le hors-connexion) ; images réduites en JPEG par `src/insurance/images.ts`.
+- « Retour » : `BackLink` (`src/components/BackLink.tsx`) revient à l'écran précédent de l'application, la profondeur étant notée dans l'historique (`startHistoryTracking` dans `router.ts`) ; employé par les nouveaux écrans et la fiche ouvrage.
+- Vérifié dans le navigateur de l'ordinateur, avec des données d'essai et une caméra et un lecteur simulés : séries (grille, souhaits d'un toucher, nombre de tomes parus), page auteur (Open Library), souhaits, lien partagé relu, liens altérés, « En librairie » (possédé, souhaité, absent et titre trouvé en ligne, souhait ajouté), doublons et « À donner », PDF de trois pages avec couvertures et photographie ; fiche : série retirée, prix saisi « 14,95 € ». Non vérifiés : le partage du téléphone (« Partager le lien », « Envoyer le PDF »), absent de l'ordinateur.
 
 ## Lot 6 — Reconnaissance de texte
 - [ ] Choix de la technique (Tesseract.js gratuit ou IA de vision payante) avec l'utilisateur

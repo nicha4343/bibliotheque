@@ -73,6 +73,19 @@ export function formatDuration(milliseconds: number): string {
 const count = (value: number, singular: string, pluralForm: string): string =>
   `${formatNumber(value)} ${plural(value, singular, pluralForm)}`;
 
+const priceFormat = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
+
+/** 12.5 → « 12,50 € ». */
+export function formatPrice(value: number): string {
+  return priceFormat.format(value);
+}
+
+/** « 4 », « 4 et 7 », « 4, 6 et 7 ». */
+export function joinWithAnd(items: readonly string[]): string {
+  if (items.length < 2) return items.join('');
+  return `${items.slice(0, -1).join(', ')} et ${items.at(-1) ?? ''}`;
+}
+
 export const fr = {
   app: {
     name: 'Ma bibliothèque',
@@ -126,6 +139,8 @@ export const fr = {
     lost: 'Déclaré perdu',
     filterLent: 'Prêtés',
     lentTo: (name: string) => `Prêté à ${name}`,
+    series: 'Séries',
+    lists: 'Listes',
   },
 
   book: {
@@ -227,6 +242,17 @@ export const fr = {
     yearLabel: 'Année de parution',
     yearInvalid: 'Indiquez une année à quatre chiffres.',
     saved: 'Fiche enregistrée',
+    series: (name: string) => `Série : ${name}`,
+    seriesVolume: (name: string, index: number) => `Série : ${name} · tome ${formatNumber(index)}`,
+    authorPage: (name: string) => `Ouvrages de ${name}`,
+    seriesLabel: 'Série',
+    seriesHint: 'Laissez vide si l’ouvrage n’appartient à aucune série.',
+    volumeLabel: 'Tome',
+    volumeInvalid: 'Indiquez le numéro du tome en chiffres.',
+    priceLabel: 'Prix d’achat (en euros)',
+    priceHint: 'Prix d’un exemplaire ; il figure dans l’inventaire pour l’assurance.',
+    priceInvalid: 'Indiquez un prix, par exemple 12,50.',
+    price: (amount: string) => `Prix d’achat : ${amount}`,
   },
 
   common: {
@@ -236,6 +262,7 @@ export const fr = {
     create: 'Créer',
     untitled: 'Sans titre',
     unknownAuthor: 'Auteur inconnu',
+    back: 'Retour',
     /** « 2ᵉ exemplaire » */
     ordinal: (value: number) => (value === 1 ? '1er' : `${formatNumber(value)}ᵉ`),
     /** « 1re position », « 3ᵉ position » */
@@ -819,6 +846,7 @@ export const fr = {
       `Fichier « ${fileName} » créé : ${count(books, 'ouvrage', 'ouvrages')}, ${count(copies, 'exemplaire', 'exemplaires')}, une ligne par exemplaire. Les photographies et les citations n’y figurent pas.`,
     exportFailed: 'Le fichier n’a pu être créé.',
     importCsv: 'Importer (CSV ou exportation Libib)',
+    insurance: 'Inventaire pour l’assurance (PDF)',
     aboutTitle: 'À propos de l’application',
     version: 'Version',
     versionValue: (version: string, date: string) => `${version}, publiée le ${date}`,
@@ -857,6 +885,7 @@ export const fr = {
       tags: 'Étiquettes',
       addedAt: 'Ajouté le',
       note: 'Remarque',
+      price: 'Prix d’achat',
     },
     statusRead: 'Lu',
     statusToRead: 'À lire',
@@ -919,6 +948,270 @@ export const fr = {
       value === 1
         ? '1 ouvrage n’a pu être recherché dans toutes les sources (réseau absent, ou source momentanément indisponible) : réessayez ultérieurement avec « Rechercher les couvertures manquantes », dans les Paramètres.'
         : `${formatNumber(value)} ouvrages n’ont pu être recherchés dans toutes les sources (réseau absent, ou source momentanément indisponible) : réessayez ultérieurement avec « Rechercher les couvertures manquantes », dans les Paramètres.`,
+  },
+
+  /** Screen 9: the series of the library, and one series. */
+  series: {
+    listTitle: 'Séries',
+    back: 'Bibliothèque',
+    summary: (value: number) => (value === 0 ? 'Aucune série' : count(value, 'série', 'séries')),
+    emptyTitle: 'Aucune série n’a encore été reconnue',
+    emptyText:
+      'Les séries sont identifiées lorsque la source les référence, ou lorsque le titre indique le tome (« Astérix - Tome 3 »). Vous pouvez aussi indiquer la série d’un ouvrage depuis sa fiche, par « Modifier ».',
+    rowOwned: (owned: number, total: number) => `${formatNumber(owned)} sur ${formatNumber(total)}`,
+    rowBooks: (value: number) => count(value, 'ouvrage', 'ouvrages'),
+    rowMissing: (value: number) => count(value, 'tome manquant', 'tomes manquants'),
+    complete: 'Série complète',
+    kicker: 'Série',
+    notFound: 'Cette série ne figure plus dans votre bibliothèque.',
+    ownedOf: (owned: number, total: number) => `Vous en possédez ${formatNumber(owned)} sur ${formatNumber(total)}`,
+    ownedBooks: (value: number) => `Vous en possédez ${count(value, 'ouvrage', 'ouvrages')}`,
+    missingOne: (index: number) => `Il manque le tome ${formatNumber(index)}`,
+    missingSome: (list: string) => `Il manque les tomes ${list}`,
+    missingMany: (value: number) => `Il manque ${formatNumber(value)} tomes`,
+    volumes: 'Tomes',
+    volume: (index: number) => `Tome ${formatNumber(index)}`,
+    volumeOwned: (index: number, title: string) => `Tome ${formatNumber(index)} : ${title}`,
+    volumeMissing: 'Manquant',
+    volumeWished: 'Dans vos souhaits',
+    volumeWishLabel: (index: number) => `Tome ${formatNumber(index)}, manquant : l’ajouter à vos souhaits`,
+    volumeUnwishLabel: (index: number) => `Tome ${formatNumber(index)}, dans vos souhaits : l’en retirer`,
+    addMissing: 'Ajouter les tomes manquants à mes souhaits',
+    allWished: 'Les tomes manquants figurent dans vos souhaits',
+    addedMissing: (value: number) => `${count(value, 'tome ajouté', 'tomes ajoutés')} à vos souhaits`,
+    unnumbered: 'Sans numéro de tome',
+    total: (value: number) => `Nombre de tomes parus : ${formatNumber(value)}`,
+    totalUnknown: 'Nombre de tomes parus : non indiqué',
+    totalEdit: 'Modifier',
+    totalEditLabel: 'Modifier le nombre de tomes parus',
+    totalTitle: 'Nombre de tomes parus',
+    totalHint: 'Laissez vide : l’application retient le plus grand numéro que vous possédez.',
+    totalInvalid: 'Indiquez un nombre de 1 à 500.',
+    sameAuthor: 'Du même auteur',
+    authorRow: (value: number) => `${count(value, 'ouvrage', 'ouvrages')} dans votre bibliothèque · voir les titres manquants`,
+    otherSeries: 'Vos autres séries',
+    note: 'Les séries sont identifiées lorsque la source les référence ; à défaut, vous pouvez regrouper vous-même les ouvrages.',
+    addBook: 'Ajouter un ouvrage à cette série',
+    addTitle: 'Ajouter un ouvrage à la série',
+    addSearchLabel: 'Rechercher dans votre bibliothèque',
+    addSearchPlaceholder: 'Titre ou auteur…',
+    addNoMatch: 'Aucun ouvrage ne correspond à votre recherche.',
+    addInOther: (name: string) => `Actuellement dans la série « ${name} »`,
+    addVolumeLabel: 'Numéro du tome',
+    addVolumeHint: 'Facultatif.',
+    addConfirm: 'Ajouter à la série',
+    addChange: 'Choisir un autre ouvrage',
+    added: (title: string) => `« ${title} » ajouté à la série`,
+  },
+
+  /** Screen 9: « Du même auteur ». */
+  author: {
+    kicker: 'Auteur',
+    summary: (value: number) => `${count(value, 'ouvrage', 'ouvrages')} dans votre bibliothèque`,
+    series: 'Ses séries',
+    owned: 'Dans votre bibliothèque',
+    missing: 'Absents de votre bibliothèque',
+    searching: 'Recherche des autres ouvrages de l’auteur…',
+    offline: 'Les autres ouvrages de l’auteur seront recherchés lorsque le réseau sera disponible.',
+    failed: 'Les autres ouvrages de l’auteur n’ont pu être recherchés.',
+    retry: 'Réessayer',
+    noneMissing: 'Open Library ne connaît aucun autre ouvrage de cet auteur paru en français.',
+    source: 'D’après Open Library ; la liste peut être incomplète.',
+    wish: (title: string) => `Ajouter « ${title} » à mes souhaits`,
+    unwish: (title: string) => `Retirer « ${title} » de mes souhaits`,
+    year: (value: number) => `Paru en ${value}`,
+  },
+
+  /** Screen 11: wishes, duplicates, insurance. */
+  lists: {
+    title: 'Listes',
+    back: 'Bibliothèque',
+    tabs: 'Listes',
+    wishes: 'Souhaits',
+    duplicates: 'Doublons',
+    insurance: 'Assurance',
+  },
+
+  wishes: {
+    bookshopTitle: 'En librairie',
+    bookshopText: 'Scannez un ouvrage pour savoir immédiatement s’il figure déjà dans votre bibliothèque ou dans vos souhaits.',
+    bookshopAction: 'Vérifier un ouvrage',
+    title: (value: number) => (value === 0 ? 'Mes souhaits' : `Mes souhaits · ${formatNumber(value)}`),
+    share: 'Partager',
+    shareLabel: 'Partager ma liste de souhaits',
+    add: 'Ajouter un souhait',
+    empty:
+      'Aucun souhait pour le moment. Ajoutez-en depuis une série incomplète, la page d’un auteur ou la vérification en librairie, ou saisissez-les vous-même.',
+    sources: {
+      series: 'Série incomplète',
+      author: 'Du même auteur',
+      bookshop: 'Vu en librairie',
+      manual: 'Ajouté manuellement',
+    },
+    volumeTitle: (name: string, index: number) => `${name}, tome ${formatNumber(index)}`,
+    unknownTitle: 'Titre inconnu',
+    isbn: (isbn: string) => `ISBN ${isbn}`,
+    sheetTitle: 'Souhait',
+    newTitle: 'Nouveau souhait',
+    titleLabel: 'Titre',
+    titleRequired: 'Saisissez le titre de l’ouvrage.',
+    authorLabel: 'Auteur',
+    isbnLabel: 'ISBN',
+    isbnHint: 'Facultatif : il désigne l’édition souhaitée.',
+    isbnInvalid: 'Cet ISBN n’est pas valide.',
+    remove: 'Retirer de mes souhaits',
+    removed: (title: string) => `« ${title} » retiré de vos souhaits`,
+    saved: 'Souhait enregistré',
+    added: (title: string) => `« ${title} » ajouté à vos souhaits`,
+    already: (title: string) => `« ${title} » figure déjà dans vos souhaits`,
+    acquired: (value: number) =>
+      value === 1
+        ? '1 souhait réalisé : l’ouvrage figure désormais dans votre bibliothèque.'
+        : `${formatNumber(value)} souhaits réalisés : ces ouvrages figurent désormais dans votre bibliothèque.`,
+  },
+
+  /** « Partager » the wish list. */
+  shareWishes: {
+    title: 'Partager ma liste de souhaits',
+    text: (value: number) =>
+      value === 1
+        ? 'Vos proches verront l’ouvrage de cette liste, mais non votre bibliothèque.'
+        : `Vos proches verront les ${formatNumber(value)} ouvrages de cette liste, mais non votre bibliothèque.`,
+    note: 'Le lien contient la liste d’aujourd’hui : partagez-le de nouveau après l’avoir modifiée.',
+    nameLabel: 'Votre nom, en tête de la liste',
+    nameHint: 'Facultatif.',
+    shareLink: 'Partager le lien',
+    copyLink: 'Copier le lien',
+    copied: 'Lien copié. Vos proches pourront consulter cette liste, mais non votre bibliothèque.',
+    copyFailed: 'Le lien n’a pu être copié.',
+    preparing: 'Préparation du lien…',
+    messageTitle: (name: string) => `Liste de souhaits de ${name}`,
+    messageTitleAnonymous: 'Ma liste de souhaits',
+    messageText: 'Voici les ouvrages qui me feraient plaisir.',
+  },
+
+  /** The wish list opened from a shared link, by a relative. */
+  sharedList: {
+    title: (name: string) => `Liste de souhaits de ${name}`,
+    titleAnonymous: 'Liste de souhaits',
+    summary: (date: string, value: number) => `Établie le ${date} · ${count(value, 'ouvrage', 'ouvrages')}`,
+    loading: 'Ouverture de la liste…',
+    empty: 'Cette liste est vide.',
+    invalid:
+      'Ce lien de liste de souhaits est incomplet ou altéré. Demandez à la personne qui vous l’a transmis de le partager de nouveau.',
+    note: 'Cette liste vous a été transmise par lien. Elle ne donne aucun accès à la bibliothèque de son auteur.',
+    isbn: (isbn: string) => `ISBN ${isbn}`,
+    open: 'Ouvrir Ma bibliothèque',
+  },
+
+  /** « En librairie »: the scan of books to check before buying them. */
+  bookshop: {
+    title: 'En librairie',
+    quit: 'Revenir aux listes',
+    ready: 'Présentez le code-barres d’un ouvrage',
+    hint: 'L’application indique si vous possédez déjà l’ouvrage ou s’il figure dans vos souhaits.',
+    owned: (title: string) => `« ${title} » — déjà dans votre bibliothèque`,
+    wished: (title: string) => `« ${title} » figure dans vos souhaits`,
+    absent: 'Absent de votre bibliothèque',
+    absentTitle: (title: string) => `« ${title} » — absent de votre bibliothèque`,
+    again: (title: string) => `${title} — déjà vérifié au cours de cette visite`,
+    lentTo: (name: string) => `Prêté à ${name}`,
+    lost: 'Déclaré perdu',
+    copies: (value: number, place: string) => `${count(value, 'exemplaire', 'exemplaires')} · ${place}`,
+    searching: 'Recherche du titre…',
+    unknown: 'Titre inconnu des sources',
+    offline: 'Titre inconnu hors connexion',
+    seriesOwned: (name: string, value: number) => `Série « ${name} » : vous en possédez ${count(value, 'tome', 'tomes')}`,
+    seriesMissing: (name: string, index: number) => `Tome ${formatNumber(index)} de « ${name} », qui vous manque`,
+    shelfQr: 'Ce code QR désigne une étagère : présentez le code-barres d’un ouvrage',
+    countOwned: (value: number) => plural(value, 'possédé', 'possédés'),
+    countWished: (value: number) => plural(value, 'souhaité', 'souhaités'),
+    countAbsent: (value: number) => plural(value, 'absent', 'absents'),
+    listTitle: 'Cette visite',
+    empty: 'Les ouvrages vérifiés apparaîtront ici, le plus récent en tête.',
+    statusOwned: 'Possédé',
+    statusWished: 'Souhaité',
+    finish: 'Terminer',
+  },
+
+  duplicates: {
+    intro: 'Les ouvrages que vous possédez en plusieurs exemplaires. Indiquez ceux que vous souhaitez donner ou revendre.',
+    empty: 'Vous ne possédez aucun ouvrage en plusieurs exemplaires.',
+    summary: (value: number, give: number) =>
+      `${count(value, 'ouvrage', 'ouvrages')} en plusieurs exemplaires · ${formatNumber(give)} à donner`,
+    times: (value: number) => `× ${formatNumber(value)}`,
+    /** The tag marking a book to give, as in the suggestions of the book sheet. */
+    tag: 'À donner',
+    give: 'À donner',
+    giveLabel: (title: string) => `Un exemplaire de « ${title} » est à donner`,
+    placeCount: (place: string, value: number) => `${place} (${formatNumber(value)})`,
+    export: 'Exporter la liste (CSV)',
+    exported: (fileName: string) => `Fichier enregistré : ${fileName}`,
+    fileName: (isoDate: string) => `doublons-${isoDate}.csv`,
+    columns: {
+      title: 'Titre',
+      authors: 'Auteurs',
+      isbn13: 'ISBN-13',
+      copies: 'Exemplaires',
+      places: 'Emplacements',
+      give: 'À donner',
+    },
+    yes: 'Oui',
+    no: 'Non',
+  },
+
+  insurance: {
+    /** Tags of the book sheet marking a precious edition, whose photographs may join the inventory. */
+    preciousTags: ['Édition originale', 'Dédicacé'],
+    kicker: 'Inventaire pour l’assurance',
+    books: (value: number) => count(value, 'ouvrage', 'ouvrages'),
+    places: (rooms: number, shelves: number) => `${count(rooms, 'pièce', 'pièces')} · ${count(shelves, 'étagère', 'étagères')}`,
+    priced: (value: number) => `prix d’achat renseigné pour ${count(value, 'ouvrage', 'ouvrages')}`,
+    value: (amount: string) => `Valeur d’achat déclarée : ${amount}`,
+    options: 'Contenu de l’inventaire',
+    covers: 'Inclure les couvertures',
+    prices: 'Inclure les prix d’achat',
+    pricesDetail: 'Saisis sur la fiche de chaque ouvrage, par « Modifier »',
+    byPlace: 'Classer par pièce et par étagère',
+    byPlaceDetail: 'Sinon, par titre',
+    photos: 'Joindre les photographies des éditions précieuses',
+    photosDetail: (value: number) =>
+      value === 0
+        ? 'Aucun ouvrage photographié ne porte l’étiquette « Édition originale » ou « Dédicacé ».'
+        : `${count(value, 'photographie', 'photographies')} d’ouvrages portant l’étiquette « Édition originale » ou « Dédicacé »`,
+    generate: 'Générer le PDF',
+    generating: (done: number, total: number) => `Préparation de l’inventaire : ${formatNumber(done)} sur ${formatNumber(total)}…`,
+    ready: (pages: number) => `Inventaire prêt · ${count(pages, 'page', 'pages')}`,
+    save: 'Enregistrer le PDF',
+    send: 'Envoyer le PDF',
+    saved: (fileName: string) => `Fichier enregistré : ${fileName}`,
+    failed: 'L’inventaire n’a pu être préparé.',
+    note: 'Conservez-en une copie hors de votre domicile, par courriel ou sur votre Drive.',
+    empty: 'Votre bibliothèque est vide : il n’y a encore rien à inventorier.',
+    fileName: (isoDate: string) => `inventaire-bibliotheque-${isoDate}.pdf`,
+  },
+
+  /** Contents of the insurance PDF. */
+  inventoryPdf: {
+    title: 'Inventaire de ma bibliothèque',
+    made: (date: string) => `Établi le ${date}`,
+    totals: (books: number, copies: number) => `${count(books, 'ouvrage', 'ouvrages')} · ${count(copies, 'exemplaire', 'exemplaires')}`,
+    value: (amount: string, priced: number, books: number) =>
+      `Valeur d’achat déclarée : ${amount} (prix renseigné pour ${formatNumber(priced)} ${plural(priced, 'ouvrage', 'ouvrages')} sur ${formatNumber(books)})`,
+    lost: (value: number) =>
+      value === 1
+        ? 'Un exemplaire déclaré perdu ne figure pas dans cet inventaire.'
+        : `${formatNumber(value)} exemplaires déclarés perdus ne figurent pas dans cet inventaire.`,
+    shelf: (name: string, value: number) => `${name} · ${count(value, 'ouvrage', 'ouvrages')}`,
+    byTitle: 'Ouvrages classés par titre',
+    copies: (value: number) => `${formatNumber(value)} exemplaires`,
+    lentTo: (name: string) => `Prêté à ${name}`,
+    isbn: (isbn: string) => `ISBN ${isbn}`,
+    times: (value: number, price: string) => `${formatNumber(value)} × ${price}`,
+    total: (amount: string) => `Valeur d’achat totale : ${amount}`,
+    photos: 'Photographies des éditions précieuses',
+    footer: (date: string) => `Ma bibliothèque · inventaire du ${date}`,
+    page: (page: number, pages: number) => `Page ${formatNumber(page)} sur ${formatNumber(pages)}`,
   },
 
   pwa: {

@@ -44,6 +44,7 @@ describe('base de données', () => {
         'rooms',
         'scanEntries',
         'scanSessions',
+        'series',
         'settings',
         'shelfChecks',
         'shelves',

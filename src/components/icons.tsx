@@ -264,3 +264,73 @@ export function StarIcon({ size = 22, filled = false }: IconProps & { filled?: b
     </svg>
   );
 }
+
+/** Volumes side by side (« Séries » shortcut). */
+export function SeriesIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="3" y="4" width="4.5" height="16" rx="1" />
+      <rect x="9.5" y="4" width="4.5" height="16" rx="1" />
+      <path d="M16.2 5.2l3.6-.9 2.2 15.4-3.6.9z" />
+    </Svg>
+  );
+}
+
+/** « Listes » shortcut: wishes, duplicates, insurance. */
+export function ListIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M9 6h11M9 12h11M9 18h11" />
+      <path d="M4 6h.01M4 12h.01M4 18h.01" />
+    </Svg>
+  );
+}
+
+/** A wish, filled once made. */
+export function HeartIcon({ size = 22, filled = false }: IconProps & { filled?: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+    </svg>
+  );
+}
+
+/** Link shared with relatives. */
+export function LinkIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
+      <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
+    </Svg>
+  );
+}
+
+/** File to save (CSV, PDF). */
+export function FileIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z" />
+      <path d="M14 3v5h5" />
+    </Svg>
+  );
+}
+
+/** Sent to another application (share sheet of the phone). */
+export function ShareIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 15V4M8 8l4-4 4 4" />
+      <path d="M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7" />
+    </Svg>
+  );
+}

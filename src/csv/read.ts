@@ -18,7 +18,7 @@ export interface ImportedCopy {
 }
 
 export type ImportedFields = Pick<Book, 'title' | 'authors' | 'status' | 'rating' | 'review' | 'tags'> &
-  Partial<Pick<Book, 'isbn13' | 'isbn10' | 'publisher' | 'year' | 'language' | 'seriesName' | 'seriesIndex'>>;
+  Partial<Pick<Book, 'isbn13' | 'isbn10' | 'publisher' | 'year' | 'language' | 'seriesName' | 'seriesIndex' | 'price'>>;
 
 export interface ImportedBook {
   fields: ImportedFields;
@@ -67,6 +67,13 @@ function readYear(value: string): number | undefined {
 function readRating(value: string): number {
   const rating = Number(value.trim().replace(',', '.'));
   return Number.isFinite(rating) ? Math.min(5, Math.max(0, Math.round(rating))) : 0;
+}
+
+/** « 12,50 », « 12.5 », « 12,50 € », « $12.99 », « 1 234,50 »; undefined when empty or unreadable. */
+export function parsePrice(value: string): number | undefined {
+  const text = value.replace(/[\s€$£]|EUR|USD/gi, '').replace(',', '.');
+  if (!/^\d+(?:\.\d{1,2})?$/.test(text)) return undefined;
+  return Math.round(Number(text) * 100) / 100;
 }
 
 function readTags(value: string): string[] {
@@ -135,6 +142,8 @@ function readAppRow(cell: Cells): ImportedBook {
   if (language) fields.language = language;
   if (seriesName) fields.seriesName = seriesName;
   if (cell(APP.volume) && Number.isFinite(seriesIndex)) fields.seriesIndex = seriesIndex;
+  const price = parsePrice(cell(APP.price));
+  if (price !== undefined) fields.price = price;
 
   const copy: ImportedCopy = {};
   const room = cell(APP.room);
@@ -168,6 +177,7 @@ const LIBIB = {
   group: ['group', 'groups'],
   copies: ['copies'],
   added: ['added', 'addeddate', 'dateadded'],
+  price: ['price', 'purchaseprice'],
 } as const;
 
 /** « Albert Camus » or, when Libib splits the first creator into last and first names, « Camus, Albert ». */
@@ -199,6 +209,8 @@ function readLibibRow(cell: Cells): ImportedBook | undefined {
   if (publisher) fields.publisher = publisher;
   if (year) fields.year = year;
   if (group) fields.seriesName = group;
+  const price = parsePrice(cell(LIBIB.price));
+  if (price !== undefined) fields.price = price;
 
   const copies = Number.parseInt(cell(LIBIB.copies), 10);
   const addedAt = readDate(cell(LIBIB.added), 'monthFirst');

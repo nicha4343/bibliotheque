@@ -10,6 +10,7 @@ import type {
   Room,
   ScanEntry,
   ScanSession,
+  SeriesRecord,
   SettingsRecord,
   Shelf,
   ShelfCheck,
@@ -36,6 +37,7 @@ export class LibraryDatabase extends Dexie {
   settings!: EntityTable<SettingsRecord, 'id'>;
   backup!: EntityTable<BackupState, 'id'>;
   shelfChecks!: EntityTable<ShelfCheck, 'id'>;
+  series!: EntityTable<SeriesRecord, 'id'>;
 
   constructor(name = DATABASE_NAME) {
     super(name);
@@ -65,6 +67,10 @@ export class LibraryDatabase extends Dexie {
     // Lot 3: shelf checks. Copy.position and Copy.lostAt are not indexed: no other change.
     this.version(4).stores({
       shelfChecks: 'id, shelfId, startedAt',
+    });
+    // Lot 5: number of volumes of a series. Book.price and the new Wish fields are not indexed.
+    this.version(5).stores({
+      series: 'id',
     });
   }
 }

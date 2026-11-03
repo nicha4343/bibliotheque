@@ -45,6 +45,7 @@ Application web installable sur téléphone (PWA) pour cataloguer une bibliothè
 - **Métadonnées**, interrogées **en parallèle** (la première réponse complète l'emporte, les autres complètent les champs vides) : Google Books, Open Library, BnF (SRU). Mise en cache locale. La BnF accepte l'appel direct depuis le navigateur (CORS vérifié au lot 1) : aucun relais nécessaire.
 - **Couvertures** : Open Library Covers, Google Books ; en dernier recours, les libraires Amazon (par ISBN-10, image enregistrée) puis Decitre (par EAN, affichée par lien, en ligne seulement) — adresses non officielles, choisies par l'utilisateur le 1er novembre 2026 parce qu'elles seules ont les couvertures des ouvrages récents des petits éditeurs ; photographie prise sur le flux vidéo du scan lui-même (pas de sélecteur de fichier pour la prise de vue).
 - Signal sonore via Web Audio ; vibration via `navigator.vibrate` (absente sur iPhone : ne pas en dépendre).
+- **Lot 5** : autres ouvrages d'un auteur par la recherche d'Open Library (éditions françaises, en ligne) ; liste de souhaits partagée sans serveur, compressée dans le lien après le « # » ; inventaire PDF fabriqué sur le téléphone par pdf-lib (chargé à la demande ; polices standard du PDF, d'où `toWinAnsi` pour les caractères qu'elles ignorent).
 
 ## Conventions de code
 
@@ -73,7 +74,8 @@ Node 24. Installer les dépendances une fois : `npm install`.
 ### Points d'attention
 - **Espaces insécables** : les outils d'édition ne savent pas toujours les saisir. Écrire les textes de `fr.ts` avec des espaces ordinaires, puis lancer `npm run texts:fix` ; le test `fr.test.ts` signale toute faute restante (typographie, tutoiement, vocabulaire proscrit).
 - **Base IndexedDB** (`src/db/db.ts`) : ne jamais modifier une version publiée du schéma ; ajouter `this.version(N + 1)` avec les changements, sans quoi les données des téléphones seraient perdues ou illisibles.
-- **Navigation** par ancre (`#/bibliotheque`, `#/scanner`, `#/a-completer`, `#/parametres`) : fonctionne sur tout hébergement statique et hors connexion. Base Vite relative (`./`).
+- **Navigation** par ancre (`#/bibliotheque`, `#/scanner`, `#/a-completer`, `#/parametres`) : fonctionne sur tout hébergement statique et hors connexion. Base Vite relative (`./`). « Retour » (`BackLink`) revient à l'écran précédent de l'application grâce à la profondeur notée dans l'historique (`startHistoryTracking`).
+- **Fins de ligne** : le dépôt est en LF, la copie de travail Windows en CRLF (`core.autocrlf`) ; un script de remplacement doit en tenir compte.
 - **Service worker** : le nôtre, `src/sw/sw.ts` (Workbox, mode `injectManifest`, vérifié par `tsconfig.sw.json`) : cache hors connexion et rappels des prêts. Il lit la base sans Dexie (`src/sw/reminders.ts`) et ne doit jamais la créer ni la mettre à niveau. Absent en développement (`npm run dev`) : essayer avec `npm run preview`.
 - **Mises à jour** : jamais de rechargement automatique (il interromprait un scan) ; un bandeau propose « Mettre à jour » ou « Reporter ».
 - **Polices** embarquées (Fontsource), pas de Google Fonts : rendu identique hors connexion.

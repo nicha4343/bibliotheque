@@ -13,7 +13,7 @@ import { useLiveQuery } from '../db/useLiveQuery';
 import { disableLoanNotifications, enableLoanNotifications } from '../loans/reminders';
 import { checkGoogleBooksKey } from '../metadata/googleBooksKey';
 import { retryAllUnknown } from '../pending/pending';
-import { routeHref } from '../router';
+import { LIST_TABS, routeHref } from '../router';
 import { formatDate, formatDateTime, fr } from '../textes/fr';
 
 type OfflineStatus = 'ready' | 'preparing' | 'unsupported';
@@ -393,6 +393,10 @@ export function SettingsScreen() {
           </button>
           <a class="link-row" href={routeHref('import')}>
             {fr.settings.importCsv}
+            <ChevronRightIcon size={18} />
+          </a>
+          <a class="link-row" href={routeHref('lists', LIST_TABS.insurance)}>
+            {fr.settings.insurance}
             <ChevronRightIcon size={18} />
           </a>
         </div>

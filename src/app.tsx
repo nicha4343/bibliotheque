@@ -1,19 +1,24 @@
 import { NavBar } from './components/NavBar';
 import { PwaNotices } from './components/PwaNotices';
 import { LOAN_HISTORY, useRoute, type Route, type TabId } from './router';
+import { AuthorScreen } from './screens/AuthorScreen';
 import { BackupScreen } from './screens/BackupScreen';
 import { BookScreen } from './screens/BookScreen';
+import { BookshopScreen } from './screens/BookshopScreen';
 import { EntryScreen } from './screens/EntryScreen';
 import { ImportScreen } from './screens/ImportScreen';
 import { LabelsScreen } from './screens/LabelsScreen';
 import { LendScanScreen } from './screens/LendScanScreen';
 import { LibraryScreen } from './screens/LibraryScreen';
+import { ListsScreen, listTabOf } from './screens/ListsScreen';
 import { LoanHistoryScreen, LoansScreen } from './screens/LoansScreen';
 import { PendingScreen } from './screens/PendingScreen';
 import { PlacesScreen } from './screens/PlacesScreen';
 import { RecapScreen } from './screens/RecapScreen';
 import { ScanScreen } from './screens/ScanScreen';
+import { SeriesListScreen, SeriesScreen } from './screens/SeriesScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
+import { SharedListScreen } from './screens/SharedListScreen';
 import { ShelfCheckScreen } from './screens/ShelfCheckScreen';
 import { ShelfScreen } from './screens/ShelfScreen';
 import { ShelvesScreen } from './screens/ShelvesScreen';
@@ -26,6 +31,9 @@ function tabOf(route: Route): TabId | undefined {
     case 'shelves':
     case 'shelf':
     case 'loans':
+    case 'series':
+    case 'author':
+    case 'lists':
       return 'library';
     case 'pending':
       return 'pending';
@@ -70,6 +78,16 @@ function CurrentScreen({ route }: { route: Route }) {
       return <LendScanScreen key="lend" mode="lend" />;
     case 'giveBack':
       return <LendScanScreen key="return" mode="return" />;
+    case 'series':
+      return route.param ? <SeriesScreen key={route.param} name={route.param} /> : <SeriesListScreen />;
+    case 'author':
+      return route.param ? <AuthorScreen key={route.param} name={route.param} /> : <LibraryScreen />;
+    case 'lists':
+      return <ListsScreen key={route.param ?? 'wishes'} tab={listTabOf(route.param)} />;
+    case 'bookshop':
+      return <BookshopScreen />;
+    case 'sharedList':
+      return route.param ? <SharedListScreen key={route.param} payload={route.param} /> : <LibraryScreen />;
     case 'import':
       return <ImportScreen />;
     case 'backup':

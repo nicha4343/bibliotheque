@@ -50,8 +50,14 @@ export interface Book {
   publisher?: string;
   year?: number;
   language?: string;
+  /**
+   * Given by a source, an import or the user. Absent: read from the title when it names a volume
+   * (« Blake et Mortimer - Tome 1 », see series/series.ts); empty: the user took the book out of any series.
+   */
   seriesName?: string;
   seriesIndex?: number;
+  /** Prix d’achat of one copy, in euros (lot 5, insurance inventory). */
+  price?: number;
   cover?: Cover;
   status: ReadingStatus;
   /** 0 = not rated, otherwise 1 to 5. */
@@ -198,13 +204,29 @@ export interface Loan {
   seenAt?: Timestamp;
 }
 
-/** Souhait (lot 5). */
+/** Where a wish comes from: a missing volume, the author page, a bookshop check, or typed by the user. */
+export type WishSource = 'series' | 'author' | 'bookshop' | 'manual';
+
+/** Souhait (lot 5). Removed by itself once the book enters the library (see wishes/wishes.ts). */
 export interface Wish {
   id: Id;
+  /** Empty when only the ISBN is known (bookshop check offline). */
   title: string;
   author?: string;
   isbn?: string;
-  source: 'series' | 'manual';
+  source: WishSource;
+  /** A missing volume of a series of the library. */
+  seriesName?: string;
+  seriesIndex?: number;
+  createdAt: Timestamp;
+}
+
+/** What the user says of a series (lot 5); its volumes are the notices bearing its name. */
+export interface SeriesRecord {
+  /** seriesKey() of the name. */
+  id: string;
+  /** « Nombre de tomes parus », declared by the user; otherwise the highest volume owned. */
+  total?: number;
 }
 
 /** Citation (lot 2). */
@@ -269,6 +291,8 @@ export interface Settings {
   loanNotifications: boolean;
   /** Ajouter chaque prêt à l’agenda: Google Agenda opens when a book is lent. */
   loanCalendar: boolean;
+  /** Name shown at the top of the shared wish list (empty: none). */
+  wishListName: string;
 }
 
 export const SETTINGS_KEY = 'app';
