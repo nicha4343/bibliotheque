@@ -73,7 +73,7 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - [x] Rappels en option (décision du 3 novembre 2026 : les deux, le rappel dans l'application dans tous les cas) : notification du téléphone, ajout à l'agenda
 - [x] Restitution par bouton ou par nouveau scan ; historique
 - [x] Filtre « Prêtés » et bouton « Prêter » sur la fiche
-- [ ] Essai sur téléphone : prêter en scannant, restituer par un nouveau scan, « Adresser un rappel courtois » (partage du téléphone), activer « Notification à l'échéance » (notification d'essai) et « Ajouter chaque prêt à l'agenda » (Google Agenda s'ouvre-t-il avec la bonne date ?)
+- [ ] Essai sur téléphone : prêter en scannant, restituer par un nouveau scan, « Adresser un rappel courtois » (partage du téléphone). Déjà validé le 3 novembre 2026 : ouverture hors connexion après la mise à jour (nouveau service worker), notification d'essai à l'activation de « Notification à l'échéance », ouverture de Google Agenda à la bonne date lors d'un prêt
 
 ### Reprise du lot 4 (3 novembre 2026)
 - Aucune nouvelle version du schéma : la table `loans` existe depuis la version 1 (`returnedAt` non indexé). La sauvegarde Google Drive passe au format 2 (prêts compris ; le format 1 se restaure sans prêts).
