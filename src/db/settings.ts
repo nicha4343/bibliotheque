@@ -13,7 +13,7 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   loanNotifications: false,
   loanCalendar: false,
   wishListName: '',
-  geminiKey: '',
+  mistralKey: '',
 };
 
 /** Stored values over the defaults, so a setting added later gets its default value. */

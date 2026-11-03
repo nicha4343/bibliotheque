@@ -8,7 +8,7 @@ import { Screen } from '../components/Screen';
 import type { Id, PendingItem } from '../db/schema';
 import { DEFAULT_SETTINGS, getSettings } from '../db/settings';
 import { useLiveQuery } from '../db/useLiveQuery';
-import { awaitsReading, currentReading, geminiKeyRefused } from '../pending/coverReading';
+import { awaitsReading, currentReading, coverKeyRefused } from '../pending/coverReading';
 import {
   confirmReading,
   deleteItem,
@@ -81,7 +81,7 @@ export function PendingScreen() {
     }
   };
 
-  /** « Confirmer » (lot 6): the notice is created with what Gemini read on the cover. */
+  /** « Confirmer » (lot 6): the notice is created with what Mistral read on the cover. */
   const confirm = async (item: PendingItem) => {
     setSearching((current) => new Set(current).add(item.id));
     try {
@@ -97,7 +97,7 @@ export function PendingScreen() {
   };
 
   const photographed = all.some((item) => item.photoBlobId);
-  const keyHint = !photographed ? '' : !settings.geminiKey ? fr.pending.noKeyHint : geminiKeyRefused(settings.geminiKey) ? fr.pending.keyRefusedHint : '';
+  const keyHint = !photographed ? '' : !settings.mistralKey ? fr.pending.noKeyHint : coverKeyRefused(settings.mistralKey) ? fr.pending.keyRefusedHint : '';
 
   const remove = async (item: PendingItem) => {
     setRemoving(undefined);
@@ -160,7 +160,7 @@ export function PendingScreen() {
                 item={item}
                 place={places?.byShelfId.get(item.shelfId)?.label}
                 searching={searching.has(item.id)}
-                reading={awaitsReading(item, settings.geminiKey)}
+                reading={awaitsReading(item, settings.mistralKey)}
                 onRetry={() => void retry(item)}
                 onConfirm={() => void confirm(item)}
                 onPhotograph={() => {
@@ -210,7 +210,7 @@ interface PendingCardProps {
   item: PendingItem;
   place: string | undefined;
   searching: boolean;
-  /** Gemini has yet to read the photograph (lot 6). */
+  /** Mistral has yet to read the photograph (lot 6). */
   reading: boolean;
   onRetry: () => void;
   onConfirm: () => void;

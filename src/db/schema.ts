@@ -97,11 +97,11 @@ export interface PendingItem {
   createdAt: Timestamp;
   /** Position of the copy to create on shelfId (order remembered), taken from the read. */
   position?: number;
-  /** What Gemini read on the photograph (lot 6); not indexed, no new version of the schema. */
+  /** What Mistral read on the photograph (lot 6); not indexed, no new version of the schema. */
   coverReading?: CoverReading;
 }
 
-/** Title, authors and publisher read by Gemini on the photograph of an item (lot 6). */
+/** Title, authors and publisher read by Mistral on the photograph of an item (lot 6). */
 export interface CoverReading {
   /** The photograph read: a new photograph is read again. */
   photoBlobId: Id;
@@ -327,8 +327,8 @@ export interface Settings {
   loanCalendar: boolean;
   /** Name shown at the top of the shared wish list (empty: none). */
   wishListName: string;
-  /** Clé Gemini of the user (lot 6, empty: none), reading the covers photographed. Kept on the device only. */
-  geminiKey: string;
+  /** Clé Mistral of the user (lot 6, empty: none), reading the covers photographed. Kept on the device only. */
+  mistralKey: string;
 }
 
 export const SETTINGS_KEY = 'app';

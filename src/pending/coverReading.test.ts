@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LibraryDatabase } from '../db/db';
 import { newId } from '../db/ids';
 import type { ScanSession, Shelf } from '../db/schema';
-import type { GeminiCover, GeminiOutcome } from '../metadata/gemini';
+import type { ReadCover, ReadOutcome } from '../metadata/mistral';
 import { createRoom } from '../places/places';
 import { recordNoBarcode, startSession } from '../scan/session';
 import { awaitsReading, currentReading, readItemCover } from './coverReading';
@@ -23,16 +23,16 @@ afterEach(async () => {
   await database.delete();
 });
 
-const read = (cover: GeminiCover) => (): Promise<GeminiOutcome> => Promise.resolve({ status: 'read', cover });
-const LOTUS: GeminiCover = { title: 'Le Lotus bleu', authors: ['Hergé'], publisher: 'Casterman', seriesName: 'Les Aventures de Tintin', seriesIndex: 5 };
+const read = (cover: ReadCover) => (): Promise<ReadOutcome> => Promise.resolve({ status: 'read', cover });
+const LOTUS: ReadCover = { title: 'Le Lotus bleu', authors: ['Hergé'], publisher: 'Casterman', seriesName: 'Les Aventures de Tintin', seriesIndex: 5 };
 
 async function photographedItem(): Promise<string> {
   const entry = await recordNoBarcode(session, new Blob(['jpeg']), {}, database);
   return entry.pendingItemId ?? '';
 }
 
-describe('lecture des couvertures de « À compléter » par Gemini', () => {
-  it('conserve ce que Gemini a lu, lié à la photographie lue', async () => {
+describe('lecture des couvertures de « À compléter » par Mistral', () => {
+  it('conserve ce que Mistral a lu, lié à la photographie lue', async () => {
     const itemId = await photographedItem();
     const before = await database.pendingItems.get(itemId);
     expect(before && awaitsReading(before, 'clé')).toBe(true);
@@ -44,7 +44,7 @@ describe('lecture des couvertures de « À compléter » par Gemini', () => {
     expect(item && awaitsReading(item, 'clé')).toBe(false);
   });
 
-  it('ne garde rien quand Gemini est indisponible ou refuse la clé', async () => {
+  it('ne garde rien quand Mistral est indisponible ou refuse la clé', async () => {
     const itemId = await photographedItem();
     expect(await readItemCover(itemId, 'clé', database, () => Promise.resolve({ status: 'busy' }))).toBe('busy');
     expect(await readItemCover(itemId, 'clé', database, () => Promise.resolve({ status: 'refused' }))).toBe('refused');
@@ -74,7 +74,7 @@ describe('lecture des couvertures de « À compléter » par Gemini', () => {
     expect(await database.pendingItems.count()).toBe(0);
   });
 
-  it('« Confirmer » n’ajoute rien quand Gemini n’a lu aucun titre', async () => {
+  it('« Confirmer » n’ajoute rien quand Mistral n’a lu aucun titre', async () => {
     const itemId = await photographedItem();
     await readItemCover(itemId, 'clé', database, read({ title: '', authors: [] }));
     expect(await confirmReading(itemId, database)).toBeUndefined();

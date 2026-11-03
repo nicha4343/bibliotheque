@@ -11,7 +11,7 @@ import { DEFAULT_SETTINGS, getSettings, updateSettings } from '../db/settings';
 import { getStorageProtection, type StorageProtection } from '../db/storage';
 import { useLiveQuery } from '../db/useLiveQuery';
 import { disableLoanNotifications, enableLoanNotifications } from '../loans/reminders';
-import { checkGeminiKey } from '../metadata/gemini';
+import { checkMistralKey } from '../metadata/mistral';
 import { checkGoogleBooksKey } from '../metadata/googleBooksKey';
 import { retryAllUnknown } from '../pending/pending';
 import { LIST_TABS, routeHref } from '../router';
@@ -138,13 +138,13 @@ function GoogleBooksKeyField({ saved }: { saved: string }) {
   );
 }
 
-const GEMINI_CHECKS = { valid: fr.settings.geminiValid, refused: fr.settings.geminiRefused, unverified: fr.settings.geminiUnverified };
+const MISTRAL_CHECKS = { valid: fr.settings.mistralValid, refused: fr.settings.mistralRefused, unverified: fr.settings.mistralUnverified };
 
 /** Where the user creates a free key (lot 6). */
-const AI_STUDIO_KEYS = 'https://aistudio.google.com/apikey';
+const MISTRAL_KEYS = 'https://console.mistral.ai/api-keys';
 
-/** « Clé Gemini » (lot 6): checked once when saved; the covers photographed are then read. */
-function GeminiKeyField({ saved }: { saved: string }) {
+/** « Clé Mistral » (lot 6): checked once when saved; the covers photographed are then read. */
+function MistralKeyField({ saved }: { saved: string }) {
   const [draft, setDraft] = useState(saved);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -158,13 +158,13 @@ function GeminiKeyField({ saved }: { saved: string }) {
     const key = draft.trim();
     setBusy(true);
     try {
-      await updateSettings({ geminiKey: key });
+      await updateSettings({ mistralKey: key });
       if (!key) {
-        setMessage(fr.settings.geminiRemoved);
+        setMessage(fr.settings.mistralRemoved);
         return;
       }
       setMessage(fr.settings.keyChecking);
-      setMessage(GEMINI_CHECKS[await checkGeminiKey(key)]);
+      setMessage(MISTRAL_CHECKS[await checkMistralKey(key)]);
     } finally {
       setBusy(false);
     }
@@ -172,18 +172,18 @@ function GeminiKeyField({ saved }: { saved: string }) {
 
   return (
     <form class="setting setting--stacked" onSubmit={(event) => void submit(event)}>
-      <label class="setting__label" for="gemini-key">
-        {fr.settings.geminiLabel}
+      <label class="setting__label" for="mistral-key">
+        {fr.settings.mistralLabel}
       </label>
-      <p class="setting__detail" id="gemini-key-detail">
-        {fr.settings.geminiDetail}{' '}
-        <a href={AI_STUDIO_KEYS} target="_blank" rel="noopener noreferrer">
-          {fr.settings.geminiCreate}
+      <p class="setting__detail" id="mistral-key-detail">
+        {fr.settings.mistralDetail}{' '}
+        <a href={MISTRAL_KEYS} target="_blank" rel="noopener noreferrer">
+          {fr.settings.mistralCreate}
         </a>
       </p>
       <div class="inline-form">
         <input
-          id="gemini-key"
+          id="mistral-key"
           class="field__input mono inline-form__field"
           type="text"
           value={draft}
@@ -191,7 +191,7 @@ function GeminiKeyField({ saved }: { saved: string }) {
           autocapitalize="off"
           spellcheck={false}
           enterKeyHint="done"
-          aria-describedby="gemini-key-detail"
+          aria-describedby="mistral-key-detail"
           onInput={(event) => {
             setDraft(event.currentTarget.value);
           }}
@@ -426,12 +426,12 @@ export function SettingsScreen() {
         </div>
       </section>
 
-      <section class="section" aria-labelledby="gemini-title">
-        <h2 class="section__title" id="gemini-title">
-          {fr.settings.geminiSection}
+      <section class="section" aria-labelledby="cover-reading-title">
+        <h2 class="section__title" id="cover-reading-title">
+          {fr.settings.mistralSection}
         </h2>
         <div class="card">
-          <GeminiKeyField saved={settings.geminiKey} />
+          <MistralKeyField saved={settings.mistralKey} />
         </div>
       </section>
 

@@ -53,9 +53,9 @@ export function EntryScreen({ itemId }: { itemId?: string | undefined }) {
   const settings = useLiveQuery(() => getSettings(), [], DEFAULT_SETTINGS);
   const prefilled = useRef<Id | undefined>(undefined);
   useCoverReadingChanges();
-  // Lot 6: what Gemini read on the photograph of the item.
+  // Lot 6: what Mistral read on the photograph of the item.
   const reading = item ? currentReading(item) : undefined;
-  const readingPending = item ? awaitsReading(item, settings.geminiKey) : false;
+  const readingPending = item ? awaitsReading(item, settings.mistralKey) : false;
 
   useEffect(() => {
     document.title = fr.app.documentTitle(fr.entry.title);
@@ -80,7 +80,7 @@ export function EntryScreen({ itemId }: { itemId?: string | undefined }) {
     };
   }, [currentId]);
 
-  // The form starts from what Gemini read, once per item, unless the user has begun typing.
+  // The form starts from what Mistral read, once per item, unless the user has begun typing.
   useEffect(() => {
     if (!item || !reading?.title || prefilled.current === item.id) return;
     prefilled.current = item.id;

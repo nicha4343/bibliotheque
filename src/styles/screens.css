@@ -781,7 +781,7 @@ a.scan__round-button {
   gap: 6px;
 }
 
-/* Lot 6: title and author read by Gemini on the photograph */
+/* Lot 6: title and author read by Mistral on the photograph */
 .pending-card__reading {
   display: flex;
   flex-direction: column;
@@ -943,7 +943,7 @@ a.scan__round-button {
   color: var(--color-text-muted);
 }
 
-/* Lot 6: Gemini reading the photograph, or what it read */
+/* Lot 6: Mistral reading the photograph, or what it read */
 .entry__reading {
   display: flex;
   align-items: center;

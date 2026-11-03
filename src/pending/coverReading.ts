@@ -2,24 +2,24 @@ import { liveQuery } from 'dexie';
 import { db, type LibraryDatabase } from '../db/db';
 import type { CoverReading, Id, PendingItem } from '../db/schema';
 import { getSettings } from '../db/settings';
-import { readCoverWithGemini, type GeminiOutcome } from '../metadata/gemini';
+import { readCoverWithMistral, type ReadOutcome } from '../metadata/mistral';
 import { parseHash, type RouteId } from '../router';
 
-// The photographs of « À compléter » are read by Gemini in the background, one after the other,
+// The photographs of « À compléter » are read by Mistral in the background, one after the other,
 // whatever the screen shown (lot 6): their title, author and publisher wait on the item (screens 3
 // and 4). Never during a scan, which must not slow down; online only, with the user's key.
 
 /** Screens reading barcodes. */
 const SCANNING_ROUTES: ReadonlySet<RouteId> = new Set<RouteId>(['scan', 'check', 'lend', 'giveBack', 'bookshop']);
-/** The free tier allows about ten requests a minute. */
-const SPACING_MS = 6000;
+/** Mistral's free mode limits the requests per second and the words per minute: one photograph at a time, unhurried. */
+const SPACING_MS = 4000;
 /** Quota exhausted, service or network unavailable: asked again after this delay. */
 const BUSY_DELAY_MS = 60_000;
-/** A photograph Gemini failed to read twice is left until the next start. */
+/** A photograph Mistral failed to read twice is left until the next start. */
 const MAX_FAILURES = 2;
 
 const failures = new Map<Id, number>();
-/** The key Gemini refused: nothing is sent until another one is entered. */
+/** The key Mistral refused: nothing is sent until another one is entered. */
 let refusedKey: string | undefined;
 const listeners = new Set<() => void>();
 const notify = () => {
@@ -36,29 +36,29 @@ export function subscribeCoverReading(listener: () => void): () => void {
   };
 }
 
-export const geminiKeyRefused = (key: string): boolean => key.trim() !== '' && key.trim() === refusedKey;
+export const coverKeyRefused = (key: string): boolean => key.trim() !== '' && key.trim() === refusedKey;
 
 /** What was read on the item's current photograph, if it has been read. */
 export const currentReading = (item: PendingItem): CoverReading | undefined =>
   item.photoBlobId && item.coverReading?.photoBlobId === item.photoBlobId ? item.coverReading : undefined;
 
-/** Whether the photograph of the item waits for Gemini (never without a key Gemini accepts). */
-export const awaitsReading = (item: PendingItem, geminiKey: string): boolean =>
-  geminiKey.trim() !== '' &&
-  !geminiKeyRefused(geminiKey) &&
+/** Whether the photograph of the item waits for Mistral (never without a key Mistral accepts). */
+export const awaitsReading = (item: PendingItem, mistralKey: string): boolean =>
+  mistralKey.trim() !== '' &&
+  !coverKeyRefused(mistralKey) &&
   !!item.photoBlobId &&
   !currentReading(item) &&
   (failures.get(item.photoBlobId) ?? 0) < MAX_FAILURES;
 
-type Read = (photo: Blob, key: string) => Promise<GeminiOutcome>;
+type Read = (photo: Blob, key: string) => Promise<ReadOutcome>;
 
 /** Reads the photograph of an item and keeps what was read, unless the photograph changed meanwhile. */
 export async function readItemCover(
   itemId: Id,
   key: string,
   database: LibraryDatabase = db,
-  read: Read = readCoverWithGemini,
-): Promise<GeminiOutcome['status']> {
+  read: Read = readCoverWithMistral,
+): Promise<ReadOutcome['status']> {
   const item = await database.pendingItems.get(itemId);
   const photoBlobId = item?.photoBlobId;
   const photo = photoBlobId ? await database.blobs.get(photoBlobId) : undefined;
@@ -99,8 +99,8 @@ function wakeCoverReading(database: LibraryDatabase = db): void {
         wakeAgain = false;
         for (;;) {
           if (scanning() || !navigator.onLine) break;
-          const key = (await getSettings(database)).geminiKey.trim();
-          if (!key || geminiKeyRefused(key)) break;
+          const key = (await getSettings(database)).mistralKey.trim();
+          if (!key || coverKeyRefused(key)) break;
           const waiting = (await database.pendingItems.orderBy('createdAt').toArray()).filter((item) => awaitsReading(item, key));
           const item = waiting.find((candidate) => candidate.id === preferred) ?? waiting[0];
           if (!item?.photoBlobId) break;
