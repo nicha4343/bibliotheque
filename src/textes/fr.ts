@@ -923,37 +923,6 @@ export const fr = {
     storageUnknown: 'Vos données sont conservées sur cet appareil.',
   },
 
-  // Temporary: sizes given by the browser, to understand the navigation bar hidden after a reload.
-  displayDiagnostic: {
-    title: 'Mesures de l’affichage (provisoire)',
-    intro: (milliseconds: string, changes: number) =>
-      `Première mesure ${milliseconds} millisecondes après l’ouverture de la page ; ${count(changes, 'changement', 'changements')} depuis. Les lignes modifiées sont en gras.`,
-    measure: 'Mesure',
-    atLoad: 'Au chargement',
-    now: 'Maintenant',
-    labels: {
-      window: 'innerWidth × innerHeight',
-      visualViewport: 'visualViewport',
-      clientHeight: 'clientHeight',
-      screen: 'screen / availHeight',
-      vh: '100vh',
-      svh: '100svh',
-      lvh: '100lvh',
-      dvh: '100dvh',
-      safeTop: 'inset-top',
-      safeBottom: 'inset-bottom',
-      safeMaxBottom: 'max-inset-bottom',
-      app: 'Application',
-      navBottom: 'Bas du menu',
-      standalone: 'Installée',
-      pixelRatio: 'devicePixelRatio',
-    },
-    yes: 'oui',
-    no: 'non',
-    viewport: (content: string) => `Balise viewport : ${content}`,
-    device: (description: string) => `Appareil : ${description}`,
-  },
-
   /**
    * CSV export, one row per copy. The import recognises these column names (ignoring case and
    * accents): renaming one prevents files exported before from being imported.
