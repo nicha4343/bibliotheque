@@ -10,6 +10,7 @@ import type { BackupState, MetadataProvider, Settings } from '../db/schema';
 import { DEFAULT_SETTINGS, getSettings, updateSettings } from '../db/settings';
 import { getStorageProtection, type StorageProtection } from '../db/storage';
 import { useLiveQuery } from '../db/useLiveQuery';
+import { disableLoanNotifications, enableLoanNotifications } from '../loans/reminders';
 import { checkGoogleBooksKey } from '../metadata/googleBooksKey';
 import { retryAllUnknown } from '../pending/pending';
 import { routeHref } from '../router';
@@ -195,6 +196,53 @@ function backupSummary(state: BackupState | undefined): string {
   return state.lastBackupAt ? fr.backup.rowLast(formatDateTime(new Date(state.lastBackupAt), new Date())) : fr.backup.rowNever;
 }
 
+const NOTIFICATIONS_MESSAGES = {
+  enabled: fr.settings.loanNotificationsOn,
+  unsupported: fr.settings.loanNotificationsUnsupported,
+  denied: fr.settings.loanNotificationsDenied,
+  notInstalled: fr.settings.loanNotificationsNotInstalled,
+} as const;
+
+/** « Prêts » (lot 4): the reminder in the app is always shown; the phone and the calendar are options. */
+function LoanReminders({ settings }: { settings: Settings }) {
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const toggleNotifications = async (on: boolean) => {
+    setBusy(true);
+    setMessage('');
+    if (on) setMessage(NOTIFICATIONS_MESSAGES[await enableLoanNotifications()]);
+    else await disableLoanNotifications();
+    setBusy(false);
+  };
+
+  return (
+    <section class="section" aria-labelledby="loans-title">
+      <h2 class="section__title" id="loans-title">
+        {fr.settings.loansSection}
+      </h2>
+      <div class="card">
+        <SwitchRow
+          label={fr.settings.loanNotifications}
+          detail={fr.settings.loanNotificationsDetail}
+          checked={settings.loanNotifications}
+          disabled={busy}
+          onChange={(on) => void toggleNotifications(on)}
+        />
+        <SwitchRow
+          label={fr.settings.loanCalendar}
+          detail={fr.settings.loanCalendarDetail}
+          checked={settings.loanCalendar}
+          onChange={(loanCalendar) => void updateSettings({ loanCalendar })}
+        />
+      </div>
+      <p class="status-line" role="status">
+        {message}
+      </p>
+    </section>
+  );
+}
+
 /** Screen 7. */
 export function SettingsScreen() {
   const offline = useOfflineStatus();
@@ -307,6 +355,8 @@ export function SettingsScreen() {
           {settings.sources.googleBooks && <GoogleBooksKeyField saved={settings.googleBooksKey} />}
         </div>
       </section>
+
+      <LoanReminders settings={settings} />
 
       <section class="section" aria-labelledby="offline-title">
         <h2 class="section__title" id="offline-title">

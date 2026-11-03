@@ -69,15 +69,17 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - Proposé à l'utilisateur, sans réponse : filtre de la bibliothèque sur une étagère classé dans l'ordre de rangement quand l'option est active (aujourd'hui toujours par titre).
 
 ## Lot 4 — Prêts
-- [x] Prêter en scannant, emprunteurs, durées, rappels (écran 10) ; rappel à l'échéance dans l'application (notification du téléphone : à décider, voir ci-dessous)
+- [x] Prêter en scannant, emprunteurs, durées, rappels (écran 10) ; rappel à l'échéance dans l'application
+- [x] Rappels en option (décision du 3 novembre 2026 : les deux, le rappel dans l'application dans tous les cas) : notification du téléphone, ajout à l'agenda
 - [x] Restitution par bouton ou par nouveau scan ; historique
 - [x] Filtre « Prêtés » et bouton « Prêter » sur la fiche
-- [ ] Essai sur téléphone : prêter en scannant, restituer par un nouveau scan, « Adresser un rappel courtois » (partage du téléphone)
+- [ ] Essai sur téléphone : prêter en scannant, restituer par un nouveau scan, « Adresser un rappel courtois » (partage du téléphone), activer « Notification à l'échéance » (notification d'essai) et « Ajouter chaque prêt à l'agenda » (Google Agenda s'ouvre-t-il avec la bonne date ?)
 
 ### Reprise du lot 4 (3 novembre 2026)
 - Aucune nouvelle version du schéma : la table `loans` existe depuis la version 1 (`returnedAt` non indexé). La sauvegarde Google Drive passe au format 2 (prêts compris ; le format 1 se restaure sans prêts).
 - Logique pure, testée (`src/loans/loans.test.ts`) : `src/loans/loans.ts` (échéance, état d'un prêt, emprunteurs connus, prêt, restitution et annulation, sens d'une lecture du scan des prêts, regroupement par emprunteur, historique). Retirer un exemplaire ou supprimer une fiche efface ses prêts (`books.ts`).
 - Composants : `LendSheet` (emprunteur et durée, depuis le scan ou la fiche), `CourtesySheet` (message modifiable, partage du téléphone ou copie). Écrans : `LoansScreen` et `LoanHistoryScreen` (`#/prets`, `#/prets/historique`), `LendScanScreen` (`#/preter`). Bibliothèque : filtre « Prêtés », raccourci « Prêts » avec pastille ; fiche : « Prêter » et « Restitué » sous chaque exemplaire ; fenêtre « Ouvrage déjà possédé » : « · prêté à … ».
+- Rappels : service worker propre (`src/sw/sw.ts`, Workbox en mode `injectManifest`, même cache qu'avant ; `tsconfig.sw.json`), qui lit la base sans Dexie (`src/sw/reminders.ts`) ; côté page, `src/loans/reminders.ts` (activation, `refreshLoanNotifications` au démarrage) ; dates pures dans `src/loans/dates.ts` (aussi employées par le service worker). Champs `Loan.notifiedAt` et `Loan.seenAt`, non indexés ; paramètres `loanNotifications` et `loanCalendar`. Vérifié avec `npm run preview` : service worker actif, 19 fichiers en cache, rappel de la bibliothèque, liens d'agenda ; la notification elle-même n'a pu l'être (refusée par le navigateur de l'ordinateur).
 - Vérifié dans le navigateur de l'ordinateur avec une caméra et un lecteur de codes simulés : prêt, restitution par scan, choix entre restitution et second exemplaire, lectures répétées sans effet, annulations, rappel courtois (sans partage sur l'ordinateur : « Copier le message » seul).
 
 ## Lot 5 — Séries et listes
@@ -100,6 +102,5 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
   - ajout et déplacement d'exemplaires par les invités, seulement si cela reste simple.
 
 ## À décider par l'utilisateur
-- Notification du téléphone à l'échéance d'un prêt, application fermée : possible sur Android seulement (synchronisation périodique de Chrome, application installée), au moment choisi par Chrome (une fois par jour au mieux, parfois moins si l'application est peu ouverte) ; ou, à la place, « Ajouter à l'agenda » lors du prêt (rappel fiable par l'agenda Google, qui reçoit alors le titre et l'emprunteur)
 - Lecture par photographie de l'ISBN imprimé des livres anciens
 - Dictée du titre et de l'auteur

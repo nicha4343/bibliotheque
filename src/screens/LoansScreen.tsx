@@ -1,13 +1,24 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { CoverImage } from '../components/CoverImage';
 import { ChevronLeftIcon, ScanIcon } from '../components/icons';
 import { Screen } from '../components/Screen';
 import { db } from '../db/db';
 import type { Book, Copy, Id, Loan } from '../db/schema';
+import { DEFAULT_SETTINGS, getSettings } from '../db/settings';
 import { useLiveQuery } from '../db/useLiveQuery';
 import { foldText } from '../library/filter';
 import { CourtesySheet } from '../loans/CourtesySheet';
-import { groupByBorrower, isActive, loanHistory, loanState, loanStateText, returnLoan, undoReturn } from '../loans/loans';
+import {
+  calendarUrl,
+  groupByBorrower,
+  isActive,
+  loanHistory,
+  loanState,
+  loanStateText,
+  markDueLoansSeen,
+  returnLoan,
+  undoReturn,
+} from '../loans/loans';
 import { loadPlaces, type PlaceIndex } from '../places/places';
 import { LOAN_HISTORY, routeHref } from '../router';
 import { formatNearDate, fr } from '../textes/fr';
@@ -50,7 +61,13 @@ export function LoansScreen() {
   const [message, setMessage] = useState('');
   const [givenBack, setGivenBack] = useState<GivenBack>();
   const [courtesy, setCourtesy] = useState<{ borrower: string; message: string }>();
+  const settings = useLiveQuery(() => getSettings(), [], DEFAULT_SETTINGS);
   const now = new Date();
+
+  // The loans due are shown here: the reminder of the library screen has done its work.
+  useEffect(() => {
+    void markDueLoansSeen();
+  }, []);
 
   const active = data?.loans.filter(isActive) ?? [];
   const groups = groupByBorrower(active);
@@ -153,6 +170,17 @@ export function LoansScreen() {
                           >
                             {fr.loans.courtesy(group.borrower)}
                           </button>
+                        )}
+                        {settings.loanCalendar && (
+                          <a
+                            class="text-button loan__courtesy"
+                            href={calendarUrl(loan, titleOf(loan))}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={fr.loanReminders.addToCalendarLabel(titleOf(loan))}
+                          >
+                            {fr.loanReminders.addToCalendar}
+                          </a>
                         )}
                       </span>
                       <button

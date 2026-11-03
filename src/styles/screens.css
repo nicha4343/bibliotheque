@@ -2123,3 +2123,50 @@ a.loan__title:hover {
   margin-bottom: var(--space-2);
   padding: 0;
 }
+
+/* Library: a loan whose return day has come, until seen */
+.reminder {
+  display: flex;
+  align-items: flex-start;
+  border-radius: var(--radius-card);
+  background: var(--color-pending-soft);
+  color: var(--color-pending-text);
+}
+
+.reminder__link {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: 14px 0 14px 14px;
+  color: inherit;
+  font-size: var(--text-secondary);
+  font-weight: 600;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.reminder__link:hover {
+  color: inherit;
+}
+
+.reminder__link svg {
+  flex-shrink: 0;
+}
+
+.reminder__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.reminder__action {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.reminder__close {
+  flex-shrink: 0;
+  color: var(--color-pending-text);
+}

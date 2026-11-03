@@ -1,6 +1,9 @@
 // Data model, as described in docs/SPEC.md (« Modèle de données »).
 // Dates are stored as timestamps in milliseconds (Date.now()).
 
+/** Name of the IndexedDB database, also opened by the service worker (loan reminders). */
+export const DATABASE_NAME = 'ma-bibliotheque';
+
 export type Id = string;
 export type Timestamp = number;
 
@@ -189,6 +192,10 @@ export interface Loan {
   lentAt: Timestamp;
   dueAt: Timestamp;
   returnedAt?: Timestamp;
+  /** Phone notification shown by the service worker once the return day has come. */
+  notifiedAt?: Timestamp;
+  /** Reminder of the library screen closed, or loans screen opened, once the return day has come. */
+  seenAt?: Timestamp;
 }
 
 /** Souhait (lot 5). */
@@ -258,6 +265,10 @@ export interface Settings {
   offlineScanning: boolean;
   /** Clé Google Books of the user (empty: none). Kept on the device only, never in the repository. */
   googleBooksKey: string;
+  /** Notification à l’échéance d’un prêt (Android: periodic background sync of the service worker). */
+  loanNotifications: boolean;
+  /** Ajouter chaque prêt à l’agenda: Google Agenda opens when a book is lent. */
+  loanCalendar: boolean;
 }
 
 export const SETTINGS_KEY = 'app';

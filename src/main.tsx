@@ -11,6 +11,7 @@ import { render } from 'preact';
 import { App } from './app';
 import { startBackups } from './backup/backup';
 import { requestPersistentStorage } from './db/storage';
+import { refreshLoanNotifications } from './loans/reminders';
 import { unlockAudio } from './scan/feedback';
 import { startLookups } from './scan/lookups';
 
@@ -19,6 +20,8 @@ void requestPersistentStorage();
 startBackups();
 // Codes read offline or before the app was closed are searched again.
 startLookups();
+// « Notification à l’échéance »: the daily check of the loans is registered again.
+void refreshLoanNotifications();
 // Browsers only allow sound after a touch.
 document.addEventListener('pointerdown', unlockAudio, { passive: true });
 

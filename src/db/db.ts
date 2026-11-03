@@ -16,8 +16,9 @@ import type {
   StoredBlob,
   Wish,
 } from './schema';
+import { DATABASE_NAME } from './schema';
 
-export const DATABASE_NAME = 'ma-bibliotheque';
+export { DATABASE_NAME };
 
 export class LibraryDatabase extends Dexie {
   rooms!: EntityTable<Room, 'id'>;

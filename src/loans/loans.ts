@@ -2,57 +2,11 @@ import { db, type LibraryDatabase } from '../db/db';
 import { newId } from '../db/ids';
 import type { Book, Copy, Id, Loan } from '../db/schema';
 import { foldText } from '../library/filter';
-import { formatNearDate, fr } from '../textes/fr';
+import { dueDate, isActive, unseenDueLoans, type LoanDuration } from './dates';
 
 // Loans (lot 4, screen 10): lend a copy, give it back, remind the borrower.
 
-export type LoanDuration = '2w' | '1m' | '2m';
-
-export const LOAN_DURATIONS: readonly LoanDuration[] = ['2w', '1m', '2m'];
-export const DEFAULT_LOAN_DURATION: LoanDuration = '1m';
-
-/**
- * Day the book is expected back, at noon local time (safe from daylight-saving changes). A month
- * later is the same day of the month, or the last day of a shorter month (31 January → 28 February).
- */
-export function dueDate(lentAt: Date, duration: LoanDuration): Date {
-  const due = new Date(lentAt.getFullYear(), lentAt.getMonth(), lentAt.getDate(), 12);
-  if (duration === '2w') {
-    due.setDate(due.getDate() + 14);
-    return due;
-  }
-  const day = due.getDate();
-  due.setDate(1);
-  due.setMonth(due.getMonth() + (duration === '1m' ? 1 : 2));
-  const lastDay = new Date(due.getFullYear(), due.getMonth() + 1, 0).getDate();
-  due.setDate(Math.min(day, lastDay));
-  return due;
-}
-
-const dayNumber = (date: Date): number => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86_400_000;
-
-/** « due » on the day the book is expected back, « late » from the next day. */
-export type LoanState = 'running' | 'due' | 'late';
-
-export function loanState(loan: Pick<Loan, 'dueAt'>, now: Date): LoanState {
-  const days = dayNumber(now) - dayNumber(new Date(loan.dueAt));
-  return days < 0 ? 'running' : days === 0 ? 'due' : 'late';
-}
-
-/** « Rappel le 1er décembre », « Retour prévu aujourd’hui », « En retard · retour prévu le 1er octobre ». */
-export function loanStateText(loan: Pick<Loan, 'dueAt'>, now: Date): string {
-  const due = formatNearDate(new Date(loan.dueAt), now);
-  switch (loanState(loan, now)) {
-    case 'running':
-      return fr.loans.reminderOn(due);
-    case 'due':
-      return fr.loans.dueToday;
-    case 'late':
-      return fr.loans.late(due);
-  }
-}
-
-export const isActive = (loan: Loan): boolean => loan.returnedAt === undefined;
+export * from './dates';
 
 /** Names already used, the person most recently lent to first. */
 export function knownBorrowers(loans: readonly Loan[]): string[] {
@@ -178,6 +132,8 @@ export function groupByBorrower(loans: readonly Loan[]): BorrowerGroup[] {
 export const loanHistory = (loans: readonly Loan[]): Loan[] =>
   loans.filter((loan) => !isActive(loan)).sort((a, b) => (b.returnedAt ?? 0) - (a.returnedAt ?? 0));
 
-/** Loans in progress whose return day has come. */
-export const dueLoans = (loans: readonly Loan[], now: Date): Loan[] =>
-  loans.filter((loan) => isActive(loan) && loanState(loan, now) !== 'running');
+/** The reminder of the library screen is closed, or the loans screen opened: the due loans have been seen. */
+export async function markDueLoansSeen(database: LibraryDatabase = db, now = new Date()): Promise<void> {
+  const unseen = unseenDueLoans(await database.loans.toArray(), now);
+  if (unseen.length > 0) await database.loans.bulkUpdate(unseen.map((loan) => ({ key: loan.id, changes: { seenAt: now.getTime() } })));
+}

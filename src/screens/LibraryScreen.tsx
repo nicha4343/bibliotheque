@@ -15,7 +15,7 @@ import {
   type PlaceFilter,
   type StatusFilter,
 } from '../library/filter';
-import { dueLoans } from '../loans/loans';
+import { dueLoans, markDueLoansSeen, unseenDueLoans } from '../loans/loans';
 import { indexPlaces, type PlaceIndex } from '../places/places';
 import { ROUTE_HASHES, routeHref } from '../router';
 import { formatNumber, fr } from '../textes/fr';
@@ -23,8 +23,15 @@ import { formatNumber, fr } from '../textes/fr';
 interface LibraryData {
   entries: LibraryEntry[];
   places: PlaceIndex;
-  /** Loans whose return day has come: the reminder shown on the « Prêts » shortcut. */
+  /** Loans whose return day has come: the number shown on the « Prêts » shortcut. */
   due: number;
+  /** Those not yet seen: the reminder at the top of the screen. */
+  reminders: Reminder[];
+}
+
+interface Reminder {
+  title: string;
+  borrower: string;
 }
 
 async function loadLibrary(): Promise<LibraryData> {
@@ -35,10 +42,17 @@ async function loadLibrary(): Promise<LibraryData> {
     db.shelves.toArray(),
     db.loans.toArray(),
   ]);
+  const now = new Date();
+  const titles = new Map(books.map((book) => [book.id, book.title]));
+  const bookOfCopy = new Map(copies.map((copy) => [copy.id, copy.bookId]));
   return {
     entries: toEntries(books, copies, loans),
     places: indexPlaces(rooms, shelves),
-    due: dueLoans(loans, new Date()).length,
+    due: dueLoans(loans, now).length,
+    reminders: unseenDueLoans(loans, now).map((loan) => ({
+      title: titles.get(bookOfCopy.get(loan.copyId) ?? '') || fr.common.untitled,
+      borrower: loan.borrower,
+    })),
   };
 }
 
@@ -115,6 +129,7 @@ export function LibraryScreen() {
 
       {data && places && total !== 0 && (
         <>
+          {data.reminders.length > 0 && <LoanReminder reminders={data.reminders} />}
           <nav class="shortcuts" aria-label={fr.library.shortcuts}>
             {places.byShelfId.size > 0 && (
               <a class="shortcut" href={routeHref('shelves')}>
@@ -249,6 +264,32 @@ export function LibraryScreen() {
         </>
       )}
     </Screen>
+  );
+}
+
+/** The return day of a loan has come: shown until the user closes it or opens the loans screen. */
+function LoanReminder({ reminders }: { reminders: Reminder[] }) {
+  const [first] = reminders;
+  const text =
+    reminders.length === 1 && first ? fr.loanReminders.inAppOne(first.title, first.borrower) : fr.loanReminders.inAppMany(reminders.length);
+  return (
+    <div class="reminder">
+      <a class="reminder__link" href={routeHref('loans')}>
+        <LoanIcon size={22} />
+        <span class="reminder__text">
+          {text}
+          <span class="reminder__action">{fr.loanReminders.see}</span>
+        </span>
+      </a>
+      <button
+        type="button"
+        class="icon-button reminder__close"
+        aria-label={fr.loanReminders.dismiss}
+        onClick={() => void markDueLoansSeen()}
+      >
+        <CloseIcon size={18} />
+      </button>
+    </div>
   );
 }
 

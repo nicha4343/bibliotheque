@@ -34,6 +34,10 @@ export default defineConfig({
     preact(),
     htmlTexts(),
     VitePWA({
+      // Our own service worker (src/sw/sw.ts): Workbox's offline caching, plus the loan reminders (lot 4).
+      strategies: 'injectManifest',
+      srcDir: 'src/sw',
+      filename: 'sw.ts',
       // An update never reloads the page by itself: a scan session must not be interrupted.
       registerType: 'prompt',
       injectRegister: false,
@@ -60,10 +64,10 @@ export default defineConfig({
           { src: 'maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
-      workbox: {
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,woff2,png,svg,ico,wasm}'],
-        clientsClaim: true,
-        cleanupOutdatedCaches: true,
+        // A classic script, as Workbox generated before.
+        rollupFormat: 'iife',
       },
     }),
   ],

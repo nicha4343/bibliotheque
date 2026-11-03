@@ -6,7 +6,8 @@ import { newId } from '../db/ids';
 import type { Book, Copy, Loan, Shelf } from '../db/schema';
 import { createRoom } from '../places/places';
 import { newBook, newCopy } from '../scan/session';
-import {
+ import {
+  calendarUrl,
   cancelLoan,
   classifyLendScan,
   dueDate,
@@ -17,9 +18,13 @@ import {
   loadLendScan,
   loanHistory,
   loanState,
+  loansToNotify,
+  markDueLoansSeen,
   matchBorrower,
+  reminderNotification,
   returnLoan,
   undoReturn,
+  unseenDueLoans,
 } from './loans';
 
 const loan = (fields: Partial<Loan>): Loan => ({
@@ -185,5 +190,50 @@ describe('prêts enregistrés', () => {
     expect((await database.loans.toArray()).map((item) => item.borrower)).toEqual(['Léa']);
     await deleteBook(book.id, database);
     expect(await database.loans.count()).toBe(0);
+  });
+});
+
+describe('rappels', () => {
+  const now = new Date(2026, 10, 3, 9);
+  const due = loan({ id: 'due', dueAt: new Date(2026, 10, 3, 12).getTime() });
+  const late = loan({ id: 'late', dueAt: new Date(2026, 9, 1, 12).getTime(), notifiedAt: 1, seenAt: 2 });
+  const running = loan({ id: 'running', dueAt: new Date(2026, 11, 1, 12).getTime() });
+
+  it('notifient une seule fois chaque prêt arrivé à échéance', () => {
+    expect(loansToNotify([due, late, running], now)).toEqual([due]);
+  });
+
+  it('rappellent dans l’application les prêts échus que l’utilisateur n’a pas vus', () => {
+    expect(unseenDueLoans([due, late, running], now)).toEqual([due]);
+  });
+
+  it('nomment le premier prêt de la notification et comptent les autres', () => {
+    const items = ['A', 'B', 'C'].map((title) => ({ title, borrower: 'Sam' }));
+    expect(reminderNotification(items.slice(0, 1))).toEqual({
+      title: 'Prêt arrivé à échéance',
+      body: '« A », prêté à Sam',
+    });
+    expect(reminderNotification(items)).toEqual({
+      title: '3 prêts arrivés à échéance',
+      body: '« A », prêté à Sam, et 2 autres prêts',
+    });
+  });
+
+  it('créent dans Google Agenda un événement d’une journée, le jour du retour prévu', () => {
+    const url = new URL(calendarUrl({ borrower: 'Léa', lentAt: new Date(2026, 10, 3).getTime(), dueAt: new Date(2026, 11, 31, 12).getTime() }, 'Candide'));
+    expect(url.origin + url.pathname).toBe('https://calendar.google.com/calendar/render');
+    expect(url.searchParams.get('action')).toBe('TEMPLATE');
+    expect(url.searchParams.get('dates')).toBe('20261231/20270101');
+    expect(url.searchParams.get('text')).toContain('Candide');
+    expect(url.searchParams.get('text')).toContain('Léa');
+  });
+
+  it('sont marqués vus à l’ouverture des prêts', async () => {
+    const database = new LibraryDatabase(`test-${newId()}`);
+    await database.loans.bulkAdd([due, running]);
+    await markDueLoansSeen(database, now);
+    expect((await database.loans.get('due'))?.seenAt).toBe(now.getTime());
+    expect((await database.loans.get('running'))?.seenAt).toBeUndefined();
+    await database.delete();
   });
 });

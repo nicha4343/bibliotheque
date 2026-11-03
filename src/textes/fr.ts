@@ -544,6 +544,25 @@ export const fr = {
     copyFailed: 'Le message n’a pu être copié : sélectionnez-le, puis copiez-le.',
   },
 
+  /** Reminders of the return day: in the app always, on the phone and in the calendar as options. */
+  loanReminders: {
+    inAppOne: (title: string, name: string) => `Le prêt de « ${title} » à ${name} est arrivé à échéance.`,
+    inAppMany: (value: number) => `${formatNumber(value)} prêts sont arrivés à échéance.`,
+    see: 'Consulter les prêts',
+    dismiss: 'Masquer ce rappel',
+    notificationTitle: (value: number) =>
+      value === 1 ? 'Prêt arrivé à échéance' : `${formatNumber(value)} prêts arrivés à échéance`,
+    notificationMore: (title: string, name: string, others: number) =>
+      `« ${title} », prêté à ${name}, et ${count(others, 'autre prêt', 'autres prêts')}`,
+    notificationItem: (title: string, name: string) => `« ${title} », prêté à ${name}`,
+    enabledTitle: 'Rappels des prêts',
+    enabledBody: 'Le téléphone vous préviendra ainsi le jour du retour prévu de chaque prêt.',
+    calendarTitle: (title: string, name: string) => `Retour de « ${title} », prêté à ${name}`,
+    calendarDetails: (date: string) => `Prêté le ${date}. Rappel de Ma bibliothèque.`,
+    addToCalendar: 'Ajouter à l’agenda',
+    addToCalendarLabel: (title: string) => `Ajouter le retour de « ${title} » à l’agenda`,
+  },
+
   loanHistory: {
     title: 'Historique des prêts',
     back: 'Prêts',
@@ -764,6 +783,20 @@ export const fr = {
         : value === 1
           ? '1 ouvrage mis de côté a été retrouvé et ajouté à votre bibliothèque.'
           : `${formatNumber(value)} ouvrages mis de côté ont été retrouvés et ajoutés à votre bibliothèque.`,
+    loansSection: 'Prêts',
+    loanNotifications: 'Notification à l’échéance',
+    loanNotificationsDetail:
+      'Le téléphone vous prévient le jour du retour prévu, même application fermée. Android seulement, application installée ; Chrome choisit le moment, une fois par jour au plus.',
+    loanNotificationsOn: 'Notifications activées : une notification d’essai vient d’être envoyée.',
+    loanNotificationsUnsupported:
+      'Ce navigateur ne permet pas ces notifications : seul Chrome sur Android le permet, l’application étant installée sur l’écran d’accueil.',
+    loanNotificationsDenied:
+      'Les notifications sont refusées à cette application : autorisez-les dans les paramètres du téléphone, puis réessayez.',
+    loanNotificationsNotInstalled:
+      'Chrome ne le permet qu’à l’application installée sur l’écran d’accueil : ouvrez-la depuis son icône, puis réessayez.',
+    loanCalendar: 'Ajouter chaque prêt à l’agenda',
+    loanCalendarDetail:
+      'Google Agenda s’ouvre lors du prêt, à la date du retour prévu, et vous préviendra ce jour-là. Il reçoit le titre de l’ouvrage et le nom de l’emprunteur.',
     offlineSection: 'Hors connexion',
     offlineScanning: 'Lecture hors connexion',
     offlineScanningDetail: 'Les codes sont conservés ; la recherche s’effectue au retour du réseau',

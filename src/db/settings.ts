@@ -10,6 +10,8 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   sources: { bnf: true, googleBooks: true, openLibrary: true },
   offlineScanning: true,
   googleBooksKey: '',
+  loanNotifications: false,
+  loanCalendar: false,
 };
 
 /** Stored values over the defaults, so a setting added later gets its default value. */

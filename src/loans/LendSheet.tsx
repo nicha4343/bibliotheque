@@ -4,10 +4,20 @@ import { PlusIcon } from '../components/icons';
 import { Sheet } from '../components/Sheet';
 import { db } from '../db/db';
 import type { Book, Copy, Loan } from '../db/schema';
+import { DEFAULT_SETTINGS, getSettings } from '../db/settings';
 import { useLiveQuery } from '../db/useLiveQuery';
 import type { PlaceIndex } from '../places/places';
 import { fr } from '../textes/fr';
-import { DEFAULT_LOAN_DURATION, knownBorrowers, lendCopy, LOAN_DURATIONS, matchBorrower, type LoanDuration } from './loans';
+import {
+  calendarUrl,
+  DEFAULT_LOAN_DURATION,
+  dueDate,
+  knownBorrowers,
+  lendCopy,
+  LOAN_DURATIONS,
+  matchBorrower,
+  type LoanDuration,
+} from './loans';
 
 interface LendSheetProps {
   book: Book;
@@ -26,6 +36,7 @@ interface LendSheetProps {
 /** « Prêter un ouvrage »: borrower (known or new) and duration. */
 export function LendSheet({ book, copies, places, scanned, initialBorrower, initialDuration, onLent, onClose }: LendSheetProps) {
   const borrowers = useLiveQuery(async () => knownBorrowers(await db.loans.toArray()), [], []);
+  const settings = useLiveQuery(() => getSettings(), [], DEFAULT_SETTINGS);
   const [copyId, setCopyId] = useState(copies[0]?.id);
   const [borrower, setBorrower] = useState(initialBorrower ?? '');
   const [newPerson, setNewPerson] = useState(false);
@@ -52,6 +63,11 @@ export function LendSheet({ book, copies, places, scanned, initialBorrower, init
   const submit = async (event: Event) => {
     event.preventDefault();
     if (!copy || !name || busy) return;
+    // « Ajouter chaque prêt à l’agenda »: opened during the touch, or the browser would block it.
+    if (settings.loanCalendar) {
+      const now = new Date();
+      window.open(calendarUrl({ borrower: name, lentAt: now.getTime(), dueAt: dueDate(now, duration).getTime() }, title), '_blank', 'noopener');
+    }
     setBusy(true);
     const loan = await lendCopy(copy.id, name, duration);
     setBusy(false);

@@ -74,6 +74,7 @@ Node 24. Installer les dépendances une fois : `npm install`.
 - **Espaces insécables** : les outils d'édition ne savent pas toujours les saisir. Écrire les textes de `fr.ts` avec des espaces ordinaires, puis lancer `npm run texts:fix` ; le test `fr.test.ts` signale toute faute restante (typographie, tutoiement, vocabulaire proscrit).
 - **Base IndexedDB** (`src/db/db.ts`) : ne jamais modifier une version publiée du schéma ; ajouter `this.version(N + 1)` avec les changements, sans quoi les données des téléphones seraient perdues ou illisibles.
 - **Navigation** par ancre (`#/bibliotheque`, `#/scanner`, `#/a-completer`, `#/parametres`) : fonctionne sur tout hébergement statique et hors connexion. Base Vite relative (`./`).
+- **Service worker** : le nôtre, `src/sw/sw.ts` (Workbox, mode `injectManifest`, vérifié par `tsconfig.sw.json`) : cache hors connexion et rappels des prêts. Il lit la base sans Dexie (`src/sw/reminders.ts`) et ne doit jamais la créer ni la mettre à niveau. Absent en développement (`npm run dev`) : essayer avec `npm run preview`.
 - **Mises à jour** : jamais de rechargement automatique (il interromprait un scan) ; un bandeau propose « Mettre à jour » ou « Reporter ».
 - **Polices** embarquées (Fontsource), pas de Google Fonts : rendu identique hors connexion.
 - TypeScript reste en 6.x et ESLint en 9.x tant que typescript-eslint et eslint-plugin-jsx-a11y ne prennent pas en charge TypeScript 7 et ESLint 10.
