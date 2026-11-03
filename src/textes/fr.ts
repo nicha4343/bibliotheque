@@ -741,7 +741,7 @@ export const fr = {
     titleLabel: 'Titre',
     titlePlaceholder: 'Titre de l’ouvrage',
     authorLabel: 'Auteur',
-    authorPlaceholder: 'Auteur ou autrice',
+    authorPlaceholder: 'Nom de l’auteur',
     publisherLabel: 'Éditeur',
     publisherPlaceholder: 'Facultatif',
     titleRequired: 'Indiquez au moins le titre de l’ouvrage.',

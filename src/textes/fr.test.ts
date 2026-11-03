@@ -42,6 +42,9 @@ const RULES: { name: string; test: (text: string) => boolean }[] = [
   { name: '« Réglages » (employer Paramètres)', test: (t) => word('réglages?').test(t) },
   { name: '« Envies » (employer Souhaits)', test: (t) => word('envies').test(t) },
   { name: '« Rendu » (employer Restitué)', test: (t) => word('rendus?|rendues?').test(t) },
+  { name: '« autrice », « auteure », « écrivaine » (employer auteur, écrivain)', test: (t) => word('autrices?|auteures?|écrivaines?').test(t) },
+  // The middle dot alone, between spaces, separates details (« 4 sur 7 · 3 tomes manquants »).
+  { name: 'écriture inclusive (point médian, « iel »)', test: (t) => /\p{L}·\p{L}/u.test(t) || word('iels?').test(t) },
   { name: '« Plus tard » ou « Passer » (employer Reporter)', test: (t) => word('plus tard').test(t) || t === 'Passer' },
   { name: '« ex. » (employer exemplaire)', test: (t) => word('ex\\.').test(t) },
 ];

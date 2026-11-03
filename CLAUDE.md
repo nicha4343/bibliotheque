@@ -12,6 +12,7 @@ Application web installable sur téléphone (PWA) pour cataloguer une bibliothè
 ### Textes de l'interface
 - **Vouvoiement** partout ; jamais de tutoiement. Les intitulés à la première personne (« Ma bibliothèque », « Mes souhaits », « Mon avis ») sont admis.
 - **Français soutenu** partout : pas d'abréviations familières, pas de « on », pas de points d'exclamation, mois écrits en entier (« 1er octobre », jamais « 1 oct. »), typographie française (espace insécable avant « : ; ? », guillemets « », apostrophe ’).
+- **Ni féminisation des noms ni écriture inclusive** (demande de l'utilisateur du 3 novembre 2026) : le masculin a valeur générique ; « auteur » se dit d'une femme comme d'un homme. Jamais « autrice », « auteure », « écrivaine », ni doublets (« auteur ou autrice »), point médian (« lecteur·rice ») ou « iel ».
 - Vocabulaire retenu :
 
 | Employer | Ne pas employer |
@@ -26,6 +27,7 @@ Application web installable sur téléphone (PWA) pour cataloguer une bibliothè
 | Restitué | Rendu |
 | Reporter | Passer, Plus tard |
 | exemplaire(s) | ex. |
+| auteur, écrivain (pour une femme aussi) | autrice, auteure, écrivaine |
 | scanner, scanné (admis) | — |
 
 - Tous les textes de l'interface sont regroupés dans un seul fichier (`src/textes/fr.ts`), jamais écrits en dur dans les composants, pour pouvoir les relire d'un bloc.

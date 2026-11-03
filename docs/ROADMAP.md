@@ -123,6 +123,7 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 
 ## Lot 7 — Améliorations demandées
 - [ ] Champ de recherche dans « Séries » (`#/series`), demandé par l'utilisateur le 3 novembre 2026 : retrouver une série par son nom ou celui de son auteur, recherche instantanée et locale, insensible aux accents, comme celle de la bibliothèque (écran 5)
+- [x] Ni « autrice » ni autre féminisation ou écriture inclusive dans les textes (demande de l'utilisateur du 3 novembre 2026) : règle de CLAUDE.md, vérifiée par `fr.test.ts` ; « Auteur ou autrice » (champ Auteur de la saisie en série) devient « Nom de l'auteur »
 - [ ] Essai sur téléphone
 
 ## Plus tard
