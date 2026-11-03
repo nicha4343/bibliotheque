@@ -2,7 +2,7 @@
 
 Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est terminé qu'après un essai sur un vrai téléphone. Le détail de chaque écran est dans [SPEC.md](SPEC.md).
 
-**Lot en cours : 5 — Séries et listes** (lots 0 et 1 terminés le 1er novembre 2026, lot 2 le 2 novembre 2026, lots 3 et 4 le 3 novembre 2026)
+**Lot en cours : 6 — Reconnaissance de texte** (lots 0 et 1 terminés le 1er novembre 2026, lot 2 le 2 novembre 2026, lots 3, 4 et 5 le 3 novembre 2026)
 
 ## Lot 0 — Socle
 - [x] Projet Vite + TypeScript strict + Preact, ESLint, Vitest
@@ -89,7 +89,7 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - [x] Doublons à donner
 - [x] Inventaire PDF pour l'assurance
 - [x] Nombre de tomes parus et titre des tomes manquants d'après la BnF (demande de l'utilisateur du 3 novembre 2026) ; correction de la lecture des réponses de la BnF ; séries des ouvrages déjà catalogués
-- [ ] Essai sur téléphone : séries (dont « Nombre de tomes parus, d'après la BnF »), page auteur, souhaits et lien partagé ouvert sur un autre téléphone, « En librairie », doublons, PDF enregistré et envoyé
+- [x] Essai sur téléphone, validé le 3 novembre 2026 (« lot 5 validé ») : séries (dont « Nombre de tomes parus, d'après la BnF »), page auteur, souhaits et lien partagé ouvert sur un autre téléphone, « En librairie », doublons, PDF enregistré et envoyé
 
 ### Reprise du lot 5 (3 novembre 2026)
 - Schéma version 5 : table `series` (nombre de tomes déclaré) ; `Book.price`, champs de `Wish` (`source` élargie, `seriesName`, `seriesIndex`, `createdAt`) non indexés ; paramètre `wishListName`. Sauvegarde Google Drive au format 3 (souhaits et séries ; les formats 1 et 2 se restaurent sans eux). Export et import CSV : colonne « Prix d'achat », `price` de Libib.
