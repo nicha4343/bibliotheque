@@ -2,7 +2,7 @@
 
 Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est terminé qu'après un essai sur un vrai téléphone. Le détail de chaque écran est dans [SPEC.md](SPEC.md).
 
-**Lot en cours : 4 — Prêts** (lots 0 et 1 terminés le 1er novembre 2026, lot 2 le 2 novembre 2026, lot 3 le 3 novembre 2026)
+**Lot en cours : 5 — Séries et listes** (lots 0 et 1 terminés le 1er novembre 2026, lot 2 le 2 novembre 2026, lots 3 et 4 le 3 novembre 2026)
 
 ## Lot 0 — Socle
 - [x] Projet Vite + TypeScript strict + Preact, ESLint, Vitest
@@ -73,13 +73,14 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - [x] Rappels en option (décision du 3 novembre 2026 : les deux, le rappel dans l'application dans tous les cas) : notification du téléphone, ajout à l'agenda
 - [x] Restitution par bouton ou par nouveau scan ; historique
 - [x] Filtre « Prêtés » et bouton « Prêter » sur la fiche
-- [ ] Essai sur téléphone : prêter en scannant, restituer par un nouveau scan, « Adresser un rappel courtois » (partage du téléphone). Déjà validé le 3 novembre 2026 : ouverture hors connexion après la mise à jour (nouveau service worker), notification d'essai à l'activation de « Notification à l'échéance », ouverture de Google Agenda à la bonne date lors d'un prêt
+- [x] Essai sur téléphone, validé le 3 novembre 2026 (« lot 4 validé sur téléphone ») : prêter en scannant, restituer par le scan « Restituer un ouvrage », et auparavant : ouverture hors connexion après la mise à jour (nouveau service worker), notification d'essai à l'activation de « Notification à l'échéance », ouverture de Google Agenda à la bonne date lors d'un prêt
 
 ### Reprise du lot 4 (3 novembre 2026)
 - Aucune nouvelle version du schéma : la table `loans` existe depuis la version 1 (`returnedAt` non indexé). La sauvegarde Google Drive passe au format 2 (prêts compris ; le format 1 se restaure sans prêts).
 - Logique pure, testée (`src/loans/loans.test.ts`) : `src/loans/loans.ts` (échéance, état d'un prêt, emprunteurs connus, prêt, restitution et annulation, sens d'une lecture du scan des prêts, regroupement par emprunteur, historique). Retirer un exemplaire ou supprimer une fiche efface ses prêts (`books.ts`).
 - Composants : `LendSheet` (emprunteur et durée, depuis le scan ou la fiche), `CourtesySheet` (message modifiable, partage du téléphone ou copie). Écrans : `LoansScreen` et `LoanHistoryScreen` (`#/prets`, `#/prets/historique`), `LendScanScreen` (`#/preter`). Bibliothèque : filtre « Prêtés », raccourci « Prêts » avec pastille ; fiche : « Prêter » et « Restitué » sous chaque exemplaire ; fenêtre « Ouvrage déjà possédé » : « · prêté à … ».
 - Rappels : service worker propre (`src/sw/sw.ts`, Workbox en mode `injectManifest`, même cache qu'avant ; `tsconfig.sw.json`), qui lit la base sans Dexie (`src/sw/reminders.ts`) ; côté page, `src/loans/reminders.ts` (activation, `refreshLoanNotifications` au démarrage) ; dates pures dans `src/loans/dates.ts` (aussi employées par le service worker). Champs `Loan.notifiedAt` et `Loan.seenAt`, non indexés ; paramètres `loanNotifications` et `loanCalendar`. Vérifié avec `npm run preview` : service worker actif, 19 fichiers en cache, rappel de la bibliothèque, liens d'agenda ; la notification elle-même n'a pu l'être (refusée par le navigateur de l'ordinateur).
+- Retours de l'essai sur téléphone (3 novembre 2026), corrigés : le bouton « Prêter un ouvrage » ne disait pas qu'il servait aussi à la restitution (ajout de « Restituer un ouvrage », scan `#/restituer` réservé aux retours) ; avec un titre long, la confirmation dépassait de l'écran (la liste du scan élargissait la page : largeur de l'application bornée dans `app.css`, bannière du scan sur deux lignes).
 - Vérifié dans le navigateur de l'ordinateur avec une caméra et un lecteur de codes simulés : prêt, restitution par scan, choix entre restitution et second exemplaire, lectures répétées sans effet, annulations, rappel courtois (sans partage sur l'ordinateur : « Copier le message » seul).
 
 ## Lot 5 — Séries et listes
