@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { CoverImage } from '../components/CoverImage';
-import { ChevronLeftIcon, ScanIcon } from '../components/icons';
+import { ChevronLeftIcon, LoanIcon, ScanIcon } from '../components/icons';
 import { Screen } from '../components/Screen';
 import { db } from '../db/db';
 import type { Book, Copy, Id, Loan } from '../db/schema';
@@ -110,6 +110,15 @@ export function LoansScreen() {
           <span class="lend-start__detail">{fr.loans.lendDetail}</span>
         </span>
       </a>
+      {active.length > 0 && (
+        <a class="lend-start lend-start--return" href={routeHref('giveBack')}>
+          <LoanIcon size={24} />
+          <span class="lend-start__text">
+            <span class="lend-start__title">{fr.loans.giveBackStart}</span>
+            <span class="lend-start__detail">{fr.loans.giveBackStartDetail}</span>
+          </span>
+        </a>
+      )}
 
       <p class="status-line status-line--with-action" role="status">
         {message && <span>{message}</span>}
@@ -199,7 +208,6 @@ export function LoansScreen() {
           );
         })}
 
-      {groups.length > 0 && <p class="loans__hint">{fr.loans.scanToGiveBack}</p>}
       {data && data.loans.length > active.length && (
         <a class="text-button text-button--center" href={routeHref('loans', LOAN_HISTORY)}>
           {fr.loans.history}

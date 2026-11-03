@@ -23,10 +23,11 @@ describe('routes', () => {
     expect(parseHash(routeHref('shelf', 'a/b'))).toEqual({ id: 'shelf', param: 'a/b' });
   });
 
-  it('distinguent les prêts, leur historique et le scan d’un ouvrage à prêter', () => {
+  it('distinguent les prêts, leur historique et les scans d’un ouvrage à prêter ou restitué', () => {
     expect(parseHash('#/prets')).toEqual({ id: 'loans' });
     expect(parseHash(routeHref('loans', LOAN_HISTORY))).toEqual({ id: 'loans', param: 'historique' });
     expect(parseHash('#/preter')).toEqual({ id: 'lend' });
+    expect(parseHash('#/restituer')).toEqual({ id: 'giveBack' });
   });
 
   it('ouvrent la bibliothèque par défaut', () => {

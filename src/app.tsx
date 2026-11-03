@@ -67,7 +67,9 @@ function CurrentScreen({ route }: { route: Route }) {
     case 'loans':
       return route.param === LOAN_HISTORY ? <LoanHistoryScreen /> : <LoansScreen />;
     case 'lend':
-      return <LendScanScreen />;
+      return <LendScanScreen key="lend" mode="lend" />;
+    case 'giveBack':
+      return <LendScanScreen key="return" mode="return" />;
     case 'import':
       return <ImportScreen />;
     case 'backup':

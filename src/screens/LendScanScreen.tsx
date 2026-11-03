@@ -30,11 +30,16 @@ type Dialog = { kind: 'lend'; book: Book; copies: Copy[] } | { kind: 'choose'; b
 
 const titleOf = (book: Book) => book.title || fr.common.untitled;
 
+/** « Prêter un ouvrage », or « Restituer un ouvrage »: given back only, a book at home is not lent. */
+export type LendScanMode = 'lend' | 'return';
+
 /**
- * « Prêter un ouvrage » (screen 10): a book read is lent through the lending sheet; a lent book read
- * again is given back. Nothing is asked when the meaning is plain, as in the scan of screen 1.
+ * Screen 10: a book read is lent through the lending sheet; a lent book read is given back (when lending
+ * too). Nothing is asked when the meaning is plain, as in the scan of screen 1.
  */
-export function LendScanScreen() {
+export function LendScanScreen({ mode }: { mode: LendScanMode }) {
+  const lending = mode === 'lend';
+  const readyFlash: Flash = { kind: 'info', text: lending ? fr.lendScan.ready : fr.lendScan.readyReturn };
   const videoRef = useRef<HTMLVideoElement>(null);
   const viewRef = useRef<HTMLDivElement>(null);
   const aimRef = useRef<HTMLDivElement>(null);
@@ -45,7 +50,7 @@ export function LendScanScreen() {
   const places = useLiveQuery<PlaceIndex | undefined>(() => loadPlaces(), [], undefined);
   const [rows, setRows] = useState<Row[]>([]);
   const [dialog, setDialog] = useState<Dialog>();
-  const [flash, setFlash] = useState<Flash>({ kind: 'info', text: fr.lendScan.ready });
+  const [flash, setFlash] = useState<Flash>(readyFlash);
   const [last, setLast] = useState<{ borrower: string; duration: LoanDuration }>();
   const filter = useRef(new RepeatFilter()).current;
   // A book left without an answer is not offered again while it stays in front of the camera.
@@ -58,8 +63,8 @@ export function LendScanScreen() {
   };
 
   useEffect(() => {
-    document.title = fr.app.documentTitle(fr.lendScan.title);
-  }, []);
+    document.title = fr.app.documentTitle(lending ? fr.lendScan.title : fr.lendScan.titleReturn);
+  }, [lending]);
 
   const placeOf = (shelfId: string | undefined) => (shelfId && places?.byShelfId.get(shelfId)?.label) || fr.library.noPlace;
 
@@ -68,7 +73,7 @@ export function LendScanScreen() {
     if (!done) return;
     const place = placeOf(copies.find((copy) => copy.id === loan.copyId)?.shelfId);
     setRows((current) => [{ kind: 'givenBack', loan: done, book, place }, ...current]);
-    setFlash({ kind: 'ok', text: fr.loans.givenBack(titleOf(book), place) });
+    setFlash({ kind: 'ok', text: fr.lendScan.givenBackFlash(titleOf(book)), detail: fr.lendScan.rowGivenBack(place) });
   };
 
   const onIsbn = async (isbn13: string) => {
@@ -91,6 +96,11 @@ export function LendScanScreen() {
         setFlash({ kind: 'warn', text: fr.lendScan.notOwned });
         break;
       case 'lend':
+        if (!lending) {
+          signal('attention');
+          setFlash({ kind: 'warn', text: fr.lendScan.notLent(titleOf(scan.book)) });
+          break;
+        }
         signal('read');
         setDialog({ kind: 'lend', book: scan.book, copies: scan.copies });
         break;
@@ -100,10 +110,18 @@ export function LendScanScreen() {
         await giveBack(scan.book, scan.loan, copies);
         break;
       }
-      case 'choose':
+      case 'choose': {
+        const [onlyLoan] = scan.loans;
+        // Given back only: a copy at home does not make the read ambiguous.
+        if (!lending && onlyLoan && scan.loans.length === 1) {
+          signal('read');
+          await giveBack(scan.book, onlyLoan, await loadCopies(scan.book));
+          break;
+        }
         signal('attention');
-        setDialog({ kind: 'choose', book: scan.book, loans: scan.loans, copies: scan.copies });
+        setDialog({ kind: 'choose', book: scan.book, loans: scan.loans, copies: lending ? scan.copies : [] });
         break;
+      }
     }
   };
 
@@ -130,14 +148,18 @@ export function LendScanScreen() {
   const dismiss = () => {
     if (dialog?.book.isbn13) dismissed.current = dialog.book.isbn13;
     setDialog(undefined);
-    setFlash({ kind: 'info', text: fr.lendScan.ready });
+    setFlash(readyFlash);
   };
 
   const onLent = (book: Book, loan: Loan, copy: Copy, duration: LoanDuration) => {
     setDialog(undefined);
     setRows((current) => [{ kind: 'lent', loan, book, place: placeOf(copy.shelfId) }, ...current]);
     setLast({ borrower: loan.borrower, duration });
-    setFlash({ kind: 'ok', text: fr.lend.done(titleOf(book), loan.borrower, formatNearDate(new Date(loan.dueAt), new Date())) });
+    setFlash({
+      kind: 'ok',
+      text: fr.lendScan.lentFlash(titleOf(book), loan.borrower),
+      detail: fr.loans.reminderOn(formatNearDate(new Date(loan.dueAt), new Date())),
+    });
   };
 
   const undo = async (row: Row) => {
@@ -159,17 +181,17 @@ export function LendScanScreen() {
 
   return (
     <main class="scan">
-      <h1 class="visually-hidden">{fr.lendScan.title}</h1>
+      <h1 class="visually-hidden">{lending ? fr.lendScan.title : fr.lendScan.titleReturn}</h1>
       <Viewfinder
         refs={refs}
         camera={camera}
         detectorAvailable={detectorAvailable}
         flash={flash}
-        hint={fr.lendScan.hint}
+        hint={lending ? fr.lendScan.hint : fr.lendScan.hintReturn}
         place={
           <p class="scan__place">
             <LoanIcon size={18} />
-            <span class="scan__place-label">{fr.lendScan.title}</span>
+            <span class="scan__place-label">{lending ? fr.lendScan.title : fr.lendScan.titleReturn}</span>
           </p>
         }
         actions={
@@ -179,9 +201,11 @@ export function LendScanScreen() {
         }
         counters={
           <>
-            <span class="scan__counter">
-              <strong>{formatNumber(lent)}</strong> {fr.lendScan.lent(lent)}
-            </span>
+            {lending && (
+              <span class="scan__counter">
+                <strong>{formatNumber(lent)}</strong> {fr.lendScan.lent(lent)}
+              </span>
+            )}
             <span class="scan__counter">
               <strong>{formatNumber(givenBack)}</strong> {fr.lendScan.givenBack(givenBack)}
             </span>
@@ -196,7 +220,7 @@ export function LendScanScreen() {
           </h2>
         </div>
         {rows.length === 0 ? (
-          <p class="scan__empty">{fr.lendScan.empty}</p>
+          <p class="scan__empty">{lending ? fr.lendScan.empty : fr.lendScan.emptyReturn}</p>
         ) : (
           <ul class="scan__rows">
             {rows.map((row) => (
@@ -225,7 +249,7 @@ export function LendScanScreen() {
             ))}
           </ul>
         )}
-        <div class="scan__actions">
+        <div class="scan__actions scan__actions--single">
           <button
             type="button"
             class="button button--primary button--large"

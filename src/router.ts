@@ -17,7 +17,8 @@ export type RouteId =
   | 'shelf'
   | 'check'
   | 'loans'
-  | 'lend';
+  | 'lend'
+  | 'giveBack';
 
 /** The four tabs of the navigation bar. */
 export type TabId = 'library' | 'scan' | 'pending' | 'settings';
@@ -49,8 +50,10 @@ export const ROUTE_HASHES: Readonly<Record<RouteId, string>> = {
   check: '#/verifier',
   /** Followed by LOAN_HISTORY for the returned loans. */
   loans: '#/prets',
-  /** Scan of a book to lend, or given back. */
+  /** Scan of a book to lend (a lent book read is given back all the same). */
   lend: '#/preter',
+  /** Scan of the books given back. */
+  giveBack: '#/restituer',
 };
 
 /** Parameter of the loans route showing the history. */

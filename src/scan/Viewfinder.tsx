@@ -9,6 +9,8 @@ export type FlashKind = 'ok' | 'warn' | 'info';
 export interface Flash {
   kind: FlashKind;
   text: string;
+  /** Second line, kept whole: where to put a book given back, the reminder of a loan. */
+  detail?: string;
 }
 
 export interface ViewfinderRefs {
@@ -71,7 +73,10 @@ export function Viewfinder({ refs, camera, detectorAvailable, flash, hint, place
       <div class="scan__center">
         <p class={`scan__flash scan__flash--${flash.kind}`} role="status">
           <span class="scan__flash-dot" aria-hidden="true" />
-          <span class="scan__flash-text">{flash.text}</span>
+          <span class="scan__flash-body">
+            <span class="scan__flash-text">{flash.text}</span>
+            {flash.detail && <span class="scan__flash-detail">{flash.detail}</span>}
+          </span>
         </p>
         <div class="scan__aim" ref={refs.aim} aria-hidden="true">
           <span class="scan__corner scan__corner--tl" />

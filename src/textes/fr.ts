@@ -479,7 +479,8 @@ export const fr = {
     givenBack: (title: string, place: string) => `« ${title} » restitué · à ranger dans ${place}`,
     undo: 'Annuler',
     undone: (title: string) => `Restitution de « ${title} » annulée`,
-    scanToGiveBack: 'Lors de la restitution, il suffit également de scanner à nouveau l’ouvrage.',
+    giveBackStart: 'Restituer un ouvrage',
+    giveBackStartDetail: 'Scannez-le : l’application indique où le ranger',
     history: 'Historique des prêts',
   },
 
@@ -500,11 +501,17 @@ export const fr = {
     failed: 'Cet exemplaire est déjà prêté.',
   },
 
-  /** Scan opened by « Prêter un ouvrage »: a book at home is lent, a lent book is given back. */
+  /** Scans of « Prêter un ouvrage » (a lent book read is given back all the same) and « Restituer un ouvrage ». */
   lendScan: {
-    title: 'Prêter ou restituer',
+    title: 'Prêter un ouvrage',
+    titleReturn: 'Restituer un ouvrage',
     quit: 'Revenir aux prêts',
-    ready: 'Présentez le code-barres de l’ouvrage à prêter ou restitué',
+    readyReturn: 'Présentez le code-barres de l’ouvrage restitué',
+    hintReturn: 'Scannez l’un après l’autre les ouvrages qui vous sont restitués.',
+    lentFlash: (title: string, name: string) => `« ${title} » prêté à ${name}`,
+    givenBackFlash: (title: string) => `« ${title} » restitué`,
+    notLent: (title: string) => `« ${title} » n’est pas prêté`,
+    ready: 'Présentez le code-barres de l’ouvrage à prêter',
     hint: 'Un ouvrage prêté qui vous est restitué est reconnu de même : scannez-le simplement.',
     notOwned: 'Cet ouvrage ne figure pas dans votre bibliothèque',
     shelfQr: 'Ce code QR désigne une étagère : présentez le code-barres d’un ouvrage',
@@ -512,6 +519,7 @@ export const fr = {
     givenBack: (value: number) => plural(value, 'restitué', 'restitués'),
     listTitle: 'Cette session',
     empty: 'Les ouvrages prêtés ou restitués apparaîtront ici, le plus récent en tête.',
+    emptyReturn: 'Les ouvrages restitués apparaîtront ici, le plus récent en tête.',
     rowLent: (name: string, date: string) => `À ${name} · rappel le ${date}`,
     rowGivenBack: (place: string) => `À ranger dans ${place}`,
     statusLent: 'Prêté',
