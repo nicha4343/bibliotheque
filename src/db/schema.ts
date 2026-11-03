@@ -97,17 +97,6 @@ export interface PendingItem {
   createdAt: Timestamp;
   /** Position of the copy to create on shelfId (order remembered), taken from the read. */
   position?: number;
-  /** Text read on the photograph (lot 6); not indexed, no new version of the schema. */
-  reading?: CoverReading;
-}
-
-/** Title, author and publisher read on the photograph of an item, most likely first (lot 6). */
-export interface CoverReading {
-  /** The photograph read: a new photograph is read again. */
-  photoBlobId: Id;
-  titles: string[];
-  authors: string[];
-  publishers: string[];
 }
 
 export interface ScanSessionCounts {

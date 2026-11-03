@@ -335,12 +335,12 @@ export function ShareIcon(props: IconProps) {
   );
 }
 
-/** « Relevé sur la couverture » (lot 6): text read in a frame. */
-export function ReadTextIcon(props: IconProps) {
+/** « Dicter le titre et l’auteur » (lot 6). */
+export function MicIcon(props: IconProps) {
   return (
     <Svg {...props}>
-      <path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2" />
-      <path d="M8 9h8M8 12h8M8 15h5" />
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
     </Svg>
   );
 }

@@ -1,14 +1,12 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { CameraSheet } from '../components/CameraSheet';
 import { CoverImage } from '../components/CoverImage';
-import { CameraIcon, CheckIcon, ChevronDownIcon, CloseIcon, PinIcon, ReadTextIcon } from '../components/icons';
+import { CameraIcon, CheckIcon, ChevronDownIcon, CloseIcon, PinIcon } from '../components/icons';
 import { db } from '../db/db';
 import type { Id, PendingItem } from '../db/schema';
 import { useLiveQuery } from '../db/useLiveQuery';
-import { foldText } from '../library/filter';
-import { awaitsReading, currentReading, preferReading } from '../ocr/reading';
-import { useReadingFailures } from '../ocr/useReadingFailures';
-import { completeItem, joinAuthors, listPendingItems, parseAuthors, readingEntry, setItemPhoto } from '../pending/pending';
+import { EditionSearch } from '../pending/EditionSearch';
+import { completeItem, joinAuthors, listPendingItems, parseAuthors, setItemPhoto } from '../pending/pending';
 import { loadPlaces, type PlaceIndex } from '../places/places';
 import { navigate, routeHref } from '../router';
 import { LocationPicker } from '../scan/LocationPicker';
@@ -49,8 +47,6 @@ export function EntryScreen({ itemId }: { itemId?: string | undefined }) {
   const places = useLiveQuery<PlaceIndex | undefined>(() => loadPlaces(), [], undefined);
   const remaining = useLiveQuery(() => db.pendingItems.count(), [], 0);
   const single = itemId !== undefined;
-  const prefilled = useRef<Id | undefined>(undefined);
-  useReadingFailures();
 
   useEffect(() => {
     document.title = fr.app.documentTitle(fr.entry.title);
@@ -66,28 +62,6 @@ export function EntryScreen({ itemId }: { itemId?: string | undefined }) {
     setTookPhoto(false);
     setShowError(false);
   }, [currentId]);
-
-  // The photograph of the item shown is read before the others (lot 6).
-  useEffect(() => {
-    preferReading(currentId);
-    return () => {
-      preferReading(undefined);
-    };
-  }, [currentId]);
-
-  // « Corriger » or « Saisir » (screen 3): the form starts from what was read on the cover.
-  useEffect(() => {
-    if (!single || !item || prefilled.current === item.id) return;
-    const reading = currentReading(item);
-    if (!reading) return;
-    prefilled.current = item.id;
-    const entry = readingEntry(reading);
-    setDraft((previous) =>
-      previous.title || previous.author || previous.publisher
-        ? previous
-        : { title: entry.title, author: joinAuthors(entry.authors), publisher: entry.publisher },
-    );
-  }, [single, item]);
 
   // An item completed elsewhere meanwhile (found by a new search) is skipped.
   useEffect(() => {
@@ -168,32 +142,6 @@ export function EntryScreen({ itemId }: { itemId?: string | undefined }) {
       : item?.photoBlobId
         ? fr.entry.photoCaption
         : fr.entry.noPhotoCaption;
-  // Lot 6: words read on the cover, touched to fill the fields.
-  const reading = item ? currentReading(item) : undefined;
-  const readingPending = item ? awaitsReading(item) : false;
-  const readingStatus = readingPending
-    ? fr.entry.readingPending
-    : reading
-      ? reading.titles.length + reading.authors.length + reading.publishers.length > 0
-        ? fr.entry.readingHint
-        : fr.entry.readingNothing
-      : '';
-  const sameText = (a: string, b: string) => foldText(a) === foldText(b);
-  const pick = (key: 'title' | 'publisher', value: string) => {
-    setDraft((previous) => ({ ...previous, [key]: sameText(previous[key], value) ? '' : value }));
-  };
-  // Several authors are separated by a comma: an author touched is added, or removed.
-  const authorPicked = (name: string) => parseAuthors(draft.author).some((author) => sameText(author, name));
-  const toggleAuthor = (name: string) => {
-    setDraft((previous) => {
-      const authors = parseAuthors(previous.author);
-      const next = authors.some((author) => sameText(author, name))
-        ? authors.filter((author) => !sameText(author, name))
-        : [...authors, name];
-      return { ...previous, author: joinAuthors(next) };
-    });
-  };
-
   const field = (key: keyof Draft) => ({
     value: draft[key],
     onInput: (event: { currentTarget: HTMLInputElement }) => {
@@ -250,13 +198,7 @@ export function EntryScreen({ itemId }: { itemId?: string | undefined }) {
             <div class="entry__meta">
               <p class="entry__kind">{item.kind === 'unknownIsbn' ? fr.pending.kindUnknown : fr.pending.kindNoBarcode}</p>
               {item.isbn && <p class="entry__isbn mono">{item.isbn}</p>}
-              <div class="entry__captions">
-                <p class="entry__caption">{caption}</p>
-                <p class="entry__caption" role="status">
-                  {readingPending && <span class="spinner" aria-hidden="true" />}
-                  {readingStatus}
-                </p>
-              </div>
+              <p class="entry__caption">{caption}</p>
               <p class="entry__place-label">{fr.entry.place}</p>
               <button
                 type="button"
@@ -272,6 +214,20 @@ export function EntryScreen({ itemId }: { itemId?: string | undefined }) {
               </button>
             </div>
           </div>
+
+          {/* Lot 6: the title and author dictated, then found in the catalogues. A new search per item. */}
+          <EditionSearch
+            key={item.id}
+            onPick={(edition) => {
+              setDraft({ title: edition.title, author: joinAuthors(edition.authors), publisher: edition.publisher ?? '' });
+              setShowError(false);
+            }}
+            onNothing={(query) => {
+              if (draft.title.trim()) return false;
+              setDraft((previous) => ({ ...previous, title: query.charAt(0).toLocaleUpperCase('fr') + query.slice(1) }));
+              return true;
+            }}
+          />
 
           <div class="field">
             <label class="field__label" for="entry-title">
@@ -293,14 +249,6 @@ export function EntryScreen({ itemId }: { itemId?: string | undefined }) {
                 {fr.entry.titleRequired}
               </p>
             )}
-            <ReadingChips
-              label={fr.entry.readingChips(fr.entry.titleLabel)}
-              values={reading?.titles ?? []}
-              isOn={(value) => sameText(draft.title, value)}
-              onPick={(value) => {
-                pick('title', value);
-              }}
-            />
           </div>
           <div class="field">
             <label class="field__label" for="entry-author">
@@ -315,12 +263,6 @@ export function EntryScreen({ itemId }: { itemId?: string | undefined }) {
               enterKeyHint="next"
               {...field('author')}
             />
-            <ReadingChips
-              label={fr.entry.readingChips(fr.entry.authorLabel)}
-              values={reading?.authors ?? []}
-              isOn={authorPicked}
-              onPick={toggleAuthor}
-            />
           </div>
           <div class="field">
             <label class="field__label" for="entry-publisher">
@@ -334,14 +276,6 @@ export function EntryScreen({ itemId }: { itemId?: string | undefined }) {
               autocomplete="off"
               enterKeyHint="done"
               {...field('publisher')}
-            />
-            <ReadingChips
-              label={fr.entry.readingChips(fr.entry.publisherLabel)}
-              values={reading?.publishers ?? []}
-              isOn={(value) => sameText(draft.publisher, value)}
-              onPick={(value) => {
-                pick('publisher', value);
-              }}
             />
           </div>
 
@@ -382,35 +316,5 @@ export function EntryScreen({ itemId }: { itemId?: string | undefined }) {
         />
       )}
     </main>
-  );
-}
-
-interface ReadingChipsProps {
-  label: string;
-  values: readonly string[];
-  isOn: (value: string) => boolean;
-  onPick: (value: string) => void;
-}
-
-/** Words read on the cover under a field (lot 6): touching one fills the field. */
-function ReadingChips({ label, values, isOn, onPick }: ReadingChipsProps) {
-  if (values.length === 0) return null;
-  return (
-    <div class="chips chips--wrap reading-chips" role="group" aria-label={label}>
-      {values.map((value) => (
-        <button
-          key={value}
-          type="button"
-          class="chip reading-chip"
-          aria-pressed={isOn(value)}
-          onClick={() => {
-            onPick(value);
-          }}
-        >
-          <ReadTextIcon size={14} />
-          {value}
-        </button>
-      ))}
-    </div>
   );
 }

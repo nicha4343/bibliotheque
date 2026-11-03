@@ -3,22 +3,11 @@ import { CameraSheet } from '../components/CameraSheet';
 import { ConfirmSheet } from '../components/ConfirmSheet';
 import { CoverImage } from '../components/CoverImage';
 import { EmptyState } from '../components/EmptyState';
-import { CheckIcon, ChevronRightIcon, PendingIcon, PinIcon, QuestionIcon, ReadTextIcon, TrashIcon } from '../components/icons';
+import { ChevronRightIcon, PendingIcon, PinIcon, QuestionIcon, TrashIcon } from '../components/icons';
 import { Screen } from '../components/Screen';
 import type { Id, PendingItem } from '../db/schema';
 import { useLiveQuery } from '../db/useLiveQuery';
-import { awaitsReading, currentReading } from '../ocr/reading';
-import { useReadingFailures } from '../ocr/useReadingFailures';
-import {
-  confirmReading,
-  deleteItem,
-  listPendingItems,
-  readingEntry,
-  retryAllUnknown,
-  retryItem,
-  setItemPhoto,
-  type RetryOutcome,
-} from '../pending/pending';
+import { deleteItem, listPendingItems, retryAllUnknown, retryItem, setItemPhoto, type RetryOutcome } from '../pending/pending';
 import { loadPlaces, type PlaceIndex } from '../places/places';
 import { routeHref } from '../router';
 import { formatDate, formatNumber, fr } from '../textes/fr';
@@ -47,7 +36,6 @@ export function PendingScreen() {
   const [photographing, setPhotographing] = useState<Id>();
   const [removing, setRemoving] = useState<PendingItem>();
   const [retryingAll, setRetryingAll] = useState(false);
-  useReadingFailures();
 
   const all = items ?? [];
   const shown = filter === 'all' ? all : all.filter((item) => item.kind === filter);
@@ -77,21 +65,6 @@ export function PendingScreen() {
       setMessage(fr.pending.retryAllDone(found, unavailable));
     } finally {
       setRetryingAll(false);
-    }
-  };
-
-  /** « Confirmer »: the notice is created with what was read on the cover. */
-  const confirm = async (item: PendingItem) => {
-    setSearching((current) => new Set(current).add(item.id));
-    try {
-      const title = await confirmReading(item.id);
-      if (title) setMessage(fr.pending.confirmed(title));
-    } finally {
-      setSearching((current) => {
-        const next = new Set(current);
-        next.delete(item.id);
-        return next;
-      });
     }
   };
 
@@ -151,7 +124,6 @@ export function PendingScreen() {
                 place={places?.byShelfId.get(item.shelfId)?.label}
                 searching={searching.has(item.id)}
                 onRetry={() => void retry(item)}
-                onConfirm={() => void confirm(item)}
                 onPhotograph={() => {
                   setPhotographing(item.id);
                 }}
@@ -200,19 +172,13 @@ interface PendingCardProps {
   place: string | undefined;
   searching: boolean;
   onRetry: () => void;
-  onConfirm: () => void;
   onPhotograph: () => void;
   onRemove: () => void;
 }
 
-function PendingCard({ item, place, searching, onRetry, onConfirm, onPhotograph, onRemove }: PendingCardProps) {
+function PendingCard({ item, place, searching, onRetry, onPhotograph, onRemove }: PendingCardProps) {
   const unknown = item.kind === 'unknownIsbn';
   const kind = unknown ? fr.pending.kindUnknown : fr.pending.kindNoBarcode;
-  // Lot 6: title and author read on the photograph, to confirm or correct.
-  const reading = currentReading(item);
-  const read = reading ? readingEntry(reading) : undefined;
-  const suggestion = read?.title ? read : undefined;
-  const details = read ? [...read.authors, read.publisher].filter(Boolean).join(' · ') : '';
   return (
     <li class="pending-card">
       {item.photoBlobId ? (
@@ -225,31 +191,9 @@ function PendingCard({ item, place, searching, onRetry, onConfirm, onPhotograph,
       <div class="pending-card__body">
         <p class="pending-card__kind">{kind}</p>
         {item.isbn && <p class="pending-card__isbn mono">{item.isbn}</p>}
-        {read && (read.title || details) ? (
-          <div class="pending-card__reading">
-            <p class="pending-card__reading-label">
-              <ReadTextIcon size={14} />
-              {fr.pending.readingLabel}
-            </p>
-            {read.title && <p class="pending-card__title">{read.title}</p>}
-            {details && <p class="pending-card__details">{details}</p>}
-            {!read.title && <p class="pending-card__text">{fr.pending.noTitleRead}</p>}
-          </div>
-        ) : (
-          <>
-            {unknown && <p class="pending-card__text">{fr.pending.unknownText}</p>}
-            {awaitsReading(item) ? (
-              <p class="pending-card__text pending-card__text--reading">
-                <span class="spinner" aria-hidden="true" />
-                {fr.pending.reading}
-              </p>
-            ) : reading ? (
-              <p class="pending-card__text">{fr.pending.nothingRead}</p>
-            ) : (
-              !unknown && <p class="pending-card__text">{fr.pending.noBarcodeText(formatDate(new Date(item.createdAt)))}</p>
-            )}
-          </>
-        )}
+        <p class="pending-card__text">
+          {unknown ? fr.pending.unknownText : fr.pending.noBarcodeText(formatDate(new Date(item.createdAt)))}
+        </p>
         {place && (
           <p class="pending-card__place">
             <PinIcon size={14} />
@@ -257,18 +201,6 @@ function PendingCard({ item, place, searching, onRetry, onConfirm, onPhotograph,
           </p>
         )}
         <div class="pending-card__actions">
-          {suggestion && (
-            <button
-              type="button"
-              class="small-button small-button--accent"
-              disabled={searching}
-              aria-label={fr.pending.confirmLabel(suggestion.title)}
-              onClick={onConfirm}
-            >
-              <CheckIcon size={16} />
-              {fr.pending.confirm}
-            </button>
-          )}
           {unknown && (
             <button type="button" class="small-button small-button--accent" disabled={searching} onClick={onRetry}>
               {searching && <span class="spinner" aria-hidden="true" />}
@@ -281,7 +213,7 @@ function PendingCard({ item, place, searching, onRetry, onConfirm, onPhotograph,
             </button>
           )}
           <a class="small-button" href={routeHref('entry', item.id)}>
-            {suggestion ? fr.pending.correct : fr.pending.enter}
+            {fr.pending.enter}
           </a>
         </div>
       </div>

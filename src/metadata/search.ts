@@ -76,15 +76,20 @@ function pause(milliseconds: number, signal: AbortSignal): Promise<void> {
   });
 }
 
+/** Waits for the turn of a Google Books request, whatever asks it (also the search by title). */
+export async function waitGoogleBooksTurn(signal: AbortSignal): Promise<void> {
+  const now = Date.now();
+  const turn = Math.max(now, googleBooksFreeAt);
+  googleBooksFreeAt = turn + pacing.spacingMs;
+  await pause(turn - now, signal);
+}
+
 async function askGoogleBooks(
   isbn13: string,
   options: { signal: AbortSignal; fetchImpl: typeof fetch; googleBooksKey: string | undefined },
 ): Promise<Answer> {
   for (let attempt = 0; ; attempt += 1) {
-    const now = Date.now();
-    const turn = Math.max(now, googleBooksFreeAt);
-    googleBooksFreeAt = turn + pacing.spacingMs;
-    await pause(turn - now, options.signal);
+    await waitGoogleBooksTurn(options.signal);
     const answer = await askSource('googleBooks', isbn13, options);
     const delay = pacing.retryDelaysMs[attempt];
     if (answer.status !== 'failed' || !answer.retry || delay === undefined || options.signal.aborted) return answer;

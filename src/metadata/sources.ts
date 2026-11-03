@@ -85,7 +85,11 @@ const stringsOf = (value: unknown): string[] =>
 
 export function parseGoogleBooks(json: unknown): SourceRecord | undefined {
   if (!isObject(json) || !Array.isArray(json.items)) return undefined;
-  const item: unknown = json.items[0];
+  return googleBooksVolume(json.items[0]);
+}
+
+/** One volume of a Google Books answer (also the results of a search by title, see titleSearch.ts). */
+export function googleBooksVolume(item: unknown): SourceRecord | undefined {
   if (!isObject(item) || !isObject(item.volumeInfo)) return undefined;
   const info = item.volumeInfo;
   const identifiers = Array.isArray(info.industryIdentifiers) ? info.industryIdentifiers.filter(isObject) : [];
@@ -169,7 +173,11 @@ export function volumeNumber(text: string | undefined): number | undefined {
 }
 
 export function parseBnf(xml: string): SourceRecord | undefined {
-  const fields = unimarcRecords(xml)[0] ?? [];
+  return bnfRecord(unimarcRecords(xml)[0] ?? []);
+}
+
+/** One UNIMARC record of the BnF (also the results of a search by title, see titleSearch.ts). */
+export function bnfRecord(fields: readonly UnimarcField[]): SourceRecord | undefined {
   if (fields.length === 0) return undefined;
   const sub = (tag: string, code: string) => unimarcValue(fields, tag, code);
   const all = (tag: string) => fields.filter((field) => field.tag === tag);
