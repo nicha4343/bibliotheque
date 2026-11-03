@@ -116,6 +116,10 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - Essai sur téléphone (3 novembre 2026) : « ça ne fonctionne pas », sans demande d'autorisation du micro. Cause inconnue (pas de message rapporté) ; corrigé à l'aveugle : le micro est demandé par `getUserMedia` avant la reconnaissance, une reconnaissance qui n'entend pas le micro dans les six secondes est arrêtée, le code d'erreur du navigateur est affiché (`service-not-allowed` n'est plus pris pour un refus du micro), et le micro du clavier est indiqué en secours. Vérifié avec des simulations : dictée normale, service refusé, aucune réponse, micro refusé.
 - Vérifié dans le navigateur de l'ordinateur avec une dictée simulée et les vrais catalogues : « le lotus bleu Hergé » donne en tête « Le lotus bleu · Hergé · Casterman » (Open Library) et « Le Lotus bleu · Éd. Moulinsart » (BnF) ; fiche remplie d'un toucher ; rien de trouvé (mots placés dans le titre) ; micro refusé. Google Books n'a pu être essayé (il refuse les appels sans clé depuis l'ordinateur). Non vérifiés : la vraie reconnaissance vocale du téléphone.
 
+## Lot 7 — Améliorations demandées
+- [ ] Champ de recherche dans « Séries » (`#/series`), demandé par l'utilisateur le 3 novembre 2026 : retrouver une série par son nom ou celui de son auteur, recherche instantanée et locale, insensible aux accents, comme celle de la bibliothèque (écran 5)
+- [ ] Essai sur téléphone
+
 ## Plus tard
 - Synchronisation entre appareils (piste : Google Drive ; même mécanisme que l'écriture à plusieurs dans un lieu partagé)
 - Photographie d'une étagère entière : lecture des tranches par IA
