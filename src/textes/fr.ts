@@ -428,6 +428,10 @@ export const fr = {
     choosePlace: 'Choisir un emplacement',
     torchOn: 'Allumer la lampe torche',
     torchOff: 'Éteindre la lampe torche',
+    switchCamera: 'Changer de caméra',
+    cameraPosition: (position: number, count: number) => `Caméra arrière ${formatNumber(position)} sur ${formatNumber(count)}`,
+    cameraMonochrome: (position: number, count: number) =>
+      `Caméra arrière ${formatNumber(position)} sur ${formatNumber(count)} : la précédente ne filmait qu’en noir et blanc`,
     scanned: (value: number) => plural(value, 'scanné', 'scannés'),
     pending: 'à compléter',
     hint: 'La caméra demeure active : vous pouvez enchaîner les ouvrages sans toucher l’écran.',

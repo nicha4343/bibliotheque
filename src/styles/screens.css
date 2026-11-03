@@ -66,6 +66,10 @@
   padding: 0;
 }
 
+.scan__round-button:disabled {
+  opacity: 0.5;
+}
+
 .scan__round-button[aria-pressed='true'] {
   background: var(--color-scan-text);
   color: var(--color-scan-background);

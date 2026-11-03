@@ -1,8 +1,8 @@
 import { useRef, useState } from 'preact/hooks';
 import { captureFrame } from '../scan/camera';
-import { useCamera } from '../scan/useCamera';
+import { useCamera, useCameraNotice } from '../scan/useCamera';
 import { fr } from '../textes/fr';
-import { CameraIcon } from './icons';
+import { CameraIcon, SwitchCameraIcon } from './icons';
 import { Sheet } from './Sheet';
 
 interface CameraSheetProps {
@@ -19,6 +19,7 @@ interface CameraSheetProps {
 export function CameraSheet({ onCapture, onClose, title = fr.camera.title, hint = fr.camera.hint, maxSize }: CameraSheetProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const camera = useCamera(videoRef);
+  const notice = useCameraNotice(camera);
   const [busy, setBusy] = useState(false);
 
   const shoot = async () => {
@@ -56,6 +57,22 @@ export function CameraSheet({ onCapture, onClose, title = fr.camera.title, hint 
           </div>
         ) : (
           camera.status === 'starting' && <p class="camera__message">{fr.scan.cameraStarting}</p>
+        )}
+        {camera.count > 1 && camera.status !== 'error' && (
+          <button
+            type="button"
+            class="scan__round-button camera__switch"
+            aria-label={fr.scan.switchCamera}
+            disabled={camera.status === 'starting'}
+            onClick={camera.switchCamera}
+          >
+            <SwitchCameraIcon size={20} />
+          </button>
+        )}
+        {notice && (
+          <p class="camera__notice" role="status">
+            {notice}
+          </p>
         )}
       </div>
       <p class="sheet__hint">{hint}</p>

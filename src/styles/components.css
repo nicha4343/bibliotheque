@@ -563,6 +563,27 @@ select.field__input {
   object-fit: cover;
 }
 
+/* « Changer de caméra », over the picture (round button of the scan screen) */
+.camera__switch {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 1;
+}
+
+.camera__notice {
+  position: absolute;
+  right: var(--space-3);
+  bottom: var(--space-3);
+  left: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-card);
+  background: var(--color-scan-surface);
+  color: var(--color-scan-text);
+  font-size: var(--text-secondary);
+  text-align: center;
+}
+
 .camera__message {
   position: absolute;
   inset: 0;

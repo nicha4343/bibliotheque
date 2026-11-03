@@ -1,8 +1,25 @@
 import type { RefObject } from 'preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import { CameraUnavailable, hasTorch, openCamera, setTorch, stopStream, type CameraError } from './camera';
+import { fr } from '../textes/fr';
+import {
+  CameraUnavailable,
+  hasTorch,
+  nextCamera,
+  openCamera,
+  pictureColour,
+  readChoice,
+  sampleFrame,
+  saveChoice,
+  setTorch,
+  stopStream,
+  type CameraDevice,
+  type CameraError,
+} from './camera';
 import { createDetector, type CodeDetector, type DetectedCode } from './detector';
 import { isInAimArea } from './reads';
+
+/** Why the camera shown changed: the user's button, or a camera filming in black and white left. */
+export type CameraChange = 'user' | 'monochrome';
 
 export interface CameraState {
   status: 'starting' | 'ready' | 'error';
@@ -11,35 +28,84 @@ export interface CameraState {
   torchOn: boolean;
   toggleTorch: () => void;
   retry: () => void;
+  /** Position of the camera shown among the rear cameras (from 1), and their number. */
+  position: number;
+  count: number;
+  /** Shows the next rear camera, remembered on this device; offered when there are several. */
+  switchCamera: () => void;
+  /** Cause of the last change of camera and its number, for the screen to announce it. */
+  change?: { reason: CameraChange; serial: number };
 }
 
-/** Rear camera shown in videoRef while the component is mounted; reopened after the app comes back. */
+/** Delays after the camera opens at which its picture is looked at, colours being settled then. */
+const COLOUR_CHECKS_MS = [800, 1600, 2800, 4500];
+
+/**
+ * Rear camera shown in videoRef while the component is mounted; reopened after the app comes back.
+ * A camera seen to film in black and white is left for the next one, unless the user chose it.
+ */
 export function useCamera(videoRef: RefObject<HTMLVideoElement | null>): CameraState {
   const [status, setStatus] = useState<CameraState['status']>('starting');
   const [error, setError] = useState<CameraError>();
   const [torchAvailable, setTorchAvailable] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [request, setRequest] = useState<{ deviceId?: string; reason?: CameraChange; serial: number }>({ serial: 0 });
+  const [rear, setRear] = useState<CameraDevice[]>([]);
+  const [deviceId, setDeviceId] = useState<string>();
   const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     let active = true;
+    const timers: ReturnType<typeof setTimeout>[] = [];
     setStatus('starting');
-    openCamera()
-      .then(async (stream) => {
+
+    const checkColour = (opened: string, cameras: CameraDevice[], step = 0) => {
+      const delay = COLOUR_CHECKS_MS[step];
+      if (delay === undefined) return;
+      timers.push(
+        setTimeout(() => {
+          const video = videoRef.current;
+          const sample = video && sampleFrame(video);
+          const colour = sample ? pictureColour(sample) : 'unknown';
+          const choice = readChoice();
+          if (colour === 'colour') {
+            saveChoice({ deviceId: opened, monochrome: choice.monochrome.filter((id) => id !== opened) });
+          } else if (colour === 'monochrome') {
+            const monochrome = [...new Set([...choice.monochrome, opened])];
+            saveChoice({ monochrome });
+            // When every camera seems to film in black and white (a grey scene), back to the main one.
+            const other = cameras.find((camera) => !monochrome.includes(camera.deviceId)) ?? cameras[0];
+            if (other && other.deviceId !== opened) {
+              setRequest((value) => ({ deviceId: other.deviceId, reason: 'monochrome', serial: value.serial + 1 }));
+            }
+          } else {
+            checkColour(opened, cameras, step + 1);
+          }
+        }, delay),
+      );
+    };
+
+    openCamera(request.deviceId)
+      .then(async (camera) => {
         if (!active) {
-          stopStream(stream);
+          stopStream(camera.stream);
           return;
         }
-        streamRef.current = stream;
+        streamRef.current = camera.stream;
         const video = videoRef.current;
         if (video) {
-          video.srcObject = stream;
+          video.srcObject = camera.stream;
           await video.play().catch(() => undefined);
         }
-        setTorchAvailable(hasTorch(stream));
+        setRear(camera.rear);
+        setDeviceId(camera.deviceId);
+        setTorchAvailable(hasTorch(camera.stream));
         setTorchOn(false);
         setStatus('ready');
+        // Looked at only while another rear camera could replace it, and when neither chosen nor already seen in colour.
+        const opened = camera.deviceId;
+        if (opened && camera.rear.length > 1 && request.reason !== 'user' && readChoice().deviceId !== opened) checkColour(opened, camera.rear);
       })
       .catch((reason: unknown) => {
         if (!active) return;
@@ -54,11 +120,12 @@ export function useCamera(videoRef: RefObject<HTMLVideoElement | null>): CameraS
     document.addEventListener('visibilitychange', onVisible);
     return () => {
       active = false;
+      timers.forEach(clearTimeout);
       document.removeEventListener('visibilitychange', onVisible);
       stopStream(streamRef.current);
       streamRef.current = null;
     };
-  }, [attempt, videoRef]);
+  }, [attempt, request, videoRef]);
 
   const toggleTorch = useCallback(() => {
     const stream = streamRef.current;
@@ -73,9 +140,47 @@ export function useCamera(videoRef: RefObject<HTMLVideoElement | null>): CameraS
     setAttempt((value) => value + 1);
   }, []);
 
-  return error && status === 'error'
-    ? { status, error, torchAvailable, torchOn, toggleTorch, retry }
-    : { status, torchAvailable, torchOn, toggleTorch, retry };
+  const switchCamera = useCallback(() => {
+    const next = nextCamera(rear, deviceId);
+    if (!next || next === deviceId) return;
+    saveChoice({ deviceId: next, monochrome: readChoice().monochrome });
+    setRequest((value) => ({ deviceId: next, reason: 'user', serial: value.serial + 1 }));
+  }, [rear, deviceId]);
+
+  const position = rear.findIndex((camera) => camera.deviceId === deviceId) + 1;
+  const common = {
+    status,
+    torchAvailable,
+    torchOn,
+    toggleTorch,
+    retry,
+    position,
+    count: rear.length,
+    switchCamera,
+    ...(request.reason ? { change: { reason: request.reason, serial: request.serial } } : {}),
+  };
+  return error && status === 'error' ? { ...common, error } : common;
+}
+
+const NOTICE_MS = 4000;
+
+/** « Caméra arrière 2 sur 3 », for a few seconds after a change of camera, once the new one shows. */
+export function useCameraNotice(camera: CameraState): string | undefined {
+  const [notice, setNotice] = useState<string>();
+  const { status, change, position, count } = camera;
+  const serial = change?.serial;
+  useEffect(() => {
+    if (!change || status !== 'ready' || position === 0) return;
+    setNotice(change.reason === 'monochrome' ? fr.scan.cameraMonochrome(position, count) : fr.scan.cameraPosition(position, count));
+    const timer = setTimeout(() => {
+      setNotice(undefined);
+    }, NOTICE_MS);
+    return () => {
+      clearTimeout(timer);
+    };
+    // Announced once per change, when the new camera is ready: not again when only its position is learnt.
+  }, [serial, status]);
+  return status === 'ready' ? notice : undefined;
 }
 
 const DETECTION_INTERVAL_MS = 100;

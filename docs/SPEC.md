@@ -44,6 +44,7 @@ Un livre (notice) peut avoir plusieurs exemplaires, chacun avec son propre empla
 
 ### 1 · Scan en rafale (version 1)
 - Caméra toujours ouverte ; cadre de visée ; bouton lampe torche.
+- **Caméra arrière principale** (correction du 3 novembre 2026 : sur le Doogee S89 de l'utilisateur, Chrome ouvrait la caméra de vision nocturne, qui filme en noir et blanc) : sur Android, la caméra n° 0 (« camera2 0, facing back ») plutôt que celle que choisit le navigateur ; ailleurs (iPhone), le choix du navigateur. Une caméra dont l'image demeure exactement grise dans les premières secondes est écartée pour la suivante (« Caméra arrière 2 sur 3 : la précédente ne filmait qu'en noir et blanc »). S'il y a plusieurs caméras arrière, un bouton « Changer de caméra » (à côté de la lampe ; sur la vue des fenêtres de prise de vue) passe à la suivante (« Caméra arrière 2 sur 3 », quatre secondes). La caméra retenue (choisie par l'utilisateur, ou vue en couleur) est mémorisée sur le téléphone, hors des paramètres sauvegardés sur Google Drive ; une caméra choisie à la main n'est jamais écartée.
 - En haut : pastille d'emplacement (« Salon · Étagère 2 ») qui ouvre le sélecteur ; compteurs « N scannés » et « N à compléter ».
 - À chaque code reconnu : signal sonore, vibration (si disponible), bandeau d'état, ligne ajoutée en tête de « Cette session » avec l'état « Recherche… », puis « Ajouté » avec la couverture.
 - ISBN inconnu : la ligne passe à « À compléter », l'élément part dans la boîte « À compléter » ; bandeau « ISBN inconnu : ouvrage mis de côté, la lecture se poursuit ».

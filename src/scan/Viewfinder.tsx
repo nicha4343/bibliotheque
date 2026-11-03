@@ -1,7 +1,7 @@
 import type { ComponentChildren, RefObject } from 'preact';
-import { TorchIcon } from '../components/icons';
+import { SwitchCameraIcon, TorchIcon } from '../components/icons';
 import { fr } from '../textes/fr';
-import type { CameraState } from './useCamera';
+import { useCameraNotice, type CameraState } from './useCamera';
 
 export type FlashKind = 'ok' | 'warn' | 'info';
 
@@ -47,6 +47,7 @@ export function Viewfinder({ refs, camera, detectorAvailable, flash, hint, place
       : !detectorAvailable
         ? fr.scan.detectorFailed
         : undefined;
+  const cameraNotice = useCameraNotice(camera);
 
   return (
     <div class="scan__view" ref={refs.view}>
@@ -64,6 +65,17 @@ export function Viewfinder({ refs, camera, detectorAvailable, flash, hint, place
               onClick={camera.toggleTorch}
             >
               <TorchIcon size={20} />
+            </button>
+          )}
+          {camera.count > 1 && (
+            <button
+              type="button"
+              class="scan__round-button"
+              aria-label={fr.scan.switchCamera}
+              disabled={camera.status === 'starting'}
+              onClick={camera.switchCamera}
+            >
+              <SwitchCameraIcon size={20} />
             </button>
           )}
           {actions}
@@ -97,7 +109,9 @@ export function Viewfinder({ refs, camera, detectorAvailable, flash, hint, place
             )}
           </div>
         ) : (
-          <p class="scan__hint">{camera.status === 'starting' ? fr.scan.cameraStarting : hint}</p>
+          <p class="scan__hint" role={cameraNotice ? 'status' : undefined}>
+            {camera.status === 'starting' ? fr.scan.cameraStarting : (cameraNotice ?? hint)}
+          </p>
         )}
       </div>
     </div>
