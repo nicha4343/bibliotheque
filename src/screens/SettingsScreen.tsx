@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { getBackupState } from '../backup/google';
+import { DisplayDiagnostic } from '../components/DisplayDiagnostic';
 import { EnrichmentStatus } from '../components/EnrichmentStatus';
 import { ChevronRightIcon, DownloadIcon } from '../components/icons';
 import { Screen } from '../components/Screen';
@@ -511,6 +512,8 @@ export function SettingsScreen() {
           </a>
         </div>
       </section>
+
+      <DisplayDiagnostic />
     </Screen>
   );
 }
