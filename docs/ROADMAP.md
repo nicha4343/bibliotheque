@@ -2,7 +2,7 @@
 
 Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est terminé qu'après un essai sur un vrai téléphone. Le détail de chaque écran est dans [SPEC.md](SPEC.md).
 
-**Lot en cours : 3 — Étagères** (lots 0 et 1 terminés le 1er novembre 2026, lot 2 le 2 novembre 2026)
+**Lot en cours : 4 — Prêts** (lots 0 et 1 terminés le 1er novembre 2026, lot 2 le 2 novembre 2026, lot 3 le 3 novembre 2026)
 
 ## Lot 0 — Socle
 - [x] Projet Vite + TypeScript strict + Preact, ESLint, Vitest
@@ -58,14 +58,15 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 - [x] Option « Mémoriser l'ordre sur l'étagère » (Paramètres ; position relevée au scan, de gauche à droite)
 - [x] Vue étagère (écran 8) et « Où se trouve … ? » ; raccourci « Étagères » de la bibliothèque ; étiquette QR lue par l'appareil photo du téléphone
 - [x] Vérification d'étagère : scan dédié, bilan et réponses, « Déclarer perdu »
-- [ ] Essai sur téléphone : scanner une étagère avec l'option active, la vérifier en déplaçant ou retirant un ouvrage, ouvrir une étiquette avec l'appareil photo
+- [x] Essai sur téléphone : ordre relevé au scan et visible sur la vue étagère, ISBN inconnus retrouvés ; validé le 3 novembre 2026 (« c'est tout bon »)
 
 ### Reprise du lot 3 (2 novembre 2026)
 - Schéma version 4 : table `shelfChecks` ; `Copy.position` (clé de tri : heure de la lecture, renumérotée par une vérification) et `Copy.lostAt`, `ScanEntry.position`, `PendingItem.position`, non indexés.
 - Logique pure, testée (`src/shelves/shelves.test.ts`) : `src/shelves/order.ts` (tri, positions après une vérification) et `src/shelves/check.ts` (comparaison, puis enregistrement : ouverture, lectures, fin, réponses).
 - Écrans : `ShelvesScreen` (`#/etageres`), `ShelfScreen` (`#/etagere/<identifiant ou jeton>[/<exemplaire>]`), `ShelfCheckScreen` (`#/verifier/<étagère>`) ; viseur commun au scan et à la vérification (`src/scan/Viewfinder.tsx`) ; fiche ouvrage : lien de l'emplacement, position, « Déplacer » et « Retrouvé ».
 - Vérifié dans le navigateur de l'ordinateur avec des lectures simulées (pas de caméra) : ordre, « Où se trouve … ? », bilan et chacune des réponses.
-- Premier essai sur téléphone (2 novembre 2026) : presque tous les ouvrages de l'étagère déclarés « ISBN inconnu ». Cause probable : la BnF et Open Library ne les connaissent pas et Google Books, seul à les connaître, n'a pas répondu ; un ISBN était alors déclaré inconnu dès la première recherche incomplète. Corrigé : trois recherches espacées de trente secondes avant « À compléter », et bouton « Rechercher de nouveau les N ISBN inconnus » dans « À compléter » pour récupérer ceux de l'essai (leur position est conservée). Deuxième essai : retrouvés, mais après trois appuis sur « Rechercher de nouveau » : Google Books refusait encore. Corrigé : ses requêtes sont espacées d'une seconde et redemandées deux fois après un refus, dans la même recherche. À confirmer sur téléphone.
+- Premier essai sur téléphone (2 novembre 2026) : presque tous les ouvrages de l'étagère déclarés « ISBN inconnu ». Cause probable : la BnF et Open Library ne les connaissent pas et Google Books, seul à les connaître, n'a pas répondu ; un ISBN était alors déclaré inconnu dès la première recherche incomplète. Corrigé : trois recherches espacées de trente secondes avant « À compléter », et bouton « Rechercher de nouveau les N ISBN inconnus » dans « À compléter » pour récupérer ceux de l'essai (leur position est conservée). Deuxième essai : retrouvés, mais après trois appuis sur « Rechercher de nouveau » : Google Books refusait encore. Corrigé : ses requêtes sont espacées d'une seconde et redemandées deux fois après un refus, dans la même recherche. Validé sur téléphone le 3 novembre 2026.
+- Proposé à l'utilisateur, sans réponse : filtre de la bibliothèque sur une étagère classé dans l'ordre de rangement quand l'option est active (aujourd'hui toujours par titre).
 
 ## Lot 4 — Prêts
 - [ ] Prêter en scannant, emprunteurs, durées, rappels (écran 10)
