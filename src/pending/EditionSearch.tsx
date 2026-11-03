@@ -5,12 +5,13 @@ import { getSettings } from '../db/settings';
 import { searchEditions, type FoundEdition } from '../metadata/titleSearch';
 import { formatNumber, fr } from '../textes/fr';
 
-const DICTATION_ERRORS: Record<DictationError, string> = {
-  denied: fr.entry.dictationDenied,
-  network: fr.entry.dictationNetwork,
-  nothing: fr.entry.dictationNothing,
-  failed: fr.entry.dictationFailed,
-};
+const dictationMessage = (error: DictationError, code: string): string =>
+  ({
+    denied: fr.entry.dictationDenied,
+    network: fr.entry.dictationNetwork,
+    nothing: fr.entry.dictationNothing,
+    failed: fr.entry.dictationFailed(code),
+  })[error];
 
 type Status =
   | { kind: 'idle' }
@@ -53,7 +54,7 @@ export function EditionSearch({ onPick, onNothing }: EditionSearchProps) {
   const message = dictation.listening
     ? dictation.heard || fr.entry.listening
     : dictation.error
-      ? DICTATION_ERRORS[dictation.error]
+      ? dictationMessage(dictation.error, dictation.errorCode)
       : {
           idle: '',
           searching: fr.entry.searching,
@@ -109,6 +110,7 @@ export function EditionSearch({ onPick, onNothing }: EditionSearchProps) {
           {status.kind === 'searching' ? <span class="spinner" aria-hidden="true" /> : <SearchIcon size={20} />}
         </button>
       </div>
+      <p class="edition-search__hint">{fr.entry.keyboardHint}</p>
       <p class="edition-search__status" role="status">
         {message}
       </p>

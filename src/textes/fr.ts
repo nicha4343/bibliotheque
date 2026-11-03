@@ -713,7 +713,9 @@ export const fr = {
     dictationDenied: 'Le micro est refusé à l’application : autorisez-le dans les paramètres du navigateur, ou saisissez le titre.',
     dictationNetwork: 'La dictée nécessite une connexion à Internet : saisissez le titre, ou réessayez dans quelques instants.',
     dictationNothing: 'Rien n’a été entendu : touchez de nouveau « Dicter le titre et l’auteur » et parlez distinctement.',
-    dictationFailed: 'La dictée n’a pu démarrer : saisissez le titre.',
+    dictationFailed: (code: string) =>
+      `La dictée n’a pu démarrer sur ce téléphone (${code === 'timeout' ? 'aucune réponse' : `code ${code}`}) : touchez le champ ci-dessous, puis le micro du clavier.`,
+    keyboardHint: 'Le micro du clavier permet aussi de dicter dans ce champ.',
     photographCover: 'Photographier la couverture',
     retakePhoto: 'Photographier de nouveau',
     place: 'Emplacement',
