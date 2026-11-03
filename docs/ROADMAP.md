@@ -2,7 +2,7 @@
 
 Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est terminé qu'après un essai sur un vrai téléphone. Le détail de chaque écran est dans [SPEC.md](SPEC.md).
 
-**Lot en cours : 8 — Étagères : « Pièces et étagères » d'un toucher** (lots 0 et 1 terminés le 1er novembre 2026, lot 2 le 2 novembre 2026, lots 3 à 7 le 3 novembre 2026)
+**Aucun lot en cours** : les lots 0 et 1 sont terminés le 1er novembre 2026, le lot 2 le 2 novembre 2026, les lots 3 à 8 le 3 novembre 2026. Le suivant est à choisir par l'utilisateur dans « Plus tard ».
 
 ## Lot 0 — Socle
 - [x] Projet Vite + TypeScript strict + Preact, ESLint, Vitest
@@ -132,7 +132,7 @@ Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est termi
 Choisi par l'utilisateur le 3 novembre 2026 parmi les améliorations « Plus tard » ; maquette : https://claude.ai/artifact/97UNgEFurnaw88fy3fLx7j (situation « un seul lieu »).
 - [x] Bouton « Pièces et étagères » en haut à droite de l'écran « Étagères » (`#/etageres`), pour créer, renommer ou supprimer d'un toucher
 - [x] « Retour » de « Pièces et étagères » revient à l'écran précédent (« Étagères » ou Paramètres) ; au retour sur « Étagères », la dernière étagère créée est amenée à l'écran et mise en évidence (`noteCreatedShelf`, `takeCreatedShelf` dans `src/places/places.ts`). Vérifié dans le navigateur de l'ordinateur, à la largeur d'un téléphone : étagère ajoutée à la dernière pièce, retour, étagère visible et mise en évidence ; rien de mis en évidence à la visite suivante ; depuis les Paramètres, « Retour » y revient
-- [ ] Essai sur téléphone
+- [x] Essai sur téléphone, validé le 3 novembre 2026 (« c'est bon sur le téléphone, lot 8 validé ») : bouton, retour, étagère créée mise en évidence
 
 ## Plus tard
 - Synchronisation entre appareils (piste : Google Drive ; même mécanisme que l'écriture à plusieurs dans un lieu partagé)
