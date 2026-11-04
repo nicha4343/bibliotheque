@@ -33,10 +33,24 @@ describe('ISBN imprimé', () => {
     expect(findPrintedIsbn(['ISBN 978-2-07-036002-5'])).toBeUndefined();
   });
 
+  it('lit un ISBN-10 dont seule la clé est séparée, ou écrit « I.S.B.N. »', () => {
+    // Reported by the user on 4 November 2026: « 280065838-X », not recognized.
+    expect(findPrintedIsbn(['280065838-X'])).toBe('9782800658384');
+    expect(findPrintedIsbn(['Imprimé en Belgique 280065838-X'])).toBe('9782800658384');
+    expect(findPrintedIsbn(['280065838- X'])).toBe('9782800658384');
+    expect(findPrintedIsbn(['280065838-K'])).toBe('9782800658384');
+    expect(findPrintedIsbn(['280065838X'])).toBe('9782800658384');
+    expect(findPrintedIsbn(['I.S.B.N. 2-8006-5838-X'])).toBe('9782800658384');
+    expect(findPrintedIsbn(['I. S. B. N. 280065838-X'])).toBe('9782800658384');
+    expect(findPrintedIsbn(['ISBN 280065838-X'])).toBe('9782800658384');
+  });
+
   it('ne prend pas un autre numéro de dix chiffres pour un ISBN', () => {
     // 0123456789 has a valid ISBN-10 check digit.
     expect(findPrintedIsbn(['Tél. 01 23 45 67 89'])).toBeUndefined();
     expect(findPrintedIsbn(['0123456789'])).toBeUndefined();
+    expect(findPrintedIsbn(['01-23-45-67-89'])).toBeUndefined();
+    expect(findPrintedIsbn(['01.23.45.67.89'])).toBeUndefined();
     expect(findPrintedIsbn(['Tél. 01 23 45 67 89', 'ISBN 2-07-036002-4'])).toBe('9782070360024');
     // Hyphenated as an ISBN, or an ISBN-13: trusted without the word « ISBN ».
     expect(findPrintedIsbn(['2-07-036002-4'])).toBe('9782070360024');

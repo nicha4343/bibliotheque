@@ -28,27 +28,35 @@ const LOOK_ALIKES: Readonly<Record<string, string>> = {
   q: '9',
   x: 'X',
   '×': 'X',
+  K: 'X',
 };
 
-/** « ISBN », « ISBN-13 : », or as Tesseract may read it: « lSBN », « I5BN », « ISBN: ». */
-const LABEL = /[I1l|][S5$][B8]N(?:[\s-]*1[03])?\s*:?/gu;
-const DASHES = /[‐‑‒–—―−]/gu;
-/** An ISBN-10 printed with its hyphens: « 2-07-036002-4 ». */
-const HYPHENATED_10 = /^\d{1,5}-\d{1,7}-\d{1,7}-[\dX]$/;
+/**
+ * « ISBN », « ISBN-13 : », « I.S.B.N. » on old books, or as Tesseract may read it: « lSBN », « I5BN »,
+ * « ISBN: ».
+ */
+const LABEL = /[I1l|]\.?\s?[S5$]\.?\s?[B8]\.?\s?N\.?(?:[\s-]*1[03])?\s*:?/gu;
+const DASHES = /[‐‑‒–—―−_]/gu;
+/**
+ * An ISBN-10 as only ISBNs are printed: its check character set apart by a hyphen (« 2-07-036002-4 »,
+ * « 280065838-X ») or an X. A telephone number ends with two figures (« 01-23-45-67-89 »).
+ */
+const PRINTED_10 = /^(?:[\d-]*\d-[\dX]|\d{9}X)$/;
 /** Words joined to form a number printed with spaces: « 978 2 07 036002 4 ». */
 const MAX_WORDS = 6;
 
 /** A word of the line as figures, or undefined when it holds letters that are not look-alikes. */
 function figures(word: string): string | undefined {
   const mapped = Array.from(word.replace(/[.,;:()]+$/u, '').replace(/^[.,;:()]+/u, ''), (char) => LOOK_ALIKES[char] ?? char).join('');
-  return /^[\dX-]+$/.test(mapped) && /\d/.test(mapped) ? mapped : undefined;
+  // A lone X: the check character, read apart from the figures.
+  return /^[\dX-]+$/.test(mapped) && /\d|^X$/.test(mapped) ? mapped : undefined;
 }
 
 interface Candidate {
   isbn13: string;
   /** Read right after the word « ISBN ». */
   labelled: boolean;
-  /** An ISBN-10 is trusted without its label only when printed with its hyphens. */
+  /** An ISBN-10 is trusted without its label only when printed as an ISBN (see PRINTED_10). */
   trusted: boolean;
 }
 
@@ -64,7 +72,8 @@ function candidatesOf(words: readonly string[], labelled: boolean): Candidate[] 
       const code = joined.replace(/[\s-]/g, '');
       if (code.length > 13) break;
       if (isValidIsbn13(code)) found.push({ isbn13: code, labelled, trusted: true });
-      else if (isValidIsbn10(code)) found.push({ isbn13: isbn10To13(code), labelled, trusted: start === end && HYPHENATED_10.test(joined) });
+      // « 280065838- X »: the check character read apart still counts as set apart by its hyphen.
+      else if (isValidIsbn10(code)) found.push({ isbn13: isbn10To13(code), labelled, trusted: PRINTED_10.test(joined.replace(/\s*-\s*/g, '-')) });
     }
   }
   return found;
@@ -72,7 +81,7 @@ function candidatesOf(words: readonly string[], labelled: boolean): Candidate[] 
 
 /**
  * The ISBN printed in the lines read, as ISBN-13: the number following the word « ISBN » first; else
- * an ISBN-13, or an ISBN-10 printed with its hyphens (a telephone number has ten figures too).
+ * an ISBN-13, or an ISBN-10 printed as such (a telephone number has ten figures too).
  */
 export function findPrintedIsbn(lines: readonly string[]): string | undefined {
   const candidates: Candidate[] = [];
