@@ -1,7 +1,7 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { CoverImage } from '../components/CoverImage';
-import { CameraIcon, ChevronDownIcon, CloseIcon, PinIcon, QuestionIcon, UndoIcon } from '../components/icons';
+import { CameraIcon, ChevronDownIcon, CloseIcon, PinIcon, QuestionIcon, ReadTextIcon, UndoIcon } from '../components/icons';
 import { db } from '../db/db';
 import type { Book, ScanEntry, ScanSession, Shelf } from '../db/schema';
 import { DEFAULT_SETTINGS, getSettings } from '../db/settings';
@@ -390,7 +390,8 @@ export function ScanScreen() {
                 disabled={camera.status !== 'ready' || busy}
                 onClick={() => void (shot === 'isbn' ? readIsbn() : photograph())}
               >
-                <CameraIcon size={20} />
+                {/* The line of the ISBN is only read, not kept: no camera (user's remark of 4 November 2026). */}
+                {shot === 'isbn' ? <ReadTextIcon size={20} /> : <CameraIcon size={20} />}
                 {shot === 'isbn' ? fr.scan.readIsbn : fr.scan.shoot}
               </button>
             </div>

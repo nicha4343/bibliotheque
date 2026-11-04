@@ -447,7 +447,7 @@ export const fr = {
     shotsLabel: 'Que photographier ?',
     shotCover: 'Couverture',
     shotIsbn: 'ISBN imprimé',
-    isbnFlash: 'Lecture d’un ISBN imprimé, pour un ouvrage sans code-barres',
+    isbnFlash: 'Seul l’ISBN est relevé : la photographie n’est pas conservée',
     isbnHint: 'Cadrez la ligne « ISBN », au dos de l’ouvrage ou sur l’une de ses premières ou dernières pages, puis touchez « Lire l’ISBN ».',
     readIsbn: 'Lire l’ISBN',
     isbnReading: 'Lecture de l’ISBN…',
