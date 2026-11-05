@@ -1,3 +1,4 @@
+import { Fragment } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { CoverImage } from '../components/CoverImage';
 import { EmptyState } from '../components/EmptyState';
@@ -16,7 +17,7 @@ import {
   type StatusFilter,
 } from '../library/filter';
 import { dueLoans, markDueLoansSeen, unseenDueLoans } from '../loans/loans';
-import { indexPlaces, type PlaceIndex } from '../places/places';
+import { loadPlaces, roomWithSite, type PlaceIndex } from '../places/places';
 import { ROUTE_HASHES, routeHref } from '../router';
 import { seriesOf } from '../series/series';
 import { formatNumber, fr } from '../textes/fr';
@@ -38,19 +39,13 @@ interface Reminder {
 }
 
 async function loadLibrary(): Promise<LibraryData> {
-  const [books, copies, rooms, shelves, loans] = await Promise.all([
-    db.books.toArray(),
-    db.copies.toArray(),
-    db.rooms.toArray(),
-    db.shelves.toArray(),
-    db.loans.toArray(),
-  ]);
+  const [books, copies, places, loans] = await Promise.all([db.books.toArray(), db.copies.toArray(), loadPlaces(), db.loans.toArray()]);
   const now = new Date();
   const titles = new Map(books.map((book) => [book.id, book.title]));
   const bookOfCopy = new Map(copies.map((copy) => [copy.id, copy.bookId]));
   return {
     entries: toEntries(books, copies, loans),
-    places: indexPlaces(rooms, shelves),
+    places,
     due: dueLoans(loans, now).length,
     reminders: unseenDueLoans(loans, now).map((loan) => ({
       title: titles.get(bookOfCopy.get(loan.copyId) ?? '') || fr.common.untitled,
@@ -62,7 +57,7 @@ async function loadLibrary(): Promise<LibraryData> {
 
 interface Filters {
   query: string;
-  /** 'all', 'room:<id>' or 'shelf:<id>' (value of the drop-down list). */
+  /** 'all', 'site:<id>', 'room:<id>' or 'shelf:<id>' (value of the drop-down list). */
   place: string;
   status: StatusFilter;
 }
@@ -76,6 +71,10 @@ function placeFilter(value: string, places: PlaceIndex): PlaceFilter {
   const [kind, id = ''] = value.split(':');
   if (kind === 'shelf') return { kind: 'shelf', shelfId: id };
   if (kind === 'room') return { kind: 'room', shelfIds: new Set((places.shelvesByRoom.get(id) ?? []).map((shelf) => shelf.id)) };
+  if (kind === 'site') {
+    const shelves = (places.roomsBySite.get(id) ?? []).flatMap((room) => places.shelvesByRoom.get(room.id) ?? []);
+    return { kind: 'room', shelfIds: new Set(shelves.map((shelf) => shelf.id)) };
+  }
   return { kind: 'all' };
 }
 
@@ -199,7 +198,7 @@ export function LibraryScreen() {
           {places.rooms.length > 0 && (
             <div class="select-with-icon">
               <label class="visually-hidden" for="library-place">
-                {fr.library.placeLabel}
+                {places.severalSites ? fr.sites.placeLabel : fr.library.placeLabel}
               </label>
               <span class="select-with-icon__icon" aria-hidden="true">
                 <PinIcon size={18} />
@@ -212,16 +211,21 @@ export function LibraryScreen() {
                   update({ place: event.currentTarget.value });
                 }}
               >
-                <option value="all">{fr.library.allPlaces}</option>
-                {places.rooms.map((room) => (
-                  <optgroup key={room.id} label={room.name}>
-                    <option value={`room:${room.id}`}>{fr.library.wholeRoom(room.name)}</option>
-                    {(places.shelvesByRoom.get(room.id) ?? []).map((shelf) => (
-                      <option key={shelf.id} value={`shelf:${shelf.id}`}>
-                        {fr.places.label(room.name, shelf.name)}
-                      </option>
+                <option value="all">{places.severalSites ? fr.sites.allSites : fr.library.allPlaces}</option>
+                {places.sites.map((site) => (
+                  <Fragment key={site.id}>
+                    {places.severalSites && <option value={`site:${site.id}`}>{fr.sites.wholeSite(site.name)}</option>}
+                    {(places.roomsBySite.get(site.id) ?? []).map((room) => (
+                      <optgroup key={room.id} label={roomWithSite(places, room)}>
+                        <option value={`room:${room.id}`}>{fr.library.wholeRoom(room.name)}</option>
+                        {(places.shelvesByRoom.get(room.id) ?? []).map((shelf) => (
+                          <option key={shelf.id} value={`shelf:${shelf.id}`}>
+                            {places.byShelfId.get(shelf.id)?.label}
+                          </option>
+                        ))}
+                      </optgroup>
                     ))}
-                  </optgroup>
+                  </Fragment>
                 ))}
               </select>
             </div>
@@ -309,6 +313,7 @@ function LoanReminder({ reminders }: { reminders: Reminder[] }) {
 
 function hasPlaceOption(value: string, places: PlaceIndex): boolean {
   const [kind, id = ''] = value.split(':');
+  if (kind === 'site') return places.severalSites && places.roomsBySite.has(id);
   return kind === 'room' ? places.shelvesByRoom.has(id) : places.byShelfId.has(id);
 }
 

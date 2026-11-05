@@ -54,15 +54,15 @@ export interface ImportResult {
 }
 
 /**
- * Adds the notices and their copies in one transaction: on failure, nothing is imported. Rooms and
- * shelves named in the file are created when missing; copies without one go to defaultShelfId.
+ * Adds the notices and their copies in one transaction: on failure, nothing is imported. Places, rooms
+ * and shelves named in the file are created when missing; copies without one go to defaultShelfId.
  */
 export async function applyImport(
   books: readonly ImportedBook[],
   defaultShelfId: Id | undefined,
   database: LibraryDatabase = db,
 ): Promise<ImportResult> {
-  return database.transaction('rw', [database.rooms, database.shelves, database.books, database.copies], async () => {
+  return database.transaction('rw', [database.sites, database.rooms, database.shelves, database.books, database.copies], async () => {
     const owned = await ownedIndex(database);
     const shelves = new Map<string, Shelf>();
     const shelfFor = async (copy: ImportedCopy): Promise<Id> => {
@@ -71,10 +71,10 @@ export async function applyImport(
         return defaultShelfId;
       }
       const shelfName = copy.shelf ?? fr.places.defaultShelfName(1);
-      const key = `${copy.room.trim().toLocaleLowerCase('fr')}\n${shelfName.trim().toLocaleLowerCase('fr')}`;
+      const key = [copy.site ?? '', copy.room, shelfName].map((name) => name.trim().toLocaleLowerCase('fr')).join('\n');
       let shelf = shelves.get(key);
       if (!shelf) {
-        shelf = await findOrCreateShelf(copy.room, shelfName, database);
+        shelf = await findOrCreateShelf(copy.room, shelfName, database, copy.site);
         shelves.set(key, shelf);
       }
       return shelf.id;

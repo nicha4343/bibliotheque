@@ -53,10 +53,24 @@
   font-weight: 500;
 }
 
-.scan__place-label {
+.scan__place-label,
+.scan__place-site {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* With several places: the place in small, above the room and shelf. */
+.scan__place-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.scan__place-site {
+  font-size: 11px;
+  color: var(--color-scan-muted);
 }
 
 .scan__round-button {
@@ -1517,7 +1531,30 @@ a.scan__round-button {
   color: var(--color-text-muted);
 }
 
-/* Rooms and shelves */
+/* Places, rooms and shelves */
+.place-site {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: calc(-1 * var(--space-2));
+}
+
+.place-site .text-button {
+  min-width: 0;
+  padding: 0 var(--space-1);
+}
+
+.place-sites {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-divider);
+}
+
+.place-sites__add {
+  align-self: flex-start;
+}
+
 .place-room {
   display: flex;
   align-items: center;

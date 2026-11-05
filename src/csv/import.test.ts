@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LibraryDatabase } from '../db/db';
 import { newId } from '../db/ids';
 import type { Shelf } from '../db/schema';
-import { createRoom, createShelf, indexPlaces } from '../places/places';
+import { createRoom, createShelf, indexPlaces, loadPlaces } from '../places/places';
 import { newBook, newCopy } from '../scan/session';
 import { parseCsv } from './csv';
 import { exportLibrary, exportRows } from './export';
@@ -57,6 +57,17 @@ describe('import', () => {
     expect(await database.copies.where('shelfId').equals(salon.id).count()).toBe(2);
   });
 
+  it('range les exemplaires dans le lieu du fichier, créé au besoin', async () => {
+    const books = [
+      imported('La Peste', '9782070360420', [{ site: 'Maison de campagne', room: 'Salon', shelf: 'Étagère 1' }]),
+      imported('Noces', undefined, [{ room: 'Salon', shelf: 'Étagère 1' }]),
+    ];
+    await applyImport(books, undefined, database);
+    const places = await loadPlaces(database);
+    const labels = (await database.copies.toArray()).map((copy) => places.byShelfId.get(copy.shelfId)?.label).sort();
+    expect(labels).toEqual(['Maison de campagne · Salon · Étagère 1', 'Maison · Salon · Étagère 1']);
+  });
+
   it('n’ajoute rien quand le même fichier est importé deux fois', async () => {
     const books = [imported('La Peste', '9782070360420'), imported('Noces')];
     await applyImport(books, salon.id, database);
@@ -98,6 +109,8 @@ describe('export puis import', () => {
     expect(exported).toMatchObject({ books: 2, copies: 3 });
     const rows = parseCsv(exported.text);
     expect(rows).toHaveLength(4);
+    const siteColumn = rows[0]?.indexOf('Lieu') ?? -1;
+    expect(rows.slice(1).map((row) => row[siteColumn])).toEqual(['Maison', 'Maison', 'Maison']);
     // Sorted by room, then shelf: Salon (created first), then Bureau.
     expect(rows.slice(1).map((row) => row[0])).toEqual(['La Peste', 'Carnet sans code', 'La Peste']);
 
@@ -110,7 +123,7 @@ describe('export puis import', () => {
       const restored = await target.books.where('isbn13').equals('9782070360420').first();
       const { id: _id, createdAt: _createdAt, updatedAt: _updatedAt, ...fields } = peste;
       expect(restored).toMatchObject(fields);
-      const places = indexPlaces(await target.rooms.toArray(), await target.shelves.toArray());
+      const places = await loadPlaces(target);
       const labels = (await target.copies.toArray()).map((copy) => places.byShelfId.get(copy.shelfId)?.label).sort();
       expect(labels).toEqual(['Bureau · Haut', 'Bureau · Étagère 1', 'Salon · Étagère 1']);
       expect((await target.copies.toArray()).some((copy) => copy.note === 'Abîmé')).toBe(true);
@@ -120,6 +133,6 @@ describe('export puis import', () => {
   });
 
   it('écrit l’en-tête même pour une bibliothèque vide', () => {
-    expect(exportRows([], [], indexPlaces([], []))).toHaveLength(1);
+    expect(exportRows([], [], indexPlaces([], [], []))).toHaveLength(1);
   });
 });

@@ -93,7 +93,11 @@ export function InsuranceTab() {
 
   if (summary.books === 0) return <p class="screen__intro">{fr.insurance.empty}</p>;
 
-  const details = [fr.insurance.places(summary.rooms, summary.shelves), fr.insurance.priced(summary.priced)].join(' · ');
+  const details = [
+    ...(summary.sites > 0 ? [fr.insurance.sites(summary.sites)] : []),
+    fr.insurance.places(summary.rooms, summary.shelves),
+    fr.insurance.priced(summary.priced),
+  ].join(' · ');
 
   return (
     <>

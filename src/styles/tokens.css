@@ -28,6 +28,7 @@
   --color-scan-surface: #171a20;
   --color-scan-border: #2a2f37;
   --color-scan-text: #e8eaed;
+  --color-scan-muted: #a3a9b3;
 
   /* Typography */
   --font-sans: 'DM Sans Variable', 'DM Sans', system-ui, sans-serif;

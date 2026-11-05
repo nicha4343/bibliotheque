@@ -2,11 +2,11 @@ import { db, type LibraryDatabase } from '../db/db';
 import type { Book, Copy, Id, ReadingStatus, Timestamp } from '../db/schema';
 import { sortKey } from '../library/filter';
 import { joinAuthors } from '../pending/pending';
-import { indexPlaces, type PlaceIndex } from '../places/places';
+import { loadPlaces, type PlaceIndex } from '../places/places';
 import { fr } from '../textes/fr';
 import { toCsv } from './csv';
 
-// « Exporter (CSV, Excel) »: one row per copy, so that each row has its room and shelf. Photographs
+// « Exporter (CSV, Excel) »: one row per copy, so that each row has its place, room and shelf. Photographs
 // cannot be part of a CSV file.
 
 type Column = keyof typeof fr.csv.columns;
@@ -21,6 +21,7 @@ const COLUMNS: readonly Column[] = [
   'language',
   'series',
   'volume',
+  'site',
   'room',
   'shelf',
   'status',
@@ -56,6 +57,7 @@ function rowOf(book: Book, copy: Copy | undefined, places: PlaceIndex): string[]
     language: book.language ?? '',
     series: book.seriesName ?? '',
     volume: book.seriesIndex === undefined ? '' : String(book.seriesIndex),
+    site: place?.site.name ?? '',
     room: place?.room.name ?? '',
     shelf: place?.shelf.name ?? '',
     status: STATUS_TEXTS[book.status],
@@ -69,7 +71,7 @@ function rowOf(book: Book, copy: Copy | undefined, places: PlaceIndex): string[]
   return COLUMNS.map((column) => values[column]);
 }
 
-/** Header, then the copies by room, shelf and title, as the library lists them. */
+/** Header, then the copies by place, room, shelf and title, as the library lists them. */
 export function exportRows(books: readonly Book[], copies: readonly Copy[], places: PlaceIndex): string[][] {
   const shelfRank = new Map<Id, number>();
   for (const room of places.rooms) {
@@ -100,13 +102,8 @@ export interface ExportResult {
 }
 
 export async function exportLibrary(database: LibraryDatabase = db): Promise<ExportResult> {
-  const [books, copies, rooms, shelves] = await Promise.all([
-    database.books.toArray(),
-    database.copies.toArray(),
-    database.rooms.toArray(),
-    database.shelves.toArray(),
-  ]);
-  return { text: toCsv(exportRows(books, copies, indexPlaces(rooms, shelves))), books: books.length, copies: copies.length };
+  const [books, copies, places] = await Promise.all([database.books.toArray(), database.copies.toArray(), loadPlaces(database)]);
+  return { text: toCsv(exportRows(books, copies, places)), books: books.length, copies: copies.length };
 }
 
 /** Saves the text as a file through the browser (« Téléchargements » on Android). */

@@ -1,4 +1,6 @@
-import Dexie, { type EntityTable } from 'dexie';
+import Dexie, { type EntityTable, type Transaction } from 'dexie';
+import { fr } from '../textes/fr';
+import { newId } from './ids';
 import type {
   BackupState,
   Book,
@@ -14,6 +16,7 @@ import type {
   SettingsRecord,
   Shelf,
   ShelfCheck,
+  Site,
   StoredBlob,
   Wish,
 } from './schema';
@@ -21,7 +24,17 @@ import { DATABASE_NAME } from './schema';
 
 export { DATABASE_NAME };
 
+/** The first place, which the rooms of a library made before the places join. */
+export const firstSite = (): Site => ({ id: newId(), name: fr.sites.defaultName, order: 0 });
+
+async function addFirstSite(tx: Transaction): Promise<void> {
+  const site = firstSite();
+  await tx.table('sites').add(site);
+  await tx.table('rooms').toCollection().modify({ siteId: site.id });
+}
+
 export class LibraryDatabase extends Dexie {
+  sites!: EntityTable<Site, 'id'>;
   rooms!: EntityTable<Room, 'id'>;
   shelves!: EntityTable<Shelf, 'id'>;
   books!: EntityTable<Book, 'id'>;
@@ -72,6 +85,15 @@ export class LibraryDatabase extends Dexie {
     this.version(5).stores({
       series: 'id',
     });
+    // Lot 10: places (lieux) above the rooms; the existing rooms join a first place, « Maison ».
+    this.version(6)
+      .stores({
+        sites: 'id',
+        rooms: 'id, order, siteId',
+      })
+      .upgrade(addFirstSite);
+    // A new library also starts with its first place.
+    this.on('populate', (tx) => addFirstSite(tx));
   }
 }
 

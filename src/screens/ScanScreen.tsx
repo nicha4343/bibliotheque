@@ -15,6 +15,7 @@ import type { DetectedCode } from '../scan/detector';
 import { DuplicateDialog } from '../scan/DuplicateDialog';
 import { beep, vibrate, type Signal } from '../scan/feedback';
 import { LocationPicker } from '../scan/LocationPicker';
+import { PlaceLabel } from '../scan/PlaceLabel';
 import { wakeLookups } from '../scan/lookups';
 import { aimAreaInVideo, classifyCode, RepeatFilter } from '../scan/reads';
 import {
@@ -325,7 +326,7 @@ export function ScanScreen() {
             }}
           >
             <PinIcon size={18} />
-            <span class="scan__place-label">{place?.label ?? fr.scan.choosePlace}</span>
+            <PlaceLabel place={place} severalSites={places?.severalSites ?? false} fallback={fr.scan.choosePlace} />
             <ChevronDownIcon size={16} />
           </button>
         }

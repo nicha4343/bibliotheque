@@ -3,7 +3,7 @@ import { CoverImage } from '../components/CoverImage';
 import { db } from '../db/db';
 import type { Book, ScanSession } from '../db/schema';
 import { useLiveQuery } from '../db/useLiveQuery';
-import { loadPlaces, nextShelf } from '../places/places';
+import { loadPlaces, nextShelf, roomWithSite } from '../places/places';
 import { navigate, routeHref } from '../router';
 import { countEntries, startSession } from '../scan/session';
 import { useEffect } from 'preact/hooks';
@@ -54,8 +54,9 @@ export function RecapScreen({ sessionId }: { sessionId?: string | undefined }) {
       const places = await loadPlaces();
       const siblings = places.shelvesByRoom.get(shelf.roomId) ?? [];
       const next = siblings[siblings.findIndex((s) => s.id === shelf.id) + 1];
-      const room = places.byShelfId.get(shelf.id)?.room.name ?? '';
-      return fr.places.label(room, next?.name ?? fr.places.defaultShelfName(siblings.length + 1));
+      if (next) return places.byShelfId.get(next.id)?.label;
+      const room = places.byShelfId.get(shelf.id)?.room;
+      return fr.places.label(room ? roomWithSite(places, room) : '', fr.places.defaultShelfName(siblings.length + 1));
     },
     [data?.session.id, data?.session.shelfId],
     undefined,

@@ -2,7 +2,7 @@
 
 Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est terminé qu'après un essai sur un vrai téléphone. Le détail de chaque écran est dans [SPEC.md](SPEC.md).
 
-**Aucun lot en cours** : les lots 0 et 1 sont terminés le 1er novembre 2026, le lot 2 le 2 novembre 2026, les lots 3 à 8 le 3 novembre 2026, le lot 9 le 5 novembre 2026. Le suivant est à choisir par l'utilisateur dans « Plus tard ».
+**Lot en cours : lot 10** (lieux au-dessus des pièces), en attente de l'essai sur téléphone. Les lots 0 et 1 sont terminés le 1er novembre 2026, le lot 2 le 2 novembre 2026, les lots 3 à 8 le 3 novembre 2026, le lot 9 le 5 novembre 2026.
 
 ## Lot 0 — Socle
 - [x] Projet Vite + TypeScript strict + Preact, ESLint, Vitest
@@ -143,11 +143,20 @@ Choisi par l'utilisateur le 3 novembre 2026 (« À décider par l'utilisateur »
 - [x] Essai sur téléphone, validé le 5 novembre 2026 (« tout bon ») : « 280065838-X » de nouveau, autres livres anciens
 - OpenRouter en secours (photographie mise de côté, ISBN lu après le scan) : inutile, le téléphone lisant bien les ISBN imprimés ; à reprendre seulement si des échecs sont signalés
 
+## Lot 10 — Lieux au-dessus des pièces
+Choisi par l'utilisateur le 5 novembre 2026, premier pas vers les lieux partagés en famille ; maquette du 3 novembre 2026 : https://claude.ai/artifact/97UNgEFurnaw88fy3fLx7j (situation « plusieurs lieux »).
+- [x] Données : table `sites` et `Room.siteId`, version 6 du schéma (`src/db/db.ts`) ; à la mise à niveau, les pièces existantes rejoignent un premier lieu, « Maison » ; une bibliothèque neuve commence avec lui (`populate`). Dans le code, le lieu s'appelle `Site` : `Place` désignait déjà un emplacement (pièce et étagère). `src/places/places.ts` : `createSite`, `renameSite`, `deleteSiteIfEmpty` (jamais le dernier, ni un lieu qui contient des ouvrages), `moveRoom`, `createRoom(…, siteId)`, `indexPlaces(sites, rooms, shelves)` (`label` nomme le lieu dès qu'il y en a deux, `roomLabel` jamais ; pièce d'un lieu disparu rangée dans le premier), lieu affiché mémorisé (`rememberShownSite`, `shownSiteOf`, `localStorage`). Testé, y compris la mise à niveau d'une base version 5
+- [x] « Étagères » et « Pièces et étagères » : pastilles des lieux avec leur nombre d'étagères et « Nouveau lieu » (`src/places/SiteChips.tsx`), seulement à partir de deux lieux ; « Renommer « Maison » », suppression d'un lieu vide ; « Lieu de la pièce » dans la fenêtre « Renommer » d'une pièce, pour la déplacer ; avec un seul lieu, « Nouveau lieu » sous les pièces de « Pièces et étagères »
+- [x] Scan : ligne « Lieu » du sélecteur « Où ranger ces ouvrages ? », lieu en petit dans la pastille d'emplacement (`src/scan/PlaceLabel.tsx`, aussi sur la vérification d'étagère)
+- [x] Ailleurs : emplacements nommant le lieu, filtre « Tous les lieux » et « Maison · toutes les pièces » de la bibliothèque, lieu au-dessus du titre de la vue d'étagère, inventaire pour l'assurance (« 2 lieux », pièces titrées « Maison · Salon »), colonne « Lieu » de l'export CSV et de l'import (`findOrCreateShelf(…, siteName)`), sauvegarde Google Drive au format 4 (`sites` ; une sauvegarde plus ancienne range ses pièces dans un premier lieu, `siteRecords`)
+- [x] Vérifié dans le navigateur de l'ordinateur, à la largeur d'un téléphone, sur une base version 5 fabriquée (trois pièces, quatre exemplaires) : mise à niveau sans perte, écrans inchangés avec un seul lieu ; « Maison de campagne » créée ; pièce renommée et déplacée ; pièce créée dans le lieu affiché, mise en évidence au retour sur « Étagères », lieu conservé d'un écran à l'autre ; sélecteur du scan ouvert sur le lieu affiché, pastille et bandeau ; filtre de la bibliothèque par lieu
+- [ ] Essai sur téléphone : mise à niveau de la vraie bibliothèque (rien ne doit bouger tant qu'il n'y a qu'un lieu), création d'un deuxième lieu, déplacement d'une pièce, scan dans l'autre lieu
+
 ## Plus tard
 - Synchronisation entre appareils (piste : Google Drive ; même mécanisme que l'écriture à plusieurs dans un lieu partagé)
 - Photographie d'une étagère entière : lecture des tranches par IA
 - Lieux partagés en famille (décisions du 1er novembre 2026, détail dans SPEC.md, « Lieux partagés en famille »), dans cet ordre :
-  - niveau « Lieu » au-dessus des pièces, utile sans partage (maquette du 3 novembre 2026, pastilles des lieux sur « Étagères », « Pièces et étagères » et le sélecteur du scan : https://claude.ai/artifact/97UNgEFurnaw88fy3fLx7j) ;
+  - niveau « Lieu » au-dessus des pièces, utile sans partage : fait au lot 10 ;
   - séparation de « Lu », de la note et de l'avis, propres à chaque personne (nouvelle version du schéma) ;
   - partage d'un lieu en consultation avec plusieurs personnes (Google Drive, après la sauvegarde du lot 2) ;
   - ajout et déplacement d'exemplaires par les invités, seulement si cela reste simple.

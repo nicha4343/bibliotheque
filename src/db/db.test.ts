@@ -48,6 +48,7 @@ describe('base de données', () => {
         'settings',
         'shelfChecks',
         'shelves',
+        'sites',
         'wishes',
       ].sort(),
     );

@@ -10,6 +10,7 @@ import { loadPlaces, type PlaceIndex } from '../places/places';
 import { navigate, routeHref } from '../router';
 import type { DetectedCode } from '../scan/detector';
 import { beep, vibrate, type Signal } from '../scan/feedback';
+import { PlaceLabel } from '../scan/PlaceLabel';
 import { classifyCode, RepeatFilter } from '../scan/reads';
 import { useCamera, useCodeDetection } from '../scan/useCamera';
 import { Viewfinder, type Flash } from '../scan/Viewfinder';
@@ -179,7 +180,7 @@ export function ShelfCheckScreen({ shelfId }: { shelfId: string }) {
         place={
           <p class="scan__place">
             <PinIcon size={18} />
-            <span class="scan__place-label">{place?.label}</span>
+            <PlaceLabel place={place} severalSites={places?.severalSites ?? false} fallback="" />
           </p>
         }
         actions={

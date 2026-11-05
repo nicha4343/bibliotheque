@@ -1,6 +1,6 @@
 import { db, type LibraryDatabase } from '../db/db';
 import { newId } from '../db/ids';
-import type { Id, Room, Shelf } from '../db/schema';
+import type { Id, Room, Shelf, Site } from '../db/schema';
 import { fr } from '../textes/fr';
 
 /** Random token printed in a shelf's QR code (URL-safe, 16 characters). */
@@ -22,6 +22,8 @@ export function defaultShelfName(existing: readonly string[]): string {
 export const sortByOrder = <T extends { order: number; name: string }>(items: readonly T[]): T[] =>
   [...items].sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, 'fr'));
 
+const nextOrder = (items: readonly { order: number }[]) => Math.max(0, ...items.map((item) => item.order + 1));
+
 export async function createShelf(roomId: Id, name?: string, database: LibraryDatabase = db): Promise<Shelf> {
   return database.transaction('rw', database.shelves, async () => {
     const siblings = await database.shelves.where('roomId').equals(roomId).toArray();
@@ -29,7 +31,7 @@ export async function createShelf(roomId: Id, name?: string, database: LibraryDa
       id: newId(),
       roomId,
       name: name?.trim() || defaultShelfName(siblings.map((s) => s.name)),
-      order: Math.max(0, ...siblings.map((s) => s.order + 1)),
+      order: nextOrder(siblings),
       qrToken: newQrToken(),
     };
     await database.shelves.add(shelf);
@@ -51,11 +53,36 @@ export function takeCreatedShelf(): Id | undefined {
   return id;
 }
 
-/** A new room comes with its first shelf, « Étagère 1 ». */
-export async function createRoom(name: string, database: LibraryDatabase = db): Promise<{ room: Room; shelf: Shelf }> {
-  return database.transaction('rw', database.rooms, database.shelves, async () => {
-    const rooms = await database.rooms.toArray();
-    const room: Room = { id: newId(), name: name.trim(), order: Math.max(0, ...rooms.map((r) => r.order + 1)) };
+/** The first place by order, created (« Maison ») if the library has none: rooms always belong to one. */
+async function defaultSite(database: LibraryDatabase): Promise<Site> {
+  const first = sortByOrder(await database.sites.toArray())[0];
+  if (first) return first;
+  const site: Site = { id: newId(), name: fr.sites.defaultName, order: 0 };
+  await database.sites.add(site);
+  return site;
+}
+
+export async function createSite(name: string, database: LibraryDatabase = db): Promise<Site> {
+  return database.transaction('rw', database.sites, async () => {
+    const site: Site = { id: newId(), name: name.trim(), order: nextOrder(await database.sites.toArray()) };
+    await database.sites.add(site);
+    return site;
+  });
+}
+
+export async function renameSite(id: Id, name: string, database: LibraryDatabase = db): Promise<void> {
+  if (name.trim()) await database.sites.update(id, { name: name.trim() });
+}
+
+/** A new room comes with its first shelf, « Étagère 1 »; it goes to the first place when none is given. */
+export async function createRoom(name: string, database: LibraryDatabase = db, siteId?: Id): Promise<{ room: Room; shelf: Shelf }> {
+  return database.transaction('rw', database.sites, database.rooms, database.shelves, async () => {
+    const room: Room = {
+      id: newId(),
+      siteId: siteId ?? (await defaultSite(database)).id,
+      name: name.trim(),
+      order: nextOrder(await database.rooms.toArray()),
+    };
     await database.rooms.add(room);
     const shelf = await createShelf(room.id, undefined, database);
     return { room, shelf };
@@ -64,22 +91,46 @@ export async function createRoom(name: string, database: LibraryDatabase = db): 
 
 const sameName = (a: string, b: string) => a.trim().toLocaleLowerCase('fr') === b.trim().toLocaleLowerCase('fr');
 
-/** Shelf of the given names (case ignored), created with its room when missing: used by the CSV import. */
-export async function findOrCreateShelf(roomName: string, shelfName: string, database: LibraryDatabase = db): Promise<Shelf> {
-  return database.transaction('rw', database.rooms, database.shelves, async () => {
+/**
+ * Shelf of the given names (case ignored), created with its room and place when missing: used by the
+ * CSV import. Without a place, the room is looked for in every place, then created in the first one.
+ */
+export async function findOrCreateShelf(
+  roomName: string,
+  shelfName: string,
+  database: LibraryDatabase = db,
+  siteName?: string,
+): Promise<Shelf> {
+  return database.transaction('rw', database.sites, database.rooms, database.shelves, async () => {
+    const sites = sortByOrder(await database.sites.toArray());
+    const named = siteName?.trim() ? siteName : undefined;
+    const site = named === undefined ? undefined : (sites.find((s) => sameName(s.name, named)) ?? (await createSite(named, database)));
     const rooms = await database.rooms.toArray();
-    let room = rooms.find((r) => sameName(r.name, roomName));
-    if (!room) {
-      room = { id: newId(), name: roomName.trim(), order: Math.max(0, ...rooms.map((r) => r.order + 1)) };
-      await database.rooms.add(room);
-    }
+    const rank = (room: Room) => {
+      const index = sites.findIndex((s) => s.id === room.siteId);
+      return index < 0 ? sites.length : index;
+    };
+    const room =
+      rooms.filter((r) => sameName(r.name, roomName) && (!site || r.siteId === site.id)).sort((a, b) => rank(a) - rank(b))[0] ??
+      (await addRoom(roomName, (site ?? (await defaultSite(database))).id, nextOrder(rooms), database));
     const shelves = await database.shelves.where('roomId').equals(room.id).toArray();
     return shelves.find((s) => sameName(s.name, shelfName)) ?? createShelf(room.id, shelfName, database);
   });
 }
 
+async function addRoom(name: string, siteId: Id, order: number, database: LibraryDatabase): Promise<Room> {
+  const room: Room = { id: newId(), siteId, name: name.trim(), order };
+  await database.rooms.add(room);
+  return room;
+}
+
 export async function renameRoom(id: Id, name: string, database: LibraryDatabase = db): Promise<void> {
   if (name.trim()) await database.rooms.update(id, { name: name.trim() });
+}
+
+/** Moves a room, with its shelves and their books, to another place. */
+export async function moveRoom(id: Id, siteId: Id, database: LibraryDatabase = db): Promise<void> {
+  await database.rooms.update(id, { siteId });
 }
 
 export async function renameShelf(id: Id, name: string, database: LibraryDatabase = db): Promise<void> {
@@ -99,22 +150,37 @@ export async function deleteShelfIfEmpty(id: Id, database: LibraryDatabase = db)
   });
 }
 
+/** Removes the rooms and their shelves when none of them holds a copy or an item to complete. */
+async function deleteRoomsIfEmpty(roomIds: readonly Id[], database: LibraryDatabase): Promise<boolean> {
+  const shelfIds = (await database.shelves.where('roomId').anyOf(roomIds).toArray()).map((shelf) => shelf.id);
+  const used =
+    (await database.copies.where('shelfId').anyOf(shelfIds).count()) +
+    (await database.pendingItems.where('shelfId').anyOf(shelfIds).count());
+  if (used > 0) return false;
+  await database.shelfChecks.where('shelfId').anyOf(shelfIds).delete();
+  await database.shelves.bulkDelete(shelfIds);
+  await database.rooms.bulkDelete([...roomIds]);
+  return true;
+}
+
 export async function deleteRoomIfEmpty(id: Id, database: LibraryDatabase = db): Promise<boolean> {
   return database.transaction(
     'rw',
     [database.rooms, database.shelves, database.copies, database.pendingItems, database.shelfChecks],
+    () => deleteRoomsIfEmpty([id], database),
+  );
+}
+
+/** Removes a place and its empty rooms, never the last place nor one that still holds books. */
+export async function deleteSiteIfEmpty(id: Id, database: LibraryDatabase = db): Promise<boolean> {
+  return database.transaction(
+    'rw',
+    [database.sites, database.rooms, database.shelves, database.copies, database.pendingItems, database.shelfChecks],
     async () => {
-      const shelves = await database.shelves.where('roomId').equals(id).toArray();
-      for (const shelf of shelves) {
-        const used =
-          (await database.copies.where('shelfId').equals(shelf.id).count()) +
-          (await database.pendingItems.where('shelfId').equals(shelf.id).count());
-        if (used > 0) return false;
-      }
-      const shelfIds = shelves.map((shelf) => shelf.id);
-      await database.shelfChecks.where('shelfId').anyOf(shelfIds).delete();
-      await database.shelves.bulkDelete(shelfIds);
-      await database.rooms.delete(id);
+      if ((await database.sites.count()) < 2) return false;
+      const roomIds = (await database.rooms.where('siteId').equals(id).toArray()).map((room) => room.id);
+      if (!(await deleteRoomsIfEmpty(roomIds, database))) return false;
+      await database.sites.delete(id);
       return true;
     },
   );
@@ -130,32 +196,97 @@ export async function nextShelf(shelfId: Id, database: LibraryDatabase = db): Pr
 }
 
 export interface Place {
+  site: Site;
   room: Room;
   shelf: Shelf;
-  /** « Salon · Étagère 2 » */
+  /** « Salon · Étagère 2 », preceded by the place when there are several: « Maison · Salon · Étagère 2 ». */
   label: string;
+  /** « Salon · Étagère 2 », where the place is shown apart. */
+  roomLabel: string;
 }
 
 export interface PlaceIndex {
+  sites: Site[];
+  /** The library has several places: their names are shown. */
+  severalSites: boolean;
+  /** Every room, place by place. */
   rooms: Room[];
+  roomsBySite: Map<Id, Room[]>;
+  siteOfRoom: Map<Id, Site>;
   shelvesByRoom: Map<Id, Shelf[]>;
   byShelfId: Map<Id, Place>;
 }
 
-/** Rooms and shelves sorted, with the label of every shelf. */
-export function indexPlaces(rooms: readonly Room[], shelves: readonly Shelf[]): PlaceIndex {
-  const sortedRooms = sortByOrder(rooms);
+/** Places, rooms and shelves sorted, with the label of every shelf. */
+export function indexPlaces(sites: readonly Site[], rooms: readonly Room[], shelves: readonly Shelf[]): PlaceIndex {
+  const sortedSites = sortByOrder(sites);
+  // Never expected (there is always a place), but a room must not vanish with its books.
+  const fallback = sortedSites[0] ?? { id: '', name: fr.sites.defaultName, order: 0 };
+  if (sortedSites.length === 0 && rooms.length > 0) sortedSites.push(fallback);
+  const known = new Set(sortedSites.map((site) => site.id));
+  const severalSites = sortedSites.length > 1;
+  const roomsBySite = new Map<Id, Room[]>(sortedSites.map((site) => [site.id, []]));
+  for (const room of sortByOrder(rooms)) roomsBySite.get(known.has(room.siteId) ? room.siteId : fallback.id)?.push(room);
+
+  const siteOfRoom = new Map<Id, Site>();
   const shelvesByRoom = new Map<Id, Shelf[]>();
   const byShelfId = new Map<Id, Place>();
-  for (const room of sortedRooms) {
-    const roomShelves = sortByOrder(shelves.filter((shelf) => shelf.roomId === room.id));
-    shelvesByRoom.set(room.id, roomShelves);
-    for (const shelf of roomShelves) byShelfId.set(shelf.id, { room, shelf, label: fr.places.label(room.name, shelf.name) });
+  for (const site of sortedSites) {
+    for (const room of roomsBySite.get(site.id) ?? []) {
+      siteOfRoom.set(room.id, site);
+      const roomShelves = sortByOrder(shelves.filter((shelf) => shelf.roomId === room.id));
+      shelvesByRoom.set(room.id, roomShelves);
+      for (const shelf of roomShelves) {
+        const roomLabel = fr.places.label(room.name, shelf.name);
+        const label = severalSites ? fr.places.label(site.name, roomLabel) : roomLabel;
+        byShelfId.set(shelf.id, { site, room, shelf, label, roomLabel });
+      }
+    }
   }
-  return { rooms: sortedRooms, shelvesByRoom, byShelfId };
+  return {
+    sites: sortedSites,
+    severalSites,
+    rooms: sortedSites.flatMap((site) => roomsBySite.get(site.id) ?? []),
+    roomsBySite,
+    siteOfRoom,
+    shelvesByRoom,
+    byShelfId,
+  };
+}
+
+/** « Salon », preceded by its place when there are several: « Maison · Salon ». */
+export function roomWithSite(places: PlaceIndex, room: Room): string {
+  const site = places.siteOfRoom.get(room.id);
+  return places.severalSites && site ? fr.places.label(site.name, room.name) : room.name;
 }
 
 export async function loadPlaces(database: LibraryDatabase = db): Promise<PlaceIndex> {
-  const [rooms, shelves] = await Promise.all([database.rooms.toArray(), database.shelves.toArray()]);
-  return indexPlaces(rooms, shelves);
+  const [sites, rooms, shelves] = await Promise.all([database.sites.toArray(), database.rooms.toArray(), database.shelves.toArray()]);
+  return indexPlaces(sites, rooms, shelves);
+}
+
+// The place shown on « Étagères » and « Pièces et étagères », kept from one screen to the other and,
+// on this device, from one day to the next.
+const SHOWN_SITE_KEY = 'bibliotheque.site';
+let shownSite: Id | undefined;
+
+export function rememberShownSite(id: Id): void {
+  shownSite = id;
+  try {
+    localStorage.setItem(SHOWN_SITE_KEY, id);
+  } catch {
+    // Storage refused (private browsing): remembered while the application stays open.
+  }
+}
+
+/** The place to show: the one shown last, or the first. */
+export function shownSiteOf(places: PlaceIndex): Site | undefined {
+  if (shownSite === undefined) {
+    try {
+      shownSite = localStorage.getItem(SHOWN_SITE_KEY) ?? undefined;
+    } catch {
+      shownSite = undefined;
+    }
+  }
+  return places.sites.find((site) => site.id === shownSite) ?? places.sites[0];
 }

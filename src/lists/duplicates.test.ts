@@ -2,20 +2,21 @@ import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LibraryDatabase } from '../db/db';
 import { newId } from '../db/ids';
-import type { Room, Shelf } from '../db/schema';
+import type { Room, Shelf, Site } from '../db/schema';
 import { indexPlaces } from '../places/places';
 import { newBook, newCopy } from '../scan/session';
 import { duplicateRows, findDuplicates, isToGive, placesOf, setToGive } from './duplicates';
 
+const sites: Site[] = [{ id: 'maison', name: 'Maison', order: 0 }];
 const rooms: Room[] = [
-  { id: 'salon', name: 'Salon', order: 0 },
-  { id: 'chambre', name: 'Chambre', order: 1 },
+  { id: 'salon', siteId: 'maison', name: 'Salon', order: 0 },
+  { id: 'chambre', siteId: 'maison', name: 'Chambre', order: 1 },
 ];
 const shelves: Shelf[] = [
   { id: 'salon-2', roomId: 'salon', name: 'Étagère 2', order: 0, qrToken: 'a' },
   { id: 'chevet', roomId: 'chambre', name: 'Table de chevet', order: 0, qrToken: 'b' },
 ];
-const places = indexPlaces(rooms, shelves);
+const places = indexPlaces(sites, rooms, shelves);
 
 let database: LibraryDatabase;
 

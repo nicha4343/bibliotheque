@@ -1,8 +1,9 @@
 import { useState } from 'preact/hooks';
 import { PlusIcon } from '../components/icons';
 import { Sheet } from '../components/Sheet';
-import type { Id, Shelf } from '../db/schema';
-import { createRoom, createShelf, type PlaceIndex } from '../places/places';
+import { db } from '../db/db';
+import type { Id, Shelf, Site } from '../db/schema';
+import { createRoom, createShelf, shownSiteOf, type PlaceIndex } from '../places/places';
 import { fr } from '../textes/fr';
 
 interface LocationPickerProps {
@@ -15,24 +16,37 @@ interface LocationPickerProps {
   onClose?: (() => void) | undefined;
 }
 
-/** « Où ranger ces ouvrages ? » — choosing a shelf closes the picker. */
+/**
+ * « Où ranger ces ouvrages ? » — choosing a shelf closes the picker. With several places, a « Lieu »
+ * row comes first; a new room is created in the place chosen.
+ */
 export function LocationPicker({ places, currentShelfId, onPick, title = fr.places.pickerTitle, onClose }: LocationPickerProps) {
-  const currentRoomId = currentShelfId ? places.byShelfId.get(currentShelfId)?.room.id : undefined;
-  const [roomId, setRoomId] = useState<Id | undefined>(currentRoomId ?? places.rooms[0]?.id);
-  const [addingRoom, setAddingRoom] = useState(places.rooms.length === 0);
+  const current = currentShelfId ? places.byShelfId.get(currentShelfId) : undefined;
+  const [siteId, setSiteId] = useState<Id | undefined>(current?.site.id ?? shownSiteOf(places)?.id);
+  const site = places.sites.find((s) => s.id === siteId) ?? places.sites[0];
+  const rooms = (site && places.roomsBySite.get(site.id)) ?? [];
+  const [roomId, setRoomId] = useState<Id | undefined>(current?.room.id ?? rooms[0]?.id);
+  const [addingRoom, setAddingRoom] = useState(rooms.length === 0);
   const [draft, setDraft] = useState('');
-  const room = places.rooms.find((r) => r.id === roomId);
+  const room = rooms.find((r) => r.id === roomId);
   const shelves = room ? (places.shelvesByRoom.get(room.id) ?? []) : [];
+
+  const chooseSite = (chosen: Site) => {
+    const siteRooms = places.roomsBySite.get(chosen.id) ?? [];
+    setSiteId(chosen.id);
+    setRoomId(siteRooms[0]?.id);
+    setAddingRoom(siteRooms.length === 0);
+  };
 
   const submitRoom = async (event: Event) => {
     event.preventDefault();
     const name = draft.trim();
     if (!name) return;
-    const existing = places.rooms.find((r) => r.name.toLocaleLowerCase('fr') === name.toLocaleLowerCase('fr'));
+    const existing = rooms.find((r) => r.name.toLocaleLowerCase('fr') === name.toLocaleLowerCase('fr'));
     if (existing) {
       setRoomId(existing.id);
     } else {
-      const created = await createRoom(name);
+      const created = await createRoom(name, db, site?.id);
       setRoomId(created.room.id);
     }
     setDraft('');
@@ -45,9 +59,29 @@ export function LocationPicker({ places, currentShelfId, onPick, title = fr.plac
 
   return (
     <Sheet title={title} onClose={onClose}>
+      {places.severalSites && (
+        <>
+          <h3 class="sheet__label">{fr.sites.label}</h3>
+          <div class="chips chips--wrap">
+            {places.sites.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                class="chip chip--large"
+                aria-pressed={s.id === site?.id}
+                onClick={() => {
+                  chooseSite(s);
+                }}
+              >
+                {s.name}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
       <h3 class="sheet__label">{fr.places.room}</h3>
       <div class="chips chips--wrap">
-        {places.rooms.map((r) => (
+        {rooms.map((r) => (
           <button
             key={r.id}
             type="button"

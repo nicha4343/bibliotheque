@@ -306,6 +306,34 @@ export const fr = {
     noRooms: 'Aucune pièce pour le moment. Créez la première ci-dessous.',
   },
 
+  /** Lot 10: places (lieux) above the rooms. */
+  sites: {
+    defaultName: 'Maison',
+    label: 'Lieu',
+    count: (value: number) => count(value, 'lieu', 'lieux'),
+    /** Spoken after the number of shelves of a chip. */
+    shelvesWord: (value: number) => plural(value, 'étagère', 'étagères'),
+    newSite: 'Nouveau lieu',
+    newSiteLabel: 'Nom du nouveau lieu',
+    newSitePlaceholder: 'Par exemple : Appartement',
+    newSiteHint: 'Un lieu regroupe des pièces : une maison, un appartement, un bureau.',
+    firstSiteHint: (name: string) => `Vos pièces actuelles demeurent dans « ${name} », que vous pourrez renommer.`,
+    oneSiteIntro:
+      'Vos ouvrages sont-ils rangés en plusieurs endroits ? Ajoutez un lieu pour chacun : une maison de campagne, un appartement, un bureau.',
+    rename: (name: string) => `Renommer « ${name} »`,
+    delete: (name: string) => `Supprimer le lieu « ${name} »`,
+    deleteTitle: 'Supprimer ce lieu ?',
+    deleteText: (name: string) => `Le lieu « ${name} » et ses pièces vides seront supprimés.`,
+    notEmpty: 'Il contient encore des ouvrages : déplacez-les d’abord.',
+    noRooms: 'Aucune pièce dans ce lieu pour le moment. Créez la première ci-dessous.',
+    noShelves: 'Aucune pièce dans ce lieu pour le moment. Créez-en une dans l’écran',
+    newRoomIn: (site: string) => `Nouvelle pièce dans ${site}`,
+    roomSite: 'Lieu de la pièce',
+    allSites: 'Tous les lieux',
+    placeLabel: 'Lieu, pièce ou étagère',
+    wholeSite: (site: string) => `${site} · toutes les pièces`,
+  },
+
   labels: {
     title: 'Étiquettes QR à imprimer',
     back: 'Paramètres',
@@ -323,6 +351,7 @@ export const fr = {
     title: 'Étagères',
     back: 'Bibliothèque',
     summary: (value: number) => (value === 0 ? 'Aucune étagère pour le moment' : count(value, 'étagère', 'étagères')),
+    summarySites: (shelves: number, sites: number) => `${count(shelves, 'étagère', 'étagères')} · ${count(sites, 'lieu', 'lieux')}`,
     books: (value: number) => (value === 0 ? 'Vide' : count(value, 'ouvrage', 'ouvrages')),
     checkedOn: (date: string) => `vérifiée le ${date}`,
     manage: 'Pièces et étagères',
@@ -950,6 +979,7 @@ export const fr = {
       language: 'Langue',
       series: 'Série',
       volume: 'Tome',
+      site: 'Lieu',
       room: 'Pièce',
       shelf: 'Étagère',
       status: 'Statut',
@@ -1251,6 +1281,7 @@ export const fr = {
     kicker: 'Inventaire pour l’assurance',
     books: (value: number) => count(value, 'ouvrage', 'ouvrages'),
     places: (rooms: number, shelves: number) => `${count(rooms, 'pièce', 'pièces')} · ${count(shelves, 'étagère', 'étagères')}`,
+    sites: (value: number) => count(value, 'lieu', 'lieux'),
     priced: (value: number) => `prix d’achat renseigné pour ${count(value, 'ouvrage', 'ouvrages')}`,
     value: (amount: string) => `Valeur d’achat déclarée : ${amount}`,
     options: 'Contenu de l’inventaire',

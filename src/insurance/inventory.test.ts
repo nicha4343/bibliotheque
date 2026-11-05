@@ -1,20 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import type { Book, Copy, Room, Shelf } from '../db/schema';
+import type { Book, Copy, Room, Shelf, Site } from '../db/schema';
 import { indexPlaces } from '../places/places';
 import { newBook, newCopy } from '../scan/session';
 import { inventoryGroups, inventorySummary, isPrecious, photographedPrecious, toWinAnsi } from './inventory';
 import { makeInventoryPdf } from './pdf';
 
+const sites: Site[] = [{ id: 'maison', name: 'Maison', order: 0 }];
 const rooms: Room[] = [
-  { id: 'salon', name: 'Salon', order: 0 },
-  { id: 'bureau', name: 'Bureau', order: 1 },
+  { id: 'salon', siteId: 'maison', name: 'Salon', order: 0 },
+  { id: 'bureau', siteId: 'maison', name: 'Bureau', order: 1 },
 ];
 const shelves: Shelf[] = [
   { id: 'salon-1', roomId: 'salon', name: 'Étagère 1', order: 0, qrToken: 'a' },
   { id: 'salon-2', roomId: 'salon', name: 'Étagère 2', order: 1, qrToken: 'b' },
   { id: 'bureau-1', roomId: 'bureau', name: 'Bandes dessinées', order: 0, qrToken: 'c' },
 ];
-const places = indexPlaces(rooms, shelves);
+const places = indexPlaces(sites, rooms, shelves);
 
 const book = (title: string, fields: Partial<Book> = {}): Book => newBook({ title, authors: ['Albert Camus'], ...fields });
 
@@ -36,6 +37,7 @@ describe('inventaire pour l’assurance', () => {
     expect(inventorySummary(books, copies, places)).toEqual({
       books: 3,
       copies: 4,
+      sites: 0,
       rooms: 2,
       shelves: 3,
       priced: 2,
@@ -58,6 +60,21 @@ describe('inventaire pour l’assurance', () => {
       ['Astérix le Gaulois', 1, ['Bureau · Bandes dessinées']],
       ['L’Étranger', 1, ['Salon · Étagère 1']],
       ['La Peste', 2, ['Salon · Étagère 1', 'Salon · Étagère 2']],
+    ]);
+  });
+
+  it('nomme le lieu de chaque pièce quand il y en a plusieurs', () => {
+    const { books, copies } = library();
+    const twoSites = indexPlaces(
+      [...sites, { id: 'campagne', name: 'Maison de campagne', order: 1 }],
+      rooms.map((room) => (room.id === 'bureau' ? { ...room, siteId: 'campagne' } : room)),
+      shelves,
+    );
+    expect(inventorySummary(books, copies, twoSites)).toMatchObject({ sites: 2, rooms: 2 });
+    expect(inventoryGroups(books, copies, [], twoSites, true).map((group) => group.room)).toEqual([
+      'Maison · Salon',
+      'Maison · Salon',
+      'Maison de campagne · Bureau',
     ]);
   });
 

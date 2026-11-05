@@ -5,7 +5,7 @@ import { addQuote } from '../books/quotes';
 import { LibraryDatabase } from '../db/db';
 import { newId } from '../db/ids';
 import type { Book } from '../db/schema';
-import { createRoom } from '../places/places';
+import { createRoom, createSite, loadPlaces } from '../places/places';
 import { newBook, newCopy } from '../scan/session';
 import { backUp, findBackup, photoFileName, restoreBackup, SNAPSHOT_FILE } from './backup';
 import { redirectUri, saveClient, updateBackupState } from './google';
@@ -105,7 +105,7 @@ describe('contenu d’une sauvegarde', () => {
     const text = JSON.stringify(await buildSnapshot(database));
     expect(parseSnapshot(text)?.books).toHaveLength(1);
     expect(parseSnapshot('{"format":"autre"}')).toBeUndefined();
-    expect(parseSnapshot(text.replace('"version":3', '"version":99'))).toBeUndefined();
+    expect(parseSnapshot(text.replace('"version":4', '"version":99'))).toBeUndefined();
     expect(parseSnapshot('pas du JSON')).toBeUndefined();
     // A backup made before the loans (lot 4), or before the wishes and series (lot 5), is still read.
     const before = JSON.parse(text) as Record<string, unknown>;
@@ -116,13 +116,45 @@ describe('contenu d’une sauvegarde', () => {
     expect(parseSnapshot(JSON.stringify({ ...before, version: 2 }))).toBeUndefined();
     expect(parseSnapshot(JSON.stringify({ ...before, loans: [], version: 2 }))).toMatchObject({ wishes: [], series: [] });
     expect(parseSnapshot(JSON.stringify({ ...before, loans: [], version: 3 }))).toBeUndefined();
+    // Before the places (lot 10).
+    delete before.sites;
+    expect(parseSnapshot(JSON.stringify({ ...before, loans: [], wishes: [], series: [], version: 3 }))).toMatchObject({ sites: [] });
+    expect(parseSnapshot(JSON.stringify({ ...before, loans: [], wishes: [], series: [], version: 4 }))).toBeUndefined();
+  });
+
+  it('range les pièces d’une sauvegarde antérieure aux lieux dans un premier lieu', async () => {
+    const { sites: _sites, ...snapshot } = await buildSnapshot(database);
+    const old = parseSnapshot(
+      JSON.stringify({ ...snapshot, version: 3, rooms: snapshot.rooms.map(({ siteId: _siteId, ...room }) => room) }),
+    );
+    if (!old) throw new Error('backup refused');
+    const other = new LibraryDatabase(`test-${newId()}`);
+    await restoreSnapshot(old, other);
+    const sites = await other.sites.toArray();
+    expect(sites.map((site) => site.name)).toEqual(['Maison']);
+    expect((await other.rooms.toArray()).map((room) => room.siteId)).toEqual([sites[0]?.id]);
+    await other.delete();
+  });
+
+  it('conserve les lieux et le lieu de chaque pièce', async () => {
+    const campagne = await createSite('Maison de campagne', database);
+    await createRoom('Séjour', database, campagne.id);
+    const snapshot = await buildSnapshot(database);
+    expect(snapshot.sites.map((site) => site.name).sort()).toEqual(['Maison', 'Maison de campagne']);
+    const other = new LibraryDatabase(`test-${newId()}`);
+    await restoreSnapshot(snapshot, other);
+    expect((await loadPlaces(other)).rooms.map((room) => `${room.name} (${room.siteId === campagne.id ? 'campagne' : 'maison'})`)).toEqual([
+      'Salon (maison)',
+      'Séjour (campagne)',
+    ]);
+    await other.delete();
   });
 
   it('conserve les souhaits et le nombre de tomes des séries', async () => {
     await database.wishes.add({ id: 'souhait', title: 'Les Choses', source: 'manual', createdAt: 1 });
     await database.series.put({ id: 'asterix', total: 39 });
     const snapshot = await buildSnapshot(database);
-    expect(snapshot.version).toBe(3);
+    expect(snapshot.version).toBe(4);
     const other = new LibraryDatabase(`test-${newId()}`);
     await restoreSnapshot(snapshot, other);
     expect(await other.wishes.toArray()).toEqual([{ id: 'souhait', title: 'Les Choses', source: 'manual', createdAt: 1 }]);

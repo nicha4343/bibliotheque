@@ -10,7 +10,8 @@ import { fr } from '../textes/fr';
 export type FileFormat = 'app' | 'libib';
 
 export interface ImportedCopy {
-  /** Room and shelf named in the file; a copy without them goes to the shelf chosen by the user. */
+  /** Place, room and shelf named in the file; a copy without a room goes to the shelf chosen by the user. */
+  site?: string;
   room?: string;
   shelf?: string;
   addedAt?: Timestamp;
@@ -146,10 +147,12 @@ function readAppRow(cell: Cells): ImportedBook {
   if (price !== undefined) fields.price = price;
 
   const copy: ImportedCopy = {};
+  const site = cell(APP.site);
   const room = cell(APP.room);
   const shelf = cell(APP.shelf);
   const addedAt = readDate(cell(APP.addedAt), 'dayFirst');
   const note = cell(APP.note);
+  if (room && site) copy.site = site;
   if (room) copy.room = room;
   if (room && shelf) copy.shelf = shelf;
   if (addedAt !== undefined) copy.addedAt = addedAt;

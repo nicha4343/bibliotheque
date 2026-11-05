@@ -8,7 +8,7 @@ import type { Book, CheckAnswer, Copy, Id, Settings, Shelf, ShelfCheck } from '.
 import { getSettings } from '../db/settings';
 import { useLiveQuery } from '../db/useLiveQuery';
 import { sortKey } from '../library/filter';
-import { loadPlaces, type PlaceIndex } from '../places/places';
+import { loadPlaces, roomWithSite, type PlaceIndex } from '../places/places';
 import { navigate, routeHref } from '../router';
 import { LocationPicker } from '../scan/LocationPicker';
 import { getActiveSession, setSessionShelf, startSession } from '../scan/session';
@@ -126,7 +126,7 @@ export function ShelfScreen({ shelfRef, copyId }: { shelfRef: string; copyId: st
         )}
 
         <header class="shelf__header">
-          <p class="shelf__room">{place.room.name}</p>
+          <p class="shelf__room">{roomWithSite(data.places, place.room)}</p>
           <h1 class="shelf__title">{shelf.name}</h1>
           <p class="shelf__summary">
             {fr.shelf.books(present.length)}

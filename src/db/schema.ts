@@ -12,9 +12,18 @@ export type MetadataProvider = 'googleBooks' | 'openLibrary' | 'bnf';
 /** Where an automatic cover comes from: a metadata source, or a bookseller as a last resort. */
 export type CoverProvider = MetadataProvider | 'amazon' | 'decitre';
 
+/** Lieu (lot 10): « Maison », « Maison de campagne »; every room belongs to one, and there is always one. */
+export interface Site {
+  id: Id;
+  name: string;
+  order: number;
+}
+
 /** Pièce. */
 export interface Room {
   id: Id;
+  /** Lieu of the room. */
+  siteId: Id;
   name: string;
   order: number;
 }

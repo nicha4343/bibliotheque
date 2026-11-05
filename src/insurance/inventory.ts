@@ -1,7 +1,7 @@
 import type { Book, Copy, Id, Loan } from '../db/schema';
 import { foldText, sortKey } from '../library/filter';
 import { isActive } from '../loans/loans';
-import type { PlaceIndex } from '../places/places';
+import { roomWithSite, type PlaceIndex } from '../places/places';
 import { fr } from '../textes/fr';
 
 // « Inventaire pour l’assurance » (lot 5, screen 11): what the PDF lists, worked out apart from its
@@ -28,7 +28,7 @@ export interface InventoryItem {
 }
 
 export interface InventoryGroup {
-  /** Room, then shelf; none when classed by title. */
+  /** Room (« Maison · Salon » when there are several places), then shelf; none when classed by title. */
   room?: string;
   shelf?: string;
   items: InventoryItem[];
@@ -37,6 +37,8 @@ export interface InventoryGroup {
 export interface InventorySummary {
   books: number;
   copies: number;
+  /** Places holding books, when the library has several (0 otherwise: not shown). */
+  sites: number;
   rooms: number;
   shelves: number;
   /** Books whose purchase price is known, and the value of their copies. */
@@ -75,6 +77,7 @@ export function inventorySummary(books: readonly Book[], copies: readonly Copy[]
   return {
     books: owned.length,
     copies: kept.length,
+    sites: places.severalSites ? new Set(kept.flatMap((copy) => places.byShelfId.get(copy.shelfId)?.site.id ?? [])).size : 0,
     rooms: new Set(kept.flatMap((copy) => places.byShelfId.get(copy.shelfId)?.room.id ?? [])).size,
     shelves: new Set(kept.map((copy) => copy.shelfId)).size,
     priced: priced.length,
@@ -125,7 +128,9 @@ export function inventoryGroups(
     });
     if (items.length === 0) continue;
     const place = places.byShelfId.get(shelfId);
-    groups.push(place ? { room: place.room.name, shelf: place.shelf.name, items } : { room: fr.library.noPlace, items });
+    groups.push(
+      place ? { room: roomWithSite(places, place.room), shelf: place.shelf.name, items } : { room: fr.library.noPlace, items },
+    );
   }
   return groups;
 }

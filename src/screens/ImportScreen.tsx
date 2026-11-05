@@ -22,7 +22,7 @@ type Step =
 
 const FORMAT_TEXTS: Record<FileFormat, string> = { app: fr.importFile.formatApp, libib: fr.importFile.formatLibib };
 
-const EMPTY_PLACES = indexPlaces([], []);
+const EMPTY_PLACES = indexPlaces([], [], []);
 
 async function readFile(file: File): Promise<Step> {
   let text: string;
