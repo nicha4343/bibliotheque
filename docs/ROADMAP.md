@@ -2,7 +2,7 @@
 
 Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est terminé qu'après un essai sur un vrai téléphone. Le détail de chaque écran est dans [SPEC.md](SPEC.md).
 
-**Lot en cours : 9 — ISBN imprimé des livres anciens** (lots 0 et 1 terminés le 1er novembre 2026, lot 2 le 2 novembre 2026, lots 3 à 8 le 3 novembre 2026)
+**Aucun lot en cours** : les lots 0 et 1 sont terminés le 1er novembre 2026, le lot 2 le 2 novembre 2026, les lots 3 à 8 le 3 novembre 2026, le lot 9 le 5 novembre 2026. Le suivant est à choisir par l'utilisateur dans « Plus tard ».
 
 ## Lot 0 — Socle
 - [x] Projet Vite + TypeScript strict + Preact, ESLint, Vitest
@@ -140,8 +140,8 @@ Choisi par l'utilisateur le 3 novembre 2026 (« À décider par l'utilisateur »
 - [x] Scan : « Couverture » ou « ISBN imprimé » en prise de vue « Sans code-barres », cadre en bande, « Lire l'ISBN » ; ISBN lu traité comme un code-barres. Vérifié dans le navigateur de l'ordinateur avec une fausse caméra montrant une page : clé fausse refusée (on reste sur le cadre), « ISBN 2-07-036002-4 » lu en 0,2 seconde puis « L'Étranger — ajouté à votre bibliothèque » ; sur des images fabriquées, lignes nettes, floues, petites, inclinées ou peu contrastées lues, grain très fort rattrapé par la seconde lecture
 - [x] Premier essai sur téléphone (4 novembre 2026) : « ça semble fonctionner », sauf « 280065838-X », non reconnu. Sans le mot « ISBN » lu à côté, un ISBN-10 n'était accepté qu'avec ses trois tirets ; il l'est désormais dès que sa clé est séparée par un tiret ou que c'est un X (« 01-23-45-67-89 » reste écarté), et « I.S.B.N. » est reconnu. Vérifié sur des images de ce numéro, avec ou sans « ISBN »
 - [x] Remarque de l'utilisateur (4 novembre 2026) : l'icône d'appareil photo de « Lire l'ISBN » faisait croire à une photographie conservée ; remplacée par celle du texte lu dans un cadre, et le message du mode le précise
-- [ ] Essai sur téléphone : « 280065838-X » de nouveau, autres livres anciens ; lumière faible
-- [ ] Selon l'essai : si le téléphone lit trop mal, OpenRouter en secours (photographie mise de côté dans « À compléter », ISBN lu après le scan)
+- [x] Essai sur téléphone, validé le 5 novembre 2026 (« tout bon ») : « 280065838-X » de nouveau, autres livres anciens
+- OpenRouter en secours (photographie mise de côté, ISBN lu après le scan) : inutile, le téléphone lisant bien les ISBN imprimés ; à reprendre seulement si des échecs sont signalés
 
 ## Plus tard
 - Synchronisation entre appareils (piste : Google Drive ; même mécanisme que l'écriture à plusieurs dans un lieu partagé)
