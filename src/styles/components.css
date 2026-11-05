@@ -352,6 +352,13 @@ select.field__input {
   flex: 1;
 }
 
+.option-list__count {
+  font-size: var(--text-small);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .radio {
   width: 20px;
   height: 20px;

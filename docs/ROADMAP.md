@@ -2,7 +2,7 @@
 
 Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est terminé qu'après un essai sur un vrai téléphone. Le détail de chaque écran est dans [SPEC.md](SPEC.md).
 
-**Lot en cours : lot 10** (lieux au-dessus des pièces), en attente de l'essai sur téléphone. Les lots 0 et 1 sont terminés le 1er novembre 2026, le lot 2 le 2 novembre 2026, les lots 3 à 8 le 3 novembre 2026, le lot 9 le 5 novembre 2026.
+**Lot en cours : lot 11** (filtre « Emplacement » de la bibliothèque), en attente de l'essai sur téléphone. Les lots 0 et 1 sont terminés le 1er novembre 2026, le lot 2 le 2 novembre 2026, les lots 3 à 8 le 3 novembre 2026, les lots 9 et 10 le 5 novembre 2026.
 
 ## Lot 0 — Socle
 - [x] Projet Vite + TypeScript strict + Preact, ESLint, Vitest
@@ -150,7 +150,13 @@ Choisi par l'utilisateur le 5 novembre 2026, premier pas vers les lieux partagé
 - [x] Scan : ligne « Lieu » du sélecteur « Où ranger ces ouvrages ? », lieu en petit dans la pastille d'emplacement (`src/scan/PlaceLabel.tsx`, aussi sur la vérification d'étagère)
 - [x] Ailleurs : emplacements nommant le lieu, filtre « Tous les lieux » et « Maison · toutes les pièces » de la bibliothèque, lieu au-dessus du titre de la vue d'étagère, inventaire pour l'assurance (« 2 lieux », pièces titrées « Maison · Salon »), colonne « Lieu » de l'export CSV et de l'import (`findOrCreateShelf(…, siteName)`), sauvegarde Google Drive au format 4 (`sites` ; une sauvegarde plus ancienne range ses pièces dans un premier lieu, `siteRecords`)
 - [x] Vérifié dans le navigateur de l'ordinateur, à la largeur d'un téléphone, sur une base version 5 fabriquée (trois pièces, quatre exemplaires) : mise à niveau sans perte, écrans inchangés avec un seul lieu ; « Maison de campagne » créée ; pièce renommée et déplacée ; pièce créée dans le lieu affiché, mise en évidence au retour sur « Étagères », lieu conservé d'un écran à l'autre ; sélecteur du scan ouvert sur le lieu affiché, pastille et bandeau ; filtre de la bibliothèque par lieu
-- [ ] Essai sur téléphone : mise à niveau de la vraie bibliothèque (rien ne doit bouger tant qu'il n'y a qu'un lieu), création d'un deuxième lieu, déplacement d'une pièce, scan dans l'autre lieu
+- [x] Essai sur téléphone, validé le 5 novembre 2026 (« lot 10 validé ») : deux lieux, « La Chapelle » et « Malzaure » ; remarque : le filtre de la bibliothèque, une liste déroulante, « est à réformer, il est immonde » (lot 11)
+
+## Lot 11 — Filtre « Emplacement » de la bibliothèque
+Demandé par l'utilisateur le 5 novembre 2026, à l'essai du lot 10 : sur Android, la liste déroulante du filtre montrait des groupes par pièce, des lignes en retrait sur deux lignes et le lieu répété partout.
+- [x] Bouton à la place de la liste (emplacement choisi, lieu en petit au-dessus, croix pour tout afficher) et fenêtre « Emplacement » sur le modèle du sélecteur du scan : pastilles des lieux, des pièces du lieu choisi, puis étagères de la pièce choisie, chacune avec son nombre d'ouvrages (`src/library/PlaceFilterSheet.tsx`). Logique du filtre sortie de `LibraryScreen` (`src/library/placeFilter.ts` : `placeFilter`, `hasPlace`, `placeSelection`, `placeFilterParts`, testés)
+- [x] Vérifié dans le navigateur de l'ordinateur, à la largeur d'un téléphone, avec deux lieux et quatre pièces : lieu, pièce, étagère (fenêtre fermée), nombres, liste mise à jour, croix ; avec un seul lieu, les pièces d'emblée
+- [ ] Essai sur téléphone
 
 ## Plus tard
 - Synchronisation entre appareils (piste : Google Drive ; même mécanisme que l'écriture à plusieurs dans un lieu partagé)

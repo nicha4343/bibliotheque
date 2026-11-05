@@ -1156,22 +1156,62 @@ a.scan__round-button {
   color: var(--color-text-muted);
 }
 
-.select-with-icon {
+/* Place filter of the library (lot 11): a button opening the « Emplacement » sheet. */
+.place-filter {
   position: relative;
 }
 
-.select-with-icon__icon {
-  position: absolute;
-  top: 15px;
-  left: 14px;
+.place-filter__button {
   display: flex;
-  color: var(--color-accent);
-  pointer-events: none;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-text);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
 }
 
-.select-with-icon__select {
-  padding-left: 42px;
-  font-weight: 600;
+.place-filter__button > svg {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+.place-filter__button > svg:first-child {
+  color: var(--color-accent);
+}
+
+.place-filter__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.place-filter__site,
+.place-filter__main {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.place-filter__site {
+  font-size: var(--text-caption);
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.place-filter--active .place-filter__button {
+  padding-right: 48px;
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.place-filter__clear {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  color: var(--color-text-muted);
 }
 
 .book-list {

@@ -116,9 +116,13 @@ export const fr = {
     searchLabel: 'Rechercher un ouvrage',
     searchPlaceholder: 'Titre, auteur, étiquette, ISBN…',
     clearSearch: 'Effacer la recherche',
-    placeLabel: 'Pièce ou étagère',
     allPlaces: 'Toutes les pièces',
-    wholeRoom: (room: string) => `${room} · toutes les étagères`,
+    /** Lot 11: the place filter, a sheet instead of a drop-down list. */
+    placeTitle: 'Emplacement',
+    placeButton: (place: string) => `Emplacement : ${place}`,
+    allShelves: 'Toutes les étagères',
+    clearPlace: 'Afficher tous les emplacements',
+    placeShow: (value: number) => (value === 0 ? 'Fermer' : `Afficher ${count(value, 'ouvrage', 'ouvrages')}`),
     statusFilters: 'Statut de lecture',
     filterAll: 'Tous',
     filterToRead: 'À lire',
@@ -330,8 +334,6 @@ export const fr = {
     newRoomIn: (site: string) => `Nouvelle pièce dans ${site}`,
     roomSite: 'Lieu de la pièce',
     allSites: 'Tous les lieux',
-    placeLabel: 'Lieu, pièce ou étagère',
-    wholeSite: (site: string) => `${site} · toutes les pièces`,
   },
 
   labels: {
