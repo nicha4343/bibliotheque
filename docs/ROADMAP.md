@@ -2,7 +2,7 @@
 
 Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est terminé qu'après un essai sur un vrai téléphone. Le détail de chaque écran est dans [SPEC.md](SPEC.md).
 
-**Lot en cours : lot 11** (filtre « Emplacement » de la bibliothèque), en attente de l'essai sur téléphone. Les lots 0 et 1 sont terminés le 1er novembre 2026, le lot 2 le 2 novembre 2026, les lots 3 à 8 le 3 novembre 2026, les lots 9 et 10 le 5 novembre 2026.
+**Aucun lot en cours** : les lots 0 et 1 sont terminés le 1er novembre 2026, le lot 2 le 2 novembre 2026, les lots 3 à 8 le 3 novembre 2026, les lots 9 à 11 le 5 novembre 2026. Le suivant est à choisir par l'utilisateur dans « Plus tard ».
 
 ## Lot 0 — Socle
 - [x] Projet Vite + TypeScript strict + Preact, ESLint, Vitest
@@ -156,7 +156,7 @@ Choisi par l'utilisateur le 5 novembre 2026, premier pas vers les lieux partagé
 Demandé par l'utilisateur le 5 novembre 2026, à l'essai du lot 10 : sur Android, la liste déroulante du filtre montrait des groupes par pièce, des lignes en retrait sur deux lignes et le lieu répété partout.
 - [x] Bouton à la place de la liste (emplacement choisi, lieu en petit au-dessus, croix pour tout afficher) et fenêtre « Emplacement » sur le modèle du sélecteur du scan : pastilles des lieux, des pièces du lieu choisi, puis étagères de la pièce choisie, chacune avec son nombre d'ouvrages (`src/library/PlaceFilterSheet.tsx`). Logique du filtre sortie de `LibraryScreen` (`src/library/placeFilter.ts` : `placeFilter`, `hasPlace`, `placeSelection`, `placeFilterParts`, testés)
 - [x] Vérifié dans le navigateur de l'ordinateur, à la largeur d'un téléphone, avec deux lieux et quatre pièces : lieu, pièce, étagère (fenêtre fermée), nombres, liste mise à jour, croix ; avec un seul lieu, les pièces d'emblée
-- [ ] Essai sur téléphone
+- [x] Essai sur téléphone, validé le 5 novembre 2026 (« lot 11 validé »)
 
 ## Plus tard
 - Synchronisation entre appareils (piste : Google Drive ; même mécanisme que l'écriture à plusieurs dans un lieu partagé)
