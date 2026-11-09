@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'preact/hooks';
 import { db } from '../db/db';
 import type { Book, Id } from '../db/schema';
+import { bookPhotoKey } from '../sharing/guest';
 
-/** Object URL of a stored photograph, released when the component goes away. */
-export function useBlobUrl(blobId: Id | undefined): string | undefined {
+/**
+ * Object URL of a stored photograph, released when the component goes away; from the pictures of the
+ * places shared with the user (lot 13) when shared.
+ */
+export function useBlobUrl(blobId: Id | undefined, shared = false): string | undefined {
   const [url, setUrl] = useState<string>();
   useEffect(() => {
-    if (!blobId) {
-      setUrl(undefined);
-      return;
-    }
+    setUrl(undefined);
+    if (!blobId) return;
     let objectUrl: string | undefined;
     let active = true;
-    void db.blobs.get(blobId).then((stored) => {
+    void (shared ? db.sharedPhotos : db.blobs).get(blobId).then((stored) => {
       if (!active || !stored) return;
       objectUrl = URL.createObjectURL(stored.blob);
       setUrl(objectUrl);
@@ -21,7 +23,7 @@ export function useBlobUrl(blobId: Id | undefined): string | undefined {
       active = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [blobId]);
+  }, [blobId, shared]);
   return url;
 }
 
@@ -56,11 +58,16 @@ interface CoverImageProps {
   class: string;
   /** Photograph shown instead of the cover (item to complete). */
   photoBlobId?: Id | undefined;
+  /** Lot 13: the book belongs to the place shared with the user through this Drive file. */
+  sharedFileId?: string | undefined;
 }
 
 /** Cover of a book: the photograph or downloaded cover, else its link, else a coloured placeholder. */
-export function CoverImage({ book, class: className, photoBlobId }: CoverImageProps) {
-  const blobUrl = useBlobUrl(photoBlobId ?? book?.cover?.blobId);
+export function CoverImage({ book, class: className, photoBlobId, sharedFileId }: CoverImageProps) {
+  const blobUrl = useBlobUrl(
+    sharedFileId ? book && bookPhotoKey(sharedFileId, book) : (photoBlobId ?? book?.cover?.blobId),
+    sharedFileId !== undefined,
+  );
   const [failed, setFailed] = useState(false);
   const src = blobUrl ?? (photoBlobId ? undefined : book?.cover?.url);
   const title = book?.title ?? '';

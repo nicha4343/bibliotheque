@@ -6,6 +6,7 @@ import { Screen } from '../components/Screen';
 import { SwitchRow } from '../components/SwitchRow';
 import { booksWithoutCover, enrichBooks, useEnrichment } from '../csv/enrich';
 import { downloadText, exportLibrary, isoDate } from '../csv/export';
+import { db } from '../db/db';
 import type { BackupState, MetadataProvider, Settings } from '../db/schema';
 import { DEFAULT_SETTINGS, getSettings, updateSettings } from '../db/settings';
 import { getStorageProtection, type StorageProtection } from '../db/storage';
@@ -259,6 +260,14 @@ function MissingCovers() {
   );
 }
 
+/** « 1 lieu partagé par vous · 1 lieu partagé avec vous » (lot 13). */
+async function sharingSummary(): Promise<string> {
+  const [sites, withYou] = await Promise.all([db.sites.toArray(), db.sharedPlaces.toArray()]);
+  const byYou = sites.filter((site) => site.share).length;
+  const opened = withYou.filter((place) => place.endedAt === undefined).length;
+  return byYou + opened === 0 ? fr.sharing.rowNone : fr.sharing.rowSummary(byYou, opened);
+}
+
 function backupSummary(state: BackupState | undefined): string {
   if (!state?.refreshToken) return fr.backup.rowNotSet;
   if (state.lastError === 'refused') return fr.backup.rowReconnect;
@@ -321,6 +330,7 @@ export function SettingsScreen() {
   const activeSources = SOURCES.filter(({ provider }) => settings.sources[provider]).length;
   const csvExport = useExport();
   const backup = useLiveQuery<BackupState | undefined>(() => getBackupState(), [], undefined);
+  const sharing = useLiveQuery<string>(() => sharingSummary(), [], '');
 
   const set = (changes: Parameters<typeof updateSettings>[0]) => {
     void updateSettings(changes);
@@ -337,6 +347,21 @@ export function SettingsScreen() {
             <span class="setting__text">
               <span class="setting__label">{fr.backup.settingsRow}</span>
               <span class="setting__detail">{backupSummary(backup)}</span>
+            </span>
+            <ChevronRightIcon size={18} />
+          </a>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="sharing-title">
+        <h2 class="section__title" id="sharing-title">
+          {fr.sharing.settingsTitle}
+        </h2>
+        <div class="card">
+          <a class="link-row link-row--detail" href={routeHref('sharing')}>
+            <span class="setting__text">
+              <span class="setting__label">{fr.sharing.settingsRow}</span>
+              <span class="setting__detail">{sharing}</span>
             </span>
             <ChevronRightIcon size={18} />
           </a>

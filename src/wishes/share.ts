@@ -51,6 +51,18 @@ function fromBase64Url(text: string): Uint8Array {
   return Uint8Array.from(binary, (char) => char.charCodeAt(0));
 }
 
+/** Compressed JSON, written with the characters allowed in a link (base64url); also the invitations of lot 13. */
+export async function packForLink(value: unknown): Promise<string> {
+  const json = new TextEncoder().encode(JSON.stringify(value));
+  return toBase64Url(await transform(json, new CompressionStream('deflate-raw')));
+}
+
+/** The value packed in a link; throws when the link is cut short or altered. */
+export async function unpackFromLink(payload: string): Promise<unknown> {
+  const json = await transform(fromBase64Url(payload), new DecompressionStream('deflate-raw'));
+  return JSON.parse(new TextDecoder().decode(json)) as unknown;
+}
+
 /** Compressed list, written with the characters allowed in a link (base64url). */
 export async function encodeWishList(list: SharedList): Promise<string> {
   const packed: Packed = {
@@ -63,8 +75,7 @@ export async function encodeWishList(list: SharedList): Promise<string> {
     }),
   };
   if (list.name.trim()) packed.n = list.name.trim();
-  const json = new TextEncoder().encode(JSON.stringify(packed));
-  return toBase64Url(await transform(json, new CompressionStream('deflate-raw')));
+  return packForLink(packed);
 }
 
 const isText = (value: unknown): value is string => typeof value === 'string';
@@ -72,8 +83,7 @@ const isText = (value: unknown): value is string => typeof value === 'string';
 /** Undefined when the link is cut short or altered. */
 export async function decodeWishList(payload: string): Promise<SharedList | undefined> {
   try {
-    const json = await transform(fromBase64Url(payload), new DecompressionStream('deflate-raw'));
-    const packed = JSON.parse(new TextDecoder().decode(json)) as Partial<Packed> | null;
+    const packed = (await unpackFromLink(payload)) as Partial<Packed> | null;
     if (packed?.v !== VERSION || !isText(packed.d) || !Array.isArray(packed.w)) return undefined;
     const wishes: SharedWish[] = [];
     for (const row of packed.w as unknown[]) {

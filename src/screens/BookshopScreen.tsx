@@ -10,6 +10,7 @@ import type { DetectedCode } from '../scan/detector';
 import { beep, vibrate, type Signal } from '../scan/feedback';
 import { findMetadata } from '../scan/lookups';
 import { classifyCode, RepeatFilter } from '../scan/reads';
+import { findSharedBook } from '../sharing/sharedLibrary';
 import { useCamera, useCodeDetection } from '../scan/useCamera';
 import { Viewfinder, type Flash } from '../scan/Viewfinder';
 import { formatNumber, fr } from '../textes/fr';
@@ -113,6 +114,16 @@ export function BookshopScreen() {
       const detail = ownedDetail(verdict, places);
       setRows((current) => [{ isbn13, kind: 'owned', book: verdict.book, title, detail }, ...current]);
       setFlash({ kind: 'warn', text: fr.bookshop.owned(title), detail });
+      return;
+    }
+    // Lot 13: a book of a place shared with the user is owned by their relatives.
+    const shared = await findSharedBook(isbn13);
+    if (shared) {
+      signal('attention');
+      const title = shared.book.title || fr.common.untitled;
+      const detail = shared.label ?? fr.bookshop.lost;
+      setRows((current) => [{ isbn13, kind: 'owned', book: shared.book, title, detail }, ...current]);
+      setFlash({ kind: 'warn', text: fr.bookshop.shared(title, shared.place), detail });
       return;
     }
     signal('read');

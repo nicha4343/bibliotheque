@@ -178,6 +178,8 @@ export async function deleteSiteIfEmpty(id: Id, database: LibraryDatabase = db):
     [database.sites, database.rooms, database.shelves, database.copies, database.pendingItems, database.shelfChecks],
     async () => {
       if ((await database.sites.count()) < 2) return false;
+      // Lot 13: a shared place stops being shared first, its Drive file going with it.
+      if ((await database.sites.get(id))?.share) return false;
       const roomIds = (await database.rooms.where('siteId').equals(id).toArray()).map((room) => room.id);
       if (!(await deleteRoomsIfEmpty(roomIds, database))) return false;
       await database.sites.delete(id);

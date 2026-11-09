@@ -23,7 +23,10 @@ export type RouteId =
   | 'author'
   | 'lists'
   | 'bookshop'
-  | 'sharedList';
+  | 'sharedList'
+  | 'sharing'
+  | 'invitation'
+  | 'sharedPlace';
 
 /** The four tabs of the navigation bar. */
 export type TabId = 'library' | 'scan' | 'pending' | 'settings';
@@ -69,6 +72,12 @@ export const ROUTE_HASHES: Readonly<Record<RouteId, string>> = {
   bookshop: '#/librairie',
   /** A wish list shared by link, followed by the list itself (see wishes/share.ts). */
   sharedList: '#/souhaits',
+  /** Lot 13: the places shared with relatives, or one of them by its id. */
+  sharing: '#/partage',
+  /** Followed by the invitation sent by the owner of a place (see sharing/invitation.ts). */
+  invitation: '#/invitation',
+  /** A place shared with the user, by the id of its Drive file, then one of its notices. */
+  sharedPlace: '#/lieu-partage',
 };
 
 /** Parameter of the loans route showing the history. */

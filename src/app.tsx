@@ -17,8 +17,13 @@ import { PlacesScreen } from './screens/PlacesScreen';
 import { RecapScreen } from './screens/RecapScreen';
 import { ScanScreen } from './screens/ScanScreen';
 import { SeriesListScreen, SeriesScreen } from './screens/SeriesScreen';
+import { InvitationScreen } from './screens/InvitationScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
+import { SharedBookScreen } from './screens/SharedBookScreen';
 import { SharedListScreen } from './screens/SharedListScreen';
+import { SharedPlaceScreen } from './screens/SharedPlaceScreen';
+import { SharingScreen } from './screens/SharingScreen';
+import { SiteSharingScreen } from './screens/SiteSharingScreen';
 import { ShelfCheckScreen } from './screens/ShelfCheckScreen';
 import { ShelfScreen } from './screens/ShelfScreen';
 import { ShelvesScreen } from './screens/ShelvesScreen';
@@ -34,6 +39,8 @@ function tabOf(route: Route): TabId | undefined {
     case 'series':
     case 'author':
     case 'lists':
+    case 'sharedPlace':
+    case 'invitation':
       return 'library';
     case 'pending':
       return 'pending';
@@ -42,6 +49,7 @@ function tabOf(route: Route): TabId | undefined {
     case 'labels':
     case 'import':
     case 'backup':
+    case 'sharing':
       return 'settings';
     default:
       return undefined;
@@ -88,6 +96,17 @@ function CurrentScreen({ route }: { route: Route }) {
       return <BookshopScreen />;
     case 'sharedList':
       return route.param ? <SharedListScreen key={route.param} payload={route.param} /> : <LibraryScreen />;
+    case 'sharing':
+      return route.param ? <SiteSharingScreen key={route.param} siteId={route.param} /> : <SharingScreen />;
+    case 'invitation':
+      return route.param ? <InvitationScreen key={route.param} payload={route.param} /> : <SharingScreen />;
+    case 'sharedPlace':
+      if (!route.param) return <SharingScreen />;
+      return route.detail ? (
+        <SharedBookScreen key={route.detail} fileId={route.param} bookId={route.detail} />
+      ) : (
+        <SharedPlaceScreen key={route.param} fileId={route.param} />
+      );
     case 'import':
       return <ImportScreen />;
     case 'backup':

@@ -2,7 +2,7 @@
 
 Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est terminé qu'après un essai sur un vrai téléphone. Le détail de chaque écran est dans [SPEC.md](SPEC.md).
 
-**Aucun lot en cours** : le lot 12 est terminé le 9 novembre 2026. Le suivant est le partage d'un lieu en consultation (troisième étape des lieux partagés en famille, voir « Plus tard »). Les lots 0 et 1 sont terminés le 1er novembre 2026, le lot 2 le 2 novembre 2026, les lots 3 à 8 le 3 novembre 2026, les lots 9 à 11 le 5 novembre 2026.
+**Lot en cours : lot 13**, partage d'un lieu en consultation (troisième étape des lieux partagés en famille, voir « Plus tard ») ; il reste la préparation du projet Google Cloud et l'essai sur deux téléphones. Les lots 0 et 1 sont terminés le 1er novembre 2026, le lot 2 le 2 novembre 2026, les lots 3 à 8 le 3 novembre 2026, les lots 9 à 11 le 5 novembre 2026.
 
 ## Lot 0 — Socle
 - [x] Projet Vite + TypeScript strict + Preact, ESLint, Vitest
@@ -167,13 +167,25 @@ Choisi par l'utilisateur le 9 novembre 2026 (« Partage en famille ») : deuxiè
 - [x] Remarque de l'utilisateur à cet essai : sur la fiche d'un ouvrage, la page entière, menu compris, se laissait glisser vers le haut, laissant un vide sous le menu. Cause, antérieure au lot : le libellé caché du champ « Nouvelle étiquette » (`.visually-hidden`, en position absolue) se plaçait par rapport à la page, sous le bas de la fenêtre, et l'allongeait d'autant. Les zones qui défilent (`.screen`, `.recap`, `.entry`, `.scan__rows`) sont désormais positionnées, et rien ne peut plus dépasser de l'application (`.app`, `overflow: clip`). Vérifié dans le navigateur de l'ordinateur, à la largeur d'un téléphone : seize écrans, dont la fiche, tiennent exactement dans la fenêtre, menu en bas ; scanner inchangé
 - [x] Vérifié sur téléphone le 9 novembre 2026 (« c'est bon ») : la page ne glisse plus
 
+## Lot 13 — Partage d'un lieu en consultation
+Demandé par l'utilisateur le 9 novembre 2026 (« commençons le lot 13 ») : troisième étape des lieux partagés en famille. Détail dans SPEC.md, « Lieux partagés en famille », « Réalisation du lot 13 ».
+- [x] Données : `Site.share` (fichier Drive, propriétaire, date ; dans la sauvegarde), tables `shareUploads`, `sharedPlaces` et `sharedPhotos`, version 8 du schéma (`src/db/db.ts`)
+- [x] Google (`src/backup/google.ts`) : autorisation `drive.file` demandée avec `drive.appdata`, autorisations accordées notées (`scopes`, `canShare`) ; retour de la page de Google lu avant le premier affichage et conduit à l'écran d'où la connexion est partie (`takeGoogleReturn`, `goToGoogle`) ; jetons d'un client quelconque (`freshToken`) ; fichiers hors du dossier caché (envoi « reprenable »), autorisations de partage, nom de l'utilisateur
+- [x] Fichier d'un lieu (`src/sharing/sharedFile.ts`) : contenu sans prix ni lecture, photographies de l'utilisateur, couvertures automatiques par leur adresse, empreinte, compression ; invitation dans le lien (`src/sharing/invitation.ts`)
+- [x] Propriétaire (`src/sharing/owner.ts`) : partager, renvoyer si changé, inviter, retirer, cesser ; écrans « Partage en famille » et « Partager « … » » (`SharingScreen`, `SiteSharingScreen`), lignes des Paramètres et de « Pièces et étagères »
+- [x] Invité (`src/sharing/guest.ts`) : invitation, sélecteur de Google en redirection (`trigger_onepick`), copie et mise à jour du lieu, couvertures téléchargées, fin du partage ; écrans `InvitationScreen`, `SharedPlaceScreen`, `SharedBookScreen` ; lieux partagés en tête de la bibliothèque ; « En librairie »
+- [x] Tests : contenu et relecture du fichier, invitation, partage, envois, invitations, fin du partage, ouverture par un invité, mises à jour, couvertures (`src/sharing/sharing.test.ts`, faux Google Drive)
+- [x] Vérifié dans le navigateur de l'ordinateur, à la largeur d'un téléphone, avec des données fabriquées : bibliothèque (« Lieux partagés avec vous »), lieu partagé (recherche, filtres, « Lus »), fiche (emplacements, remarque, « Ma lecture », étiquettes), « Partage en famille », « Partager « Malzaure » », Paramètres, « Pièces et étagères », invitation ; rien ne dépasse de l'écran
+- [ ] Préparation du projet Google Cloud par l'utilisateur : API « Google Picker » activée, autorisation `drive.file` déclarée
+- [ ] Essai sur deux téléphones (propriétaire et invité, deux comptes Google) : connexion avec les deux autorisations, partage de « Malzaure », invitation, ouverture par le sélecteur de Google, consultation hors connexion, mise à jour après un changement, retrait de l'invité
+
 ## Plus tard
 - Synchronisation entre appareils (piste : Google Drive ; même mécanisme que l'écriture à plusieurs dans un lieu partagé)
 - Photographie d'une étagère entière : lecture des tranches par IA
 - Lieux partagés en famille (décisions du 1er novembre 2026, détail dans SPEC.md, « Lieux partagés en famille »), dans cet ordre :
   - niveau « Lieu » au-dessus des pièces, utile sans partage : fait au lot 10 ;
   - séparation de « Lu », de la note et de l'avis, propres à chaque personne (nouvelle version du schéma) : fait au lot 12 ;
-  - partage d'un lieu en consultation avec plusieurs personnes (Google Drive, après la sauvegarde du lot 2) ;
+  - partage d'un lieu en consultation avec plusieurs personnes (Google Drive, après la sauvegarde du lot 2) : lot 13 ;
   - ajout et déplacement d'exemplaires par les invités, seulement si cela reste simple.
 
 ## À décider par l'utilisateur

@@ -16,8 +16,11 @@ import type {
   ScanSession,
   SeriesRecord,
   SettingsRecord,
+  SharedPhoto,
+  SharedPlace,
   Shelf,
   ShelfCheck,
+  ShareUpload,
   Site,
   StoredBlob,
   Wish,
@@ -68,6 +71,9 @@ export class LibraryDatabase extends Dexie {
   backup!: EntityTable<BackupState, 'id'>;
   shelfChecks!: EntityTable<ShelfCheck, 'id'>;
   series!: EntityTable<SeriesRecord, 'id'>;
+  shareUploads!: EntityTable<ShareUpload, 'fileId'>;
+  sharedPlaces!: EntityTable<SharedPlace, 'fileId'>;
+  sharedPhotos!: EntityTable<SharedPhoto, 'id'>;
 
   constructor(name = DATABASE_NAME) {
     super(name);
@@ -116,6 +122,13 @@ export class LibraryDatabase extends Dexie {
         readings: 'bookId',
       })
       .upgrade(moveReadings);
+    // Lot 13: places shared with relatives. Site.share is not indexed; the owner's uploads, and on a
+    // guest's device the places shared with them and their pictures, are kept apart from the library.
+    this.version(8).stores({
+      shareUploads: 'fileId',
+      sharedPlaces: 'fileId',
+      sharedPhotos: 'id, fileId',
+    });
     // A new library also starts with its first place.
     this.on('populate', (tx) => addFirstSite(tx));
   }

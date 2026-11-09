@@ -3,6 +3,7 @@ import { CoverImage } from '../components/CoverImage';
 import { EmptyState } from '../components/EmptyState';
 import {
   ChevronDownIcon,
+  ChevronRightIcon,
   CloseIcon,
   LibraryIcon,
   ListIcon,
@@ -14,6 +15,7 @@ import {
 } from '../components/icons';
 import { Screen } from '../components/Screen';
 import { db } from '../db/db';
+import type { SharedPlace } from '../db/schema';
 import { useLiveQuery } from '../db/useLiveQuery';
 import {
   firstPresentCopy,
@@ -31,6 +33,7 @@ import { PlaceFilterSheet } from '../library/PlaceFilterSheet';
 import { loadPlaces, type PlaceIndex } from '../places/places';
 import { ROUTE_HASHES, routeHref } from '../router';
 import { seriesOf } from '../series/series';
+import { loadSharedPlaces } from '../sharing/sharedLibrary';
 import { formatNumber, fr } from '../textes/fr';
 
 interface LibraryData {
@@ -42,6 +45,8 @@ interface LibraryData {
   reminders: Reminder[];
   /** At least one series is known: the « Séries » shortcut is shown. */
   hasSeries: boolean;
+  /** Lot 13: the places shared with the user. */
+  shared: SharedPlace[];
 }
 
 interface Reminder {
@@ -50,12 +55,13 @@ interface Reminder {
 }
 
 async function loadLibrary(): Promise<LibraryData> {
-  const [books, copies, places, loans, readings] = await Promise.all([
+  const [books, copies, places, loans, readings, shared] = await Promise.all([
     db.books.toArray(),
     db.copies.toArray(),
     loadPlaces(),
     db.loans.toArray(),
     db.readings.toArray(),
+    loadSharedPlaces(),
   ]);
   const now = new Date();
   const titles = new Map(books.map((book) => [book.id, book.title]));
@@ -69,6 +75,7 @@ async function loadLibrary(): Promise<LibraryData> {
       borrower: loan.borrower,
     })),
     hasSeries: books.some((book) => seriesOf(book) !== undefined),
+    shared,
   };
 }
 
@@ -132,6 +139,7 @@ export function LibraryScreen() {
 
   return (
     <Screen title={fr.library.title} subtitle={subtitle}>
+      {data && data.shared.length > 0 && <SharedPlaces places={data.shared} />}
       {total === 0 && (
         <EmptyState
           icon={<LibraryIcon size={40} />}
@@ -333,6 +341,37 @@ function LoanReminder({ reminders }: { reminders: Reminder[] }) {
   );
 }
 
+
+/** Lot 13: the places someone shares with the user, above the user's own library. */
+function SharedPlaces({ places }: { places: SharedPlace[] }) {
+  return (
+    <section class="section" aria-labelledby="shared-places-title">
+      <h2 class="section__title" id="shared-places-title">
+        {fr.sharing.libraryTitle}
+      </h2>
+      <div class="card">
+        {places.map((place) => {
+          const owner = place.owner || fr.sharing.someone;
+          const detail =
+            place.endedAt !== undefined
+              ? fr.sharing.ended
+              : place.contents
+                ? fr.sharing.libraryRow(owner, place.contents.books.length)
+                : fr.sharing.libraryWaiting(owner);
+          return (
+            <a key={place.fileId} class="link-row link-row--detail" href={routeHref('sharedPlace', place.fileId)}>
+              <span class="setting__text">
+                <span class="setting__label">{place.name}</span>
+                <span class="setting__detail">{detail}</span>
+              </span>
+              <ChevronRightIcon size={18} />
+            </a>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 
 function PlaceFilterText({ site, main }: { site?: string | undefined; main: string }) {
   return (

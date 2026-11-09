@@ -840,7 +840,7 @@ export const fr = {
     connected: 'Google Drive est connecté : première sauvegarde en cours.',
     cancelled: 'Connexion annulée.',
     signInFailed: 'La connexion n’a pu aboutir. Vérifiez l’identifiant et le code secret, puis recommencez.',
-    missingScope: 'L’accès à Google Drive n’a pas été accordé : recommencez en cochant la case proposée par Google.',
+    missingScope: 'L’accès à Google Drive n’a pas été accordé : recommencez en cochant les cases proposées par Google.',
     status: 'État',
     auto: 'Sauvegarde automatique',
     autoDetail: 'Au démarrage, puis toutes les dix minutes et à la sortie de l’application, si la bibliothèque a changé',
@@ -868,6 +868,151 @@ export const fr = {
     disconnectText: 'Les sauvegardes déjà faites demeurent sur votre Google Drive ; aucune nouvelle ne sera faite.',
     disconnectConfirm: 'Déconnecter',
     disconnected: 'Google Drive est déconnecté.',
+  },
+
+  /** Lot 13: places shared with relatives, for consultation. */
+  sharing: {
+    /** Name of the file of a shared place in the owner’s Google Drive, also shown in Google’s file picker. */
+    fileName: (place: string) => `Ma bibliothèque · ${place}`,
+    fileDescription:
+      'Lieu partagé par l’application Ma bibliothèque. Ne le modifiez pas et ne le supprimez pas : vos proches ne pourraient plus le consulter.',
+    /** When Google gives no name. */
+    someone: 'Un proche',
+    settingsTitle: 'Partage en famille',
+    settingsRow: 'Lieux partagés',
+    rowNone: 'Partagez un lieu avec vos proches, en consultation',
+    rowSummary: (byYou: number, withYou: number) =>
+      [
+        byYou > 0 ? count(byYou, 'lieu partagé par vous', 'lieux partagés par vous') : '',
+        withYou > 0 ? count(withYou, 'lieu partagé avec vous', 'lieux partagés avec vous') : '',
+      ]
+        .filter(Boolean)
+        .join(' · '),
+    title: 'Partage en famille',
+    back: 'Paramètres',
+    intro:
+      'Partagez un lieu, par exemple une maison de campagne, avec vos proches : ils consultent ses ouvrages, leurs couvertures et leur emplacement sur leur téléphone, hors connexion compris, sans pouvoir les modifier. Le reste de votre bibliothèque demeure privé, de même que vos lectures, vos notes et vos avis.',
+    needDrive: 'Le partage passe par votre Google Drive : connectez d’abord l’application à Google Drive.',
+    needDriveAction: 'Connecter Google Drive',
+    needScope:
+      'Pour partager un lieu, l’application doit pouvoir créer un fichier dans votre Google Drive ; elle ne voit que les fichiers qu’elle a créés.',
+    allow: 'Autoriser le partage',
+    allowing: 'Autorisation du partage…',
+    allowed: 'Le partage est autorisé.',
+    notAllowed: 'Google n’a pas accordé l’autorisation de créer des fichiers : recommencez en cochant les deux cases proposées.',
+    yourPlaces: 'Vos lieux',
+    notShared: 'Non partagé',
+    sharedSince: (date: string) => `Partagé depuis le ${date}`,
+    withYou: 'Partagés avec vous',
+    sharedBy: (owner: string) => `Partagé par ${owner}`,
+    ended: 'N’est plus partagé avec vous',
+    setupHint:
+      'Vos proches ouvrent le lieu avec le sélecteur de fichiers de Google : dans votre projet Google Cloud, l’API « Google Picker » doit être activée, et l’autorisation « drive.file » déclarée parmi les accès aux données.',
+
+    siteTitle: (place: string) => `Partager « ${place} »`,
+    siteBack: 'Partage en famille',
+    siteIntro: (place: string) =>
+      `Vos proches verront les ouvrages de « ${place} », leurs couvertures et leur emplacement, sur leur téléphone et hors connexion compris. Ils ne pourront rien modifier ; vos lectures, vos notes, vos avis et vos prix d’achat demeurent privés.`,
+    siteHow:
+      'Un fichier est créé dans votre Google Drive. Chaque personne invitée doit avoir un compte Google : vous l’ajoutez par son adresse, puis vous lui envoyez le lien de l’invitation.',
+    share: 'Partager ce lieu',
+    sharing: 'Création du fichier du lieu dans votre Google Drive…',
+    shared: 'Le lieu est partagé. Invitez maintenant les personnes qui pourront le consulter.',
+    status: 'État',
+    uploaded: (when: string) => `Dernière mise à jour : ${when}`,
+    neverUploaded: 'En attente de la première mise à jour.',
+    autoDetail: 'Vos changements leur parviennent au démarrage de l’application, puis toutes les dix minutes et à sa sortie.',
+    errorOffline: 'La dernière mise à jour a échoué faute de connexion ; elle sera renouvelée.',
+    errorRefused: 'Google refuse désormais l’accès : reconnectez-vous à Google Drive.',
+    errorFailed: 'La dernière mise à jour a échoué ; elle sera renouvelée.',
+    errorMissing:
+      'Le fichier du lieu a été supprimé de votre Google Drive : vos proches ne le voient plus. Cessez de partager ce lieu, puis partagez-le de nouveau.',
+    updateNow: 'Mettre à jour maintenant',
+    updating: 'Mise à jour en cours…',
+    updated: 'Le lieu est à jour pour vos proches.',
+    guests: 'Personnes invitées',
+    guestsLoading: 'Chargement de la liste…',
+    guestsOffline: 'La liste des personnes invitées n’est pas disponible hors connexion.',
+    guestsFailed: 'La liste des personnes invitées n’a pu être chargée.',
+    noGuests: 'Personne pour le moment.',
+    remove: 'Retirer',
+    removeLabel: (name: string) => `Retirer ${name}`,
+    removeTitle: 'Retirer cette personne ?',
+    removeText: (name: string, place: string) =>
+      `${name} ne pourra plus consulter « ${place} » ; la copie conservée sur son téléphone s’effacera à sa prochaine mise à jour.`,
+    removed: (name: string) => `${name} ne peut plus consulter ce lieu.`,
+    emailLabel: 'Adresse Gmail de la personne à inviter',
+    emailPlaceholder: 'prenom.nom@gmail.com',
+    emailInvalid: 'Saisissez une adresse électronique complète.',
+    invite: 'Inviter',
+    inviting: 'Invitation en cours…',
+    invited: (email: string) => `${email} peut désormais consulter ce lieu. Envoyez-lui le lien de l’invitation.`,
+    unknownAccount: 'Aucun compte Google ne correspond à cette adresse.',
+    sendLink: 'Envoyer le lien de l’invitation',
+    linkHint:
+      'Le même lien sert à toutes les personnes invitées : seules celles que vous avez ajoutées ci-dessus peuvent ouvrir le lieu.',
+    shareTitle: (place: string) => `Ma bibliothèque · ${place}`,
+    shareText: (owner: string, place: string) =>
+      `${owner} vous invite à consulter les ouvrages de « ${place} » dans l’application Ma bibliothèque. Ouvrez ce lien sur votre téléphone :`,
+    linkCopied: 'Le lien de l’invitation est copié : collez-le dans un message.',
+    linkFailed: 'Le lien n’a pu être copié.',
+    stop: 'Ne plus partager ce lieu',
+    stopTitle: 'Ne plus partager ce lieu ?',
+    stopText: (place: string) =>
+      `Le fichier de « ${place} » sera supprimé de votre Google Drive ; les copies de vos proches s’effaceront à leur prochaine mise à jour. Vos ouvrages demeurent dans votre bibliothèque.`,
+    stopConfirm: 'Ne plus partager',
+    stopped: 'Le lieu n’est plus partagé.',
+    offline: 'Cette opération demande une connexion.',
+    failed: 'L’opération n’a pu aboutir ; réessayez.',
+    refused: 'Google refuse désormais l’accès : reconnectez-vous à Google Drive.',
+    reconnect: 'Se reconnecter à Google Drive',
+    notFound: 'Ce lieu n’existe plus.',
+    deleteShared: 'Ce lieu est partagé : cessez d’abord de le partager.',
+    placesLink: (place: string) => `Partager « ${place} »`,
+
+    invitationTitle: 'Invitation',
+    invitationText: (owner: string, place: string) => `${owner} vous invite à consulter les ouvrages de « ${place} ».`,
+    invitationSteps: (file: string) =>
+      `Google va vous demander de choisir votre compte, celui auquel l’invitation a été adressée, puis vous présenter le fichier « ${file} » : touchez-le, puis « Sélectionner ». Les ouvrages sont alors copiés sur ce téléphone et consultables hors connexion ; vous ne pourrez pas les modifier.`,
+    open: 'Ouvrir avec Google',
+    openOffline: 'Une connexion est nécessaire pour ouvrir le lieu la première fois.',
+    invalid: 'Ce lien d’invitation est incomplet : demandez à la personne qui vous invite de vous l’envoyer de nouveau.',
+    ownPlace: 'Ce lieu est le vôtre : vous le partagez depuis ce téléphone.',
+    consult: (place: string) => `Consulter « ${place} »`,
+
+    placeBack: 'Bibliothèque',
+    opening: 'Ouverture du lieu…',
+    opened: 'Le lieu est copié sur ce téléphone.',
+    cancelled: 'Ouverture annulée.',
+    notPicked:
+      'Le fichier du lieu n’a pas été choisi, ou ce compte Google n’y a pas accès. Recommencez en choisissant le compte auquel l’invitation a été adressée.',
+    openFailed: 'L’ouverture n’a pu aboutir. Recommencez.',
+    reopen: 'Ouvrir de nouveau avec Google',
+    waiting: 'Le lieu n’est pas encore copié sur ce téléphone.',
+    placeUpdated: (when: string) => `Mis à jour par son propriétaire ${when}`,
+    placeErrorOffline: 'Hors connexion : voici la dernière copie conservée sur ce téléphone.',
+    placeErrorRefused: 'Google refuse désormais l’accès à ce lieu : ouvrez-le de nouveau.',
+    placeErrorFailed: 'La dernière mise à jour a échoué ; elle sera renouvelée.',
+    placeEmpty: 'Ce lieu ne contient encore aucun ouvrage.',
+    endedText: (place: string) => `« ${place} » n’est plus partagé avec vous : sa copie a été effacée de ce téléphone.`,
+    refresh: 'Mettre à jour maintenant',
+    refreshing: 'Mise à jour en cours…',
+    refreshed: 'Le lieu est à jour.',
+    leave: 'Ne plus consulter ce lieu',
+    leaveTitle: 'Ne plus consulter ce lieu ?',
+    leaveText: (place: string) =>
+      `La copie de « ${place} » sera effacée de ce téléphone. Pour la retrouver, il faudra ouvrir de nouveau le lien de l’invitation.`,
+    leaveConfirm: 'Ne plus consulter',
+
+    libraryTitle: 'Lieux partagés avec vous',
+    libraryRow: (owner: string, books: number) => `Partagé par ${owner} · ${count(books, 'ouvrage', 'ouvrages')}`,
+    libraryWaiting: (owner: string) => `Partagé par ${owner} · copie en attente`,
+
+    bookKicker: (place: string) => `Lieu partagé · ${place}`,
+    readOnly: 'Ouvrage d’un lieu partagé : seule « Ma lecture » vous appartient.',
+    where: 'Emplacement',
+    tags: 'Étiquettes',
+    bookNotFound: 'Cet ouvrage ne figure plus dans le lieu partagé.',
   },
 
   settings: {
@@ -1228,6 +1373,8 @@ export const fr = {
     ready: 'Présentez le code-barres d’un ouvrage',
     hint: 'L’application indique si vous possédez déjà l’ouvrage ou s’il figure dans vos souhaits.',
     owned: (title: string) => `« ${title} » — déjà dans votre bibliothèque`,
+    /** Lot 13: in a place shared with the user. */
+    shared: (title: string, place: string) => `« ${title} » — déjà à « ${place} », lieu partagé avec vous`,
     wished: (title: string) => `« ${title} » figure dans vos souhaits`,
     absent: 'Absent de votre bibliothèque',
     absentTitle: (title: string) => `« ${title} » — absent de votre bibliothèque`,

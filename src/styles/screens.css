@@ -2467,3 +2467,41 @@ a.loan__title:hover {
   flex-shrink: 0;
   color: var(--color-pending-text);
 }
+
+/* Lot 13: the relatives a place is shared with. */
+.guest-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guest {
+  min-height: 56px;
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.guest + .guest {
+  border-top: 1px solid var(--color-divider-soft);
+}
+
+.guest__text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.guest__name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.guest__email {
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}

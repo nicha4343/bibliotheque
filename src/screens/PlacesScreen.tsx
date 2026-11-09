@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks';
 import { BackAnchor } from '../components/BackLink';
 import { ConfirmSheet } from '../components/ConfirmSheet';
-import { PencilIcon, PlusIcon, QrIcon, TrashIcon } from '../components/icons';
+import { PencilIcon, PlusIcon, QrIcon, ShareIcon, TrashIcon } from '../components/icons';
 import { Screen } from '../components/Screen';
 import { Sheet } from '../components/Sheet';
 import { db } from '../db/db';
@@ -132,7 +132,7 @@ export function PlacesScreen() {
             <PencilIcon size={16} />
             {fr.sites.rename(site.name)}
           </button>
-          {!siteUsed && (
+          {!siteUsed && !site.share && (
             <button
               type="button"
               class="icon-button place__delete"
@@ -144,6 +144,14 @@ export function PlacesScreen() {
               <TrashIcon size={18} />
             </button>
           )}
+        </div>
+      )}
+      {places?.severalSites && site && (
+        <div class="place-site">
+          <a class="text-button" href={routeHref('sharing', site.id)}>
+            <ShareIcon size={16} />
+            {site.share ? fr.sharing.title : fr.sharing.placesLink(site.name)}
+          </a>
         </div>
       )}
 

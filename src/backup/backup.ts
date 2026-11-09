@@ -4,6 +4,7 @@ import {
   accessToken,
   BackupFailure,
   completeSignIn,
+  type GoogleReturn,
   deleteFile,
   downloadFile,
   getBackupState,
@@ -139,12 +140,12 @@ export function takeSignInResult(): Promise<SignInResult> | undefined {
  * Called once at start-up, before the first rendering: completes a sign-in, then backs up shortly
  * after the start, every ten minutes and when the app is left (if the library changed).
  */
-export function startBackups(): void {
+export function startBackups(returned: GoogleReturn | undefined): void {
   const run = () => {
     void backUp();
   };
-  if (new URLSearchParams(window.location.search).has('state')) {
-    signIn = completeSignIn();
+  if (returned) {
+    signIn = completeSignIn(returned);
     void signIn.then((result) => {
       if (result === 'connected') run();
     });

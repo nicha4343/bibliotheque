@@ -17,6 +17,17 @@ export interface Site {
   id: Id;
   name: string;
   order: number;
+  /** Lot 13: shared with relatives, through a file of the owner's Google Drive (kept in the backup). */
+  share?: SiteShare;
+}
+
+/** A place of this library shared for consultation (lot 13). */
+export interface SiteShare {
+  /** The Drive file holding the place, created by the app in the owner's Drive. */
+  fileId: string;
+  /** Name of the owner on Google, shown to the relatives invited. */
+  owner: string;
+  sharedAt: Timestamp;
 }
 
 /** Pièce. */
@@ -353,6 +364,64 @@ export const SETTINGS_KEY = 'app';
 
 export type BackupError = 'offline' | 'refused' | 'failed';
 
+/** Upload of a shared place to its Drive file (lot 13, owner's side); not part of the backup. */
+export interface ShareUpload {
+  fileId: string;
+  /** Fingerprint of the place last uploaded: an unchanged place is not uploaded again. */
+  hash?: string;
+  uploadedAt?: Timestamp;
+  /** missing: the file was deleted from the owner's Drive. */
+  lastError?: BackupError | 'missing';
+}
+
+/** What a shared place holds: its rooms, shelves, notices and copies, without the owner's readings. */
+export interface SharedPlaceContents {
+  site: Site;
+  rooms: Room[];
+  shelves: Shelf[];
+  books: Book[];
+  copies: Copy[];
+}
+
+/**
+ * A place of someone else's library shared with the person using this device (lot 13, guest's side):
+ * a copy of its contents, read offline, updated from the owner's Drive file. Its own Google access, the
+ * owner's client, granted for that file only through Google's file picker.
+ */
+export interface SharedPlace {
+  fileId: string;
+  /** Name of the place, as given by the invitation, then by the file. */
+  name: string;
+  /** Name of the owner, who invited the person. */
+  owner: string;
+  clientId: string;
+  clientSecret: string;
+  refreshToken?: string;
+  accessToken?: string;
+  accessTokenExpiresAt?: Timestamp;
+  /** PKCE verifier and state while the person picks the file on Google's page. */
+  pendingSignIn?: { verifier: string; state: string };
+  /** Version of the Drive file last read. */
+  version?: string;
+  contents?: SharedPlaceContents;
+  /** When the owner last updated the file. */
+  updatedAt?: Timestamp;
+  checkedAt?: Timestamp;
+  lastError?: BackupError;
+  /** The owner stopped sharing it, or removed the person: the copy is erased, a notice remains. */
+  endedAt?: Timestamp;
+}
+
+/**
+ * Picture of a shared place: a photograph of the owner, carried by the file, or an automatic cover
+ * downloaded by this device. id: the file id and the photograph id or cover address, separated by a space.
+ */
+export interface SharedPhoto {
+  id: string;
+  fileId: string;
+  blob: Blob;
+}
+
 /**
  * Sauvegarde automatique sur Google Drive (lot 2). The client and its secret are created by the user
  * in the Google Cloud console and typed in the app: kept on the device only, never in the repository.
@@ -368,6 +437,8 @@ export interface BackupState {
   accessTokenExpiresAt?: Timestamp;
   /** PKCE verifier and state while the user signs in on Google's page. */
   pendingSignIn?: { verifier: string; state: string };
+  /** Permissions granted by the user; absent before lot 13: the hidden folder only. */
+  scopes?: string[];
   enabled: boolean;
   lastBackupAt?: Timestamp;
   /** Fingerprint of the last uploaded backup: an unchanged library is not uploaded again. */

@@ -11,6 +11,7 @@ import './styles/lists.css';
 import { render } from 'preact';
 import { App } from './app';
 import { startBackups } from './backup/backup';
+import { takeGoogleReturn } from './backup/google';
 import { requestPersistentStorage } from './db/storage';
 import { startHistoryTracking } from './router';
 import { refreshLoanNotifications } from './loans/reminders';
@@ -18,10 +19,14 @@ import { startCoverReading } from './pending/coverReading';
 import { unlockAudio } from './scan/feedback';
 import { startLookups } from './scan/lookups';
 import { startSeriesCompletion } from './series/completion';
+import { startSharing } from './sharing/start';
 
 void requestPersistentStorage();
-// Before the first rendering: a return from Google's sign-in page leads to the backup screen.
-startBackups();
+// Before the first rendering: a return from Google's page leads to the backup screen, to the sharing of a
+// place, or to a place shared with the user (lot 13).
+const googleReturn = takeGoogleReturn();
+startBackups(googleReturn);
+startSharing(googleReturn);
 // Codes read offline or before the app was closed are searched again.
 startLookups();
 // Series of the books already catalogued, asked once to the BnF.
