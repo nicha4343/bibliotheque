@@ -1,9 +1,6 @@
 import { isbn13To10 } from '../isbn/isbn';
 import type { MetadataProvider } from '../db/schema';
 
-/** The sources asked over the network; the list of the Éditions du Triomphe is inside the application. */
-export type OnlineProvider = Exclude<MetadataProvider, 'triomphe'>;
-
 /** What one source knows about an ISBN. A record without a title is not usable. */
 export interface SourceRecord {
   provider: MetadataProvider;
@@ -22,7 +19,7 @@ export interface SourceRecord {
  * The request to send to a source for an ISBN-13. Without a key, Google Books shares one daily
  * quota between every site calling it and often refuses: the user may enter a key of their own.
  */
-export function sourceUrl(provider: OnlineProvider, isbn13: string, googleBooksKey = ''): string {
+export function sourceUrl(provider: MetadataProvider, isbn13: string, googleBooksKey = ''): string {
   switch (provider) {
     case 'googleBooks': {
       const key = googleBooksKey.trim() ? `&key=${encodeURIComponent(googleBooksKey.trim())}` : '';

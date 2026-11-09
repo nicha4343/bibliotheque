@@ -1,5 +1,5 @@
 import { db, type LibraryDatabase } from './db';
-import { SETTINGS_KEY, type Settings, type SettingsRecord } from './schema';
+import { SETTINGS_KEY, type MetadataProvider, type Settings, type SettingsRecord } from './schema';
 
 export const DEFAULT_SETTINGS: Readonly<Settings> = {
   scanSound: true,
@@ -7,7 +7,7 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   flagOwnedBooks: true,
   rememberShelfOrder: false,
   autoCovers: true,
-  sources: { bnf: true, googleBooks: true, openLibrary: true, triomphe: true },
+  sources: { bnf: true, googleBooks: true, openLibrary: true },
   offlineScanning: true,
   googleBooksKey: '',
   loanNotifications: false,
@@ -16,10 +16,20 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   openRouterKey: '',
 };
 
-/** Stored values over the defaults, so a setting added later gets its default value. */
+/**
+ * Stored values over the defaults, so a setting added later gets its default value. Only the known
+ * sources are kept: a source since removed (« Éditions du Triomphe », published on 9 November 2026 for
+ * an hour) would otherwise be asked by every search, and fail.
+ */
 export function mergeSettings(stored: SettingsRecord | undefined): Settings {
   const { id: _id, sources, ...rest } = stored ?? { id: SETTINGS_KEY };
-  return { ...DEFAULT_SETTINGS, ...rest, sources: { ...DEFAULT_SETTINGS.sources, ...sources } };
+  const known = Object.fromEntries(
+    (Object.keys(DEFAULT_SETTINGS.sources) as MetadataProvider[]).map((provider) => [
+      provider,
+      sources?.[provider] ?? DEFAULT_SETTINGS.sources[provider],
+    ]),
+  ) as Settings['sources'];
+  return { ...DEFAULT_SETTINGS, ...rest, sources: known };
 }
 
 export async function getSettings(database: LibraryDatabase = db): Promise<Settings> {

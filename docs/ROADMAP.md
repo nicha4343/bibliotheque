@@ -186,14 +186,12 @@ Demandé par l'utilisateur le 9 novembre 2026 (« il faut ajouter cette option a
 - [x] Vérifié dans le navigateur de l'ordinateur, à la largeur d'un téléphone : pièce de trois exemplaires (un prêté, un ouvrage rangé aussi ailleurs) supprimée, ouvrage rangé ailleurs conservé, prêt effacé ; avertissement d'un lieu plein ; lieu vide supprimé par la simple question ; corbeille absente d'un lieu partagé
 - [ ] Essai sur téléphone
 
-## Lot 15 — Ouvrages des Éditions du Triomphe
-Demandé par l'utilisateur le 9 novembre 2026 (« beaucoup d'ISBN n'ont pas été reconnus ») après le scan d'une cinquantaine d'ouvrages de l'éditeur ; son exportation : 51 titres (99 exemplaires), tous dans la liste de l'éditeur ; 16 inconnus de la BnF (parutions de 2026 surtout), 24 sans éditeur, 2 sans auteur. Détail dans SPEC.md, « Liste des Éditions du Triomphe ».
-- [x] Diagnostic : la BnF connaît la plupart des ouvrages anciens de l'éditeur, pas ses parutions récentes (30 des 33 de 2026 absentes) ; Google Books sans clé ne répond presque jamais ; la BnF refuse les rafales (429)
-- [x] Liste des 820 ouvrages vendus par l'éditeur (`src/metadata/triomphe.json`) : relevé du 3 novembre 2026 (projet `C:\Projets\Triomphe`) et fiches relues le 9 novembre 2026 (auteurs, éditeur, date de parution) ; quatrième source (`triomphe`), sans requête, active par défaut, dans les Paramètres
-- [x] Fiches déjà présentes complétées une fois (champs vides seulement) : `src/metadata/triompheCompletion.ts`
-- [x] BnF et Open Library redemandées après un refus momentané, comme Google Books
-- [x] Tests : liste, recherche hors connexion, ordre des réponses, source désactivée, complétion sans remplacement, BnF redemandée
-- [ ] Essai sur téléphone : « Rechercher de nouveau » dans « À compléter », éditeur et auteurs des fiches existantes, scan d'un ouvrage de 2026
+## Lot 15 — Ouvrages non reconnus
+Signalé par l'utilisateur le 9 novembre 2026 (« beaucoup d'ISBN n'ont pas été reconnus »), après le scan d'une cinquantaine d'ouvrages des Éditions du Triomphe.
+- [x] Diagnostic : sur les 820 ouvrages vendus par l'éditeur, la BnF en ignore au moins 101 (dont 30 des 33 parus en 2026) ; Google Livres connaît 84 de ces 101, sauf les toutes dernières parutions ; Open Library et le Sudoc, aucun. Or Google Books sans clé n'accorde plus aucune requête (quota quotidien nul) : sans clé, ces ouvrages partent dans « À compléter »
+- [x] Une liste des 820 ouvrages de l'éditeur, intégrée comme quatrième source (commit 7c6d542), a été retirée une heure plus tard à la demande de l'utilisateur (« répare l'appli plutôt que faire des patchs ») : ne pas la refaire. Les paramètres d'un téléphone qui l'aurait enregistrée sont nettoyés (`mergeSettings`) ; les champs vides qu'elle a pu y remplir (éditeur, auteurs, année) le demeurent, avec des valeurs justes
+- [x] BnF et Open Library redemandées après un refus momentané, comme Google Books ; texte de la clé Google Books : « Indispensable »
+- [ ] Savoir si l'utilisateur a saisi une clé Google Books ; sinon, la créer (projet Google Cloud de la sauvegarde), puis « Rechercher de nouveau » dans « À compléter »
 
 ## Plus tard
 - Synchronisation entre appareils (piste : Google Drive ; même mécanisme que l'écriture à plusieurs dans un lieu partagé)

@@ -118,8 +118,7 @@ describe('recherche simultanée', () => {
       const host = Object.keys(responses).find((key) => url.includes(key)) ?? '';
       return Promise.resolve(answer(host));
     };
-  // The list of the Éditions du Triomphe has its own tests (triomphe.test.ts).
-  const allSources = { bnf: true, googleBooks: true, openLibrary: true, triomphe: false };
+  const allSources = { bnf: true, googleBooks: true, openLibrary: true };
 
   it('fusionne les réponses de toutes les sources', async () => {
     const progress: string[][] = [];
@@ -137,7 +136,7 @@ describe('recherche simultanée', () => {
   it('n’interroge que les sources activées', async () => {
     const asked: string[] = [];
     await searchMetadata(ISBN, {
-      sources: { bnf: true, googleBooks: false, openLibrary: false, triomphe: false },
+      sources: { bnf: true, googleBooks: false, openLibrary: false },
       fetchImpl: (input) => {
         asked.push(urlOf(input));
         return Promise.resolve(new Response(bnfXml));
@@ -236,7 +235,7 @@ describe('recherche simultanée', () => {
     try {
       const times: number[] = [];
       const options = {
-        sources: { bnf: false, googleBooks: true, openLibrary: false, triomphe: false },
+        sources: { bnf: false, googleBooks: true, openLibrary: false },
         fetchImpl: fakeFetch(() => {
           times.push(Date.now());
           return new Response('{}');

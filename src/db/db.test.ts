@@ -150,11 +150,16 @@ describe('paramètres', () => {
     await updateSettings({ scanSound: false, sources: { bnf: false } }, database);
     const settings = await getSettings(database);
     expect(settings.scanSound).toBe(false);
-    expect(settings.sources).toEqual({ bnf: false, googleBooks: true, openLibrary: true, triomphe: true });
+    expect(settings.sources).toEqual({ bnf: false, googleBooks: true, openLibrary: true });
   });
 
   it('complètent un enregistrement ancien par les valeurs par défaut', () => {
     expect(mergeSettings({ id: 'app', scanVibration: false })).toEqual({ ...DEFAULT_SETTINGS, scanVibration: false });
+  });
+
+  it('oublient une source retirée depuis', () => {
+    const stored = { id: 'app' as const, sources: { bnf: false, triomphe: true } as Partial<Record<string, boolean>> };
+    expect(mergeSettings(stored).sources).toEqual({ bnf: false, googleBooks: true, openLibrary: true });
   });
 });
 

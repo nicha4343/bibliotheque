@@ -63,7 +63,7 @@ describe('recherche par le titre et l’auteur', () => {
   it('interroge les sources actives et signale qu’aucune n’a pu être jointe', async () => {
     const asked: string[] = [];
     const answer = await searchEditions('lotus bleu hergé', {
-      sources: { bnf: true, googleBooks: false, openLibrary: true, triomphe: false },
+      sources: { bnf: true, googleBooks: false, openLibrary: true },
       fetchImpl: (input) => {
         const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
         asked.push(new URL(url).hostname);
@@ -77,7 +77,7 @@ describe('recherche par le titre et l’auteur', () => {
     expect(answer.editions.at(-1)?.title).not.toMatch(/^Le Lotus bleu$/i);
 
     const offline = await searchEditions('lotus bleu', {
-      sources: { bnf: true, googleBooks: false, openLibrary: true, triomphe: false },
+      sources: { bnf: true, googleBooks: false, openLibrary: true },
       fetchImpl: () => Promise.reject(new TypeError('Failed to fetch')),
     });
     expect(offline).toEqual({ editions: [], unavailable: true });

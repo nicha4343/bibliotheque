@@ -7,8 +7,7 @@ export const DATABASE_NAME = 'ma-bibliotheque';
 export type Id = string;
 export type Timestamp = number;
 
-/** triomphe: the list of the Éditions du Triomphe, inside the application (src/metadata/triomphe.ts). */
-export type MetadataProvider = 'googleBooks' | 'openLibrary' | 'bnf' | 'triomphe';
+export type MetadataProvider = 'googleBooks' | 'openLibrary' | 'bnf';
 
 /** Where an automatic cover comes from: a metadata source, or a bookseller as a last resort. */
 export type CoverProvider = MetadataProvider | 'amazon' | 'decitre';

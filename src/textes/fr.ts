@@ -276,14 +276,7 @@ export const fr = {
     ordinal: (value: number) => (value === 1 ? '1er' : `${formatNumber(value)}ᵉ`),
     /** « 1re position », « 3ᵉ position » */
     ordinalFeminine: (value: number) => (value === 1 ? '1re' : `${formatNumber(value)}ᵉ`),
-    providers: {
-      bnf: 'BnF',
-      googleBooks: 'Google Books',
-      openLibrary: 'Open Library',
-      triomphe: 'Éditions du Triomphe',
-      amazon: 'Amazon',
-      decitre: 'Decitre',
-    },
+    providers: { bnf: 'BnF', googleBooks: 'Google Books', openLibrary: 'Open Library', amazon: 'Amazon', decitre: 'Decitre' },
   },
 
   places: {
@@ -818,7 +811,7 @@ export const fr = {
     noResultPlaced: 'Aucun ouvrage trouvé dans les catalogues : les mots recherchés ont été placés dans le titre, à corriger au besoin.',
     searchUnavailable: 'Les catalogues n’ont pu être joints : vérifiez la connexion, puis réessayez.',
     picked: (source: string) => `Fiche remplie d’après ${source} : vérifiez-la, puis enregistrez.`,
-    pickedFrom: { bnf: 'la BnF', googleBooks: 'Google Books', openLibrary: 'Open Library', triomphe: 'la liste des Éditions du Triomphe' },
+    pickedFrom: { bnf: 'la BnF', googleBooks: 'Google Books', openLibrary: 'Open Library' },
     dictationDenied: 'Le micro est refusé à l’application : autorisez-le dans les paramètres du navigateur, ou saisissez le titre.',
     dictationNetwork: 'La dictée nécessite une connexion à Internet : saisissez le titre, ou réessayez dans quelques instants.',
     dictationNothing: 'Rien n’a été entendu : touchez de nouveau « Dicter le titre et l’auteur » et parlez distinctement.',
@@ -1085,12 +1078,10 @@ export const fr = {
     bnfDetail: 'Particulièrement fiable pour les éditions françaises',
     googleBooksDetail: 'Vaste catalogue international',
     openLibraryDetail: 'Catalogue libre et gratuit',
-    triompheDetail:
-      'Liste des ouvrages vendus par l’éditeur, contenue dans l’application : leurs auteurs, et les parutions récentes que la BnF ne connaît pas encore',
     lastSource: 'Au moins une source doit demeurer active.',
     keyLabel: 'Clé Google Books',
     keyDetail:
-      'Facultative. Sans clé, Google Books refuse souvent de répondre ; avec la vôtre, il répond toujours. Elle demeure sur cet appareil.',
+      'Indispensable : sans clé, Google Books ne répond plus du tout, alors qu’il est souvent seul à connaître les parutions récentes des petits éditeurs. Votre clé, gratuite, demeure sur cet appareil.',
     keySave: 'Enregistrer',
     keyChecking: 'Vérification auprès de Google Books…',
     keyValid: 'Clé enregistrée : Google Books l’accepte.',

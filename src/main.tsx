@@ -17,7 +17,6 @@ import { startHistoryTracking } from './router';
 import { refreshLoanNotifications } from './loans/reminders';
 import { startCoverReading } from './pending/coverReading';
 import { unlockAudio } from './scan/feedback';
-import { startTriompheCompletion } from './metadata/triompheCompletion';
 import { startLookups } from './scan/lookups';
 import { startSeriesCompletion } from './series/completion';
 import { startSharing } from './sharing/start';
@@ -32,8 +31,6 @@ startSharing(googleReturn);
 startLookups();
 // Series of the books already catalogued, asked once to the BnF.
 startSeriesCompletion();
-// Empty fields of the notices completed from the list of the Éditions du Triomphe, once for each edition of it.
-startTriompheCompletion();
 // Photographs of « À compléter » read by OpenRouter in the background, never during a scan (lot 6).
 startCoverReading();
 // « Notification à l’échéance »: the daily check of the loans is registered again.
