@@ -2,7 +2,7 @@
 
 Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est terminé qu'après un essai sur un vrai téléphone. Le détail de chaque écran est dans [SPEC.md](SPEC.md).
 
-**Aucun lot en cours** : le lot 12 est validé le 9 novembre 2026, la correction de la page qui glissait reste à vérifier sur téléphone. Le suivant est le partage d'un lieu en consultation (troisième étape des lieux partagés en famille, voir « Plus tard »). Les lots 0 et 1 sont terminés le 1er novembre 2026, le lot 2 le 2 novembre 2026, les lots 3 à 8 le 3 novembre 2026, les lots 9 à 11 le 5 novembre 2026.
+**Aucun lot en cours** : le lot 12 est terminé le 9 novembre 2026. Le suivant est le partage d'un lieu en consultation (troisième étape des lieux partagés en famille, voir « Plus tard »). Les lots 0 et 1 sont terminés le 1er novembre 2026, le lot 2 le 2 novembre 2026, les lots 3 à 8 le 3 novembre 2026, les lots 9 à 11 le 5 novembre 2026.
 
 ## Lot 0 — Socle
 - [x] Projet Vite + TypeScript strict + Preact, ESLint, Vitest
@@ -165,7 +165,7 @@ Choisi par l'utilisateur le 9 novembre 2026 (« Partage en famille ») : deuxiè
 - [x] Vérifié dans le navigateur de l'ordinateur, à la largeur d'un téléphone, sur une base version 6 fabriquée (deux lieux, cinq ouvrages lus, notés ou commentés) : mise à niveau sans perte, compteurs « À lire » et « Lus », fiche ; lecture modifiée puis enregistrée à part de la notice, avis compris en quittant la fiche aussitôt
 - [x] Essai sur téléphone, validé le 9 novembre 2026 (« rien n'a bougé côté lu et commentaires »)
 - [x] Remarque de l'utilisateur à cet essai : sur la fiche d'un ouvrage, la page entière, menu compris, se laissait glisser vers le haut, laissant un vide sous le menu. Cause, antérieure au lot : le libellé caché du champ « Nouvelle étiquette » (`.visually-hidden`, en position absolue) se plaçait par rapport à la page, sous le bas de la fenêtre, et l'allongeait d'autant. Les zones qui défilent (`.screen`, `.recap`, `.entry`, `.scan__rows`) sont désormais positionnées, et rien ne peut plus dépasser de l'application (`.app`, `overflow: clip`). Vérifié dans le navigateur de l'ordinateur, à la largeur d'un téléphone : seize écrans, dont la fiche, tiennent exactement dans la fenêtre, menu en bas ; scanner inchangé
-- [ ] Vérifier sur téléphone que la page ne glisse plus
+- [x] Vérifié sur téléphone le 9 novembre 2026 (« c'est bon ») : la page ne glisse plus
 
 ## Plus tard
 - Synchronisation entre appareils (piste : Google Drive ; même mécanisme que l'écriture à plusieurs dans un lieu partagé)
