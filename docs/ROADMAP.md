@@ -186,6 +186,15 @@ Demandé par l'utilisateur le 9 novembre 2026 (« il faut ajouter cette option a
 - [x] Vérifié dans le navigateur de l'ordinateur, à la largeur d'un téléphone : pièce de trois exemplaires (un prêté, un ouvrage rangé aussi ailleurs) supprimée, ouvrage rangé ailleurs conservé, prêt effacé ; avertissement d'un lieu plein ; lieu vide supprimé par la simple question ; corbeille absente d'un lieu partagé
 - [ ] Essai sur téléphone
 
+## Lot 15 — Ouvrages des Éditions du Triomphe
+Demandé par l'utilisateur le 9 novembre 2026 (« beaucoup d'ISBN n'ont pas été reconnus ») après le scan d'une cinquantaine d'ouvrages de l'éditeur ; son exportation : 51 titres (99 exemplaires), tous dans la liste de l'éditeur ; 16 inconnus de la BnF (parutions de 2026 surtout), 24 sans éditeur, 2 sans auteur. Détail dans SPEC.md, « Liste des Éditions du Triomphe ».
+- [x] Diagnostic : la BnF connaît la plupart des ouvrages anciens de l'éditeur, pas ses parutions récentes (30 des 33 de 2026 absentes) ; Google Books sans clé ne répond presque jamais ; la BnF refuse les rafales (429)
+- [x] Liste des 820 ouvrages vendus par l'éditeur (`src/metadata/triomphe.json`) : relevé du 3 novembre 2026 (projet `C:\Projets\Triomphe`) et fiches relues le 9 novembre 2026 (auteurs, éditeur, date de parution) ; quatrième source (`triomphe`), sans requête, active par défaut, dans les Paramètres
+- [x] Fiches déjà présentes complétées une fois (champs vides seulement) : `src/metadata/triompheCompletion.ts`
+- [x] BnF et Open Library redemandées après un refus momentané, comme Google Books
+- [x] Tests : liste, recherche hors connexion, ordre des réponses, source désactivée, complétion sans remplacement, BnF redemandée
+- [ ] Essai sur téléphone : « Rechercher de nouveau » dans « À compléter », éditeur et auteurs des fiches existantes, scan d'un ouvrage de 2026
+
 ## Plus tard
 - Synchronisation entre appareils (piste : Google Drive ; même mécanisme que l'écriture à plusieurs dans un lieu partagé)
 - Photographie d'une étagère entière : lecture des tranches par IA

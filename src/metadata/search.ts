@@ -1,6 +1,7 @@
 import type { BookMetadata, MetadataProvider } from '../db/schema';
 import { mergeRecords } from './merge';
-import { parseBnf, parseGoogleBooks, parseOpenLibrary, sourceUrl, type SourceRecord } from './sources';
+import { parseBnf, parseGoogleBooks, parseOpenLibrary, sourceUrl, type OnlineProvider, type SourceRecord } from './sources';
+import { findInTriompheCatalog } from './triomphe';
 
 // Long enough for Google Books to wait its turn and be asked again after a refusal.
 export const SEARCH_TIMEOUT_MS = 12_000;
@@ -15,11 +16,20 @@ export class SearchUnavailable extends Error {
 /** failed: no answer; retry when asking again a moment later may succeed (quota, server, network). */
 type Answer = { status: 'found'; record: SourceRecord } | { status: 'notFound' } | { status: 'failed'; retry: boolean };
 
-async function askSource(
-  provider: MetadataProvider,
-  isbn13: string,
-  options: { signal: AbortSignal; fetchImpl: typeof fetch; googleBooksKey: string | undefined },
-): Promise<Answer> {
+type SourceOptions = { signal: AbortSignal; fetchImpl: typeof fetch; googleBooksKey: string | undefined };
+
+/** The list of the Éditions du Triomphe, inside the application: no request, so no refusal. */
+async function askTriomphe(isbn13: string): Promise<Answer> {
+  try {
+    const record = await findInTriompheCatalog(isbn13);
+    return record ? { status: 'found', record } : { status: 'notFound' };
+  } catch {
+    // Its file could not be loaded (application updated meanwhile, offline before the first use).
+    return { status: 'failed', retry: false };
+  }
+}
+
+async function askSource(provider: OnlineProvider, isbn13: string, options: SourceOptions): Promise<Answer> {
   try {
     const response = await options.fetchImpl(sourceUrl(provider, isbn13, options.googleBooksKey), {
       signal: options.signal,
@@ -41,18 +51,19 @@ async function askSource(
 /**
  * Google Books refuses bursts of requests, even with a key, and sometimes fails for a moment: its
  * requests leave at least spacingMs apart, whatever asks them (scan, « Rechercher de nouveau »,
- * import), and a refusal is asked again after each of the retry delays.
+ * import). Every source refusing for a moment (quota, server, network) is asked again after each of
+ * the retry delays: the BnF too refuses a burst (429, seen on 9 November 2026).
  */
-export interface GoogleBooksPacing {
+export interface SourcePacing {
   spacingMs: number;
   retryDelaysMs: readonly number[];
 }
 
-let pacing: GoogleBooksPacing = { spacingMs: 1000, retryDelaysMs: [1500, 3500] };
+let pacing: SourcePacing = { spacingMs: 1000, retryDelaysMs: [1500, 3500] };
 let googleBooksFreeAt = 0;
 
 /** Unit tests do without the pauses. */
-export function setGoogleBooksPacing(value: GoogleBooksPacing): void {
+export function setSourcePacing(value: SourcePacing): void {
   pacing = value;
   googleBooksFreeAt = 0;
 }
@@ -84,13 +95,11 @@ export async function waitGoogleBooksTurn(signal: AbortSignal): Promise<void> {
   await pause(turn - now, signal);
 }
 
-async function askGoogleBooks(
-  isbn13: string,
-  options: { signal: AbortSignal; fetchImpl: typeof fetch; googleBooksKey: string | undefined },
-): Promise<Answer> {
+/** An online source, asked again while it refuses for a moment; Google Books waits for its turn. */
+async function askOnline(provider: OnlineProvider, isbn13: string, options: SourceOptions): Promise<Answer> {
   for (let attempt = 0; ; attempt += 1) {
-    await waitGoogleBooksTurn(options.signal);
-    const answer = await askSource('googleBooks', isbn13, options);
+    if (provider === 'googleBooks') await waitGoogleBooksTurn(options.signal);
+    const answer = await askSource(provider, isbn13, options);
     const delay = pacing.retryDelaysMs[attempt];
     if (answer.status !== 'failed' || !answer.retry || delay === undefined || options.signal.aborted) return answer;
     await pause(delay, options.signal);
@@ -120,15 +129,19 @@ export async function searchMetadata(isbn13: string, options: SearchOptions): Pr
   }, options.timeoutMs ?? SEARCH_TIMEOUT_MS);
   const records: SourceRecord[] = [];
   let answered = 0;
+  // The list inside the application always answers: without the network, a book it does not know is not
+  // declared unknown, but searched again later (unless no source asked over the network is enabled).
+  let answeredOnline = 0;
+  const askedOnline = providers.some((provider) => provider !== 'triomphe');
 
   try {
     await Promise.all(
       providers.map(async (provider) => {
         const sourceOptions = { signal: controller.signal, fetchImpl, googleBooksKey: options.googleBooksKey };
-        const answer =
-          provider === 'googleBooks' ? await askGoogleBooks(isbn13, sourceOptions) : await askSource(provider, isbn13, sourceOptions);
+        const answer = provider === 'triomphe' ? await askTriomphe(isbn13) : await askOnline(provider, isbn13, sourceOptions);
         if (answer.status === 'failed') return;
         answered += 1;
+        if (provider !== 'triomphe') answeredOnline += 1;
         if (answer.status === 'found') {
           records.push(answer.record);
           options.onProgress?.(mergeRecords(isbn13, records));
@@ -139,7 +152,7 @@ export async function searchMetadata(isbn13: string, options: SearchOptions): Pr
     clearTimeout(timer);
   }
 
-  if (records.length === 0 && answered === 0) throw new SearchUnavailable();
+  if (records.length === 0 && (answered === 0 || (askedOnline && answeredOnline === 0))) throw new SearchUnavailable();
   const metadata = mergeRecords(isbn13, records);
   if (answered < providers.length) metadata.incomplete = true;
   return metadata;

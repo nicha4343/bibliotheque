@@ -150,7 +150,7 @@ describe('paramètres', () => {
     await updateSettings({ scanSound: false, sources: { bnf: false } }, database);
     const settings = await getSettings(database);
     expect(settings.scanSound).toBe(false);
-    expect(settings.sources).toEqual({ bnf: false, googleBooks: true, openLibrary: true });
+    expect(settings.sources).toEqual({ bnf: false, googleBooks: true, openLibrary: true, triomphe: true });
   });
 
   it('complètent un enregistrement ancien par les valeurs par défaut', () => {

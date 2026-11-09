@@ -7,7 +7,7 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   flagOwnedBooks: true,
   rememberShelfOrder: false,
   autoCovers: true,
-  sources: { bnf: true, googleBooks: true, openLibrary: true },
+  sources: { bnf: true, googleBooks: true, openLibrary: true, triomphe: true },
   offlineScanning: true,
   googleBooksKey: '',
   loanNotifications: false,

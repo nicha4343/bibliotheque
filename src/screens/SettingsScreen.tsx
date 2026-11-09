@@ -67,6 +67,7 @@ const SOURCES: { provider: MetadataProvider; detail: string }[] = [
   { provider: 'bnf', detail: fr.settings.bnfDetail },
   { provider: 'googleBooks', detail: fr.settings.googleBooksDetail },
   { provider: 'openLibrary', detail: fr.settings.openLibraryDetail },
+  { provider: 'triomphe', detail: fr.settings.triompheDetail },
 ];
 
 const KEY_CHECKS = { valid: fr.settings.keyValid, refused: fr.settings.keyRefused, unverified: fr.settings.keyUnverified };

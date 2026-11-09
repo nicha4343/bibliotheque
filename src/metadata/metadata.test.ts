@@ -5,7 +5,7 @@ import googleBooksJson from './fixtures/googleBooks.json';
 import openLibraryJson from './fixtures/openLibrary.json';
 import { bookshopCandidates } from './covers';
 import { completeBook, mergeRecords } from './merge';
-import { SearchUnavailable, searchMetadata, setGoogleBooksPacing } from './search';
+import { SearchUnavailable, searchMetadata, setSourcePacing } from './search';
 import { parseBnf, parseGoogleBooks, parseOpenLibrary, sourceUrl, type SourceRecord } from './sources';
 
 const ISBN = '9782070360420';
@@ -118,7 +118,8 @@ describe('recherche simultanée', () => {
       const host = Object.keys(responses).find((key) => url.includes(key)) ?? '';
       return Promise.resolve(answer(host));
     };
-  const allSources = { bnf: true, googleBooks: true, openLibrary: true };
+  // The list of the Éditions du Triomphe has its own tests (triomphe.test.ts).
+  const allSources = { bnf: true, googleBooks: true, openLibrary: true, triomphe: false };
 
   it('fusionne les réponses de toutes les sources', async () => {
     const progress: string[][] = [];
@@ -136,7 +137,7 @@ describe('recherche simultanée', () => {
   it('n’interroge que les sources activées', async () => {
     const asked: string[] = [];
     await searchMetadata(ISBN, {
-      sources: { bnf: true, googleBooks: false, openLibrary: false },
+      sources: { bnf: true, googleBooks: false, openLibrary: false, triomphe: false },
       fetchImpl: (input) => {
         asked.push(urlOf(input));
         return Promise.resolve(new Response(bnfXml));
@@ -201,6 +202,21 @@ describe('recherche simultanée', () => {
     expect(metadata.incomplete).toBeUndefined();
   });
 
+  it('demande de nouveau à la BnF après un refus momentané', async () => {
+    let calls = 0;
+    const metadata = await searchMetadata(ISBN, {
+      sources: allSources,
+      fetchImpl: fakeFetch((host) => {
+        if (host !== 'bnf') return new Response('{}');
+        calls += 1;
+        return calls < 2 ? new Response('', { status: 429 }) : new Response(bnfXml);
+      }),
+    });
+    expect(calls).toBe(2);
+    expect(metadata.providers).toEqual(['bnf']);
+    expect(metadata.incomplete).toBeUndefined();
+  });
+
   it('ne redemande pas avec une clé refusée', async () => {
     let calls = 0;
     const metadata = await searchMetadata(ISBN, {
@@ -216,11 +232,11 @@ describe('recherche simultanée', () => {
   });
 
   it('espace les requêtes adressées à Google Books, même simultanées', async () => {
-    setGoogleBooksPacing({ spacingMs: 40, retryDelaysMs: [] });
+    setSourcePacing({ spacingMs: 40, retryDelaysMs: [] });
     try {
       const times: number[] = [];
       const options = {
-        sources: { bnf: false, googleBooks: true, openLibrary: false },
+        sources: { bnf: false, googleBooks: true, openLibrary: false, triomphe: false },
         fetchImpl: fakeFetch(() => {
           times.push(Date.now());
           return new Response('{}');
@@ -229,7 +245,7 @@ describe('recherche simultanée', () => {
       await Promise.all([searchMetadata(ISBN, options), searchMetadata(ISBN, options)]);
       expect((times[1] ?? 0) - (times[0] ?? 0)).toBeGreaterThanOrEqual(30);
     } finally {
-      setGoogleBooksPacing({ spacingMs: 0, retryDelaysMs: [0, 0] });
+      setSourcePacing({ spacingMs: 0, retryDelaysMs: [0, 0] });
     }
   });
 });
