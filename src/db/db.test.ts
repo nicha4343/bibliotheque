@@ -1,4 +1,5 @@
 import 'fake-indexeddb/auto';
+import Dexie from 'dexie';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LibraryDatabase } from './db';
 import { newId } from './ids';
@@ -19,9 +20,6 @@ const book = (fields: Partial<Book>): Book => ({
   id: newId(),
   title: 'La Peste',
   authors: ['Albert Camus'],
-  status: 'toread',
-  rating: 0,
-  review: '',
   tags: [],
   createdAt: Date.now(),
   updatedAt: Date.now(),
@@ -41,6 +39,7 @@ describe('base de données', () => {
         'metadataCache',
         'pendingItems',
         'quotes',
+        'readings',
         'rooms',
         'scanEntries',
         'scanSessions',
@@ -73,6 +72,67 @@ describe('base de données', () => {
       { id: newId(), bookId: notice.id, shelfId: 'chambre-1', addedAt: Date.now() },
     ]);
     expect(await database.copies.where('bookId').equals(notice.id).count()).toBe(2);
+  });
+});
+
+describe('lecture à part de la notice (lot 12)', () => {
+  it('sort de la notice le statut, la note et l’avis d’une base antérieure, sans rien perdre', async () => {
+    const name = `test-${newId()}`;
+    // The database as published before lot 12 (schema version 6).
+    const before = new Dexie(name);
+    before.version(6).stores({
+      sites: 'id',
+      rooms: 'id, order, siteId',
+      shelves: 'id, roomId, &qrToken',
+      books: 'id, &isbn13, status, createdAt, *tags',
+      copies: 'id, bookId, shelfId, addedAt',
+      pendingItems: 'id, kind, shelfId, sessionId, createdAt',
+      scanSessions: 'id, shelfId, startedAt',
+      loans: 'id, copyId, borrower, dueAt',
+      wishes: 'id, isbn',
+      quotes: 'id, bookId',
+      metadataCache: 'isbn13, fetchedAt',
+      blobs: 'id',
+      settings: 'id',
+      scanEntries: 'id, sessionId, status, createdAt',
+      backup: 'id',
+      shelfChecks: 'id, shelfId, startedAt',
+      series: 'id',
+    });
+    const old = (id: string, title: string, status: string, rating: number, review: string) => ({
+      id,
+      title,
+      authors: ['Albert Camus'],
+      status,
+      rating,
+      review,
+      tags: ['Classique'],
+      createdAt: 1,
+      updatedAt: 2,
+    });
+    await before.table('books').bulkAdd([
+      { ...old('peste', 'La Peste', 'read', 4, 'D’une force intacte.'), isbn13: '9782070360420' },
+      old('noces', 'Noces', 'toread', 0, ''),
+      old('carnets', 'Carnets', 'toread', 0, 'À relire'),
+    ]);
+    before.close();
+
+    const upgraded = new LibraryDatabase(name);
+    try {
+      const books = await upgraded.books.orderBy('id').toArray();
+      expect(books.map((book) => Object.keys(book).sort())).toEqual([
+        ['authors', 'createdAt', 'id', 'tags', 'title', 'updatedAt'],
+        ['authors', 'createdAt', 'id', 'tags', 'title', 'updatedAt'],
+        ['authors', 'createdAt', 'id', 'isbn13', 'tags', 'title', 'updatedAt'],
+      ]);
+      expect(await upgraded.books.where('isbn13').equals('9782070360420').count()).toBe(1);
+      expect(await upgraded.readings.orderBy('bookId').toArray()).toEqual([
+        { bookId: 'carnets', status: 'toread', rating: 0, review: 'À relire', updatedAt: 2 },
+        { bookId: 'peste', status: 'read', rating: 4, review: 'D’une force intacte.', updatedAt: 2 },
+      ]);
+    } finally {
+      await upgraded.delete();
+    }
   });
 });
 

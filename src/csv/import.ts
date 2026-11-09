@@ -1,5 +1,6 @@
+import { readingFrom } from '../books/readings';
 import { db, type LibraryDatabase } from '../db/db';
-import type { Book, Copy, Id, Shelf } from '../db/schema';
+import type { Book, Copy, Id, Reading, Shelf } from '../db/schema';
 import { findOrCreateShelf } from '../places/places';
 import { newBook, newCopy } from '../scan/session';
 import { fr } from '../textes/fr';
@@ -62,7 +63,8 @@ export async function applyImport(
   defaultShelfId: Id | undefined,
   database: LibraryDatabase = db,
 ): Promise<ImportResult> {
-  return database.transaction('rw', [database.sites, database.rooms, database.shelves, database.books, database.copies], async () => {
+  const tables = [database.sites, database.rooms, database.shelves, database.books, database.readings, database.copies];
+  return database.transaction('rw', tables, async () => {
     const owned = await ownedIndex(database);
     const shelves = new Map<string, Shelf>();
     const shelfFor = async (copy: ImportedCopy): Promise<Id> => {
@@ -81,13 +83,17 @@ export async function applyImport(
     };
 
     const added: Book[] = [];
+    const readings: Reading[] = [];
     const copies: Copy[] = [];
     for (const imported of books) {
       if (isOwned(imported, owned)) continue;
-      const book = newBook(imported.fields);
+      const { status, rating, review, ...fields } = imported.fields;
+      const book = newBook(fields);
       const dates = imported.copies.flatMap((copy) => (copy.addedAt === undefined ? [] : [copy.addedAt]));
       if (dates.length > 0) book.createdAt = Math.min(...dates);
       added.push(book);
+      const reading = readingFrom(book.id, { status, rating, review }, book.updatedAt);
+      if (reading) readings.push(reading);
       if (book.isbn13) owned.isbns.add(book.isbn13);
       owned.titles.add(titleKey(book));
       for (const importedCopy of imported.copies) {
@@ -98,6 +104,7 @@ export async function applyImport(
       }
     }
     await database.books.bulkAdd(added);
+    await database.readings.bulkAdd(readings);
     await database.copies.bulkAdd(copies);
     return {
       bookIds: added.map((book) => book.id),

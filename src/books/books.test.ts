@@ -5,7 +5,7 @@ import { newId } from '../db/ids';
 import type { Book, Shelf } from '../db/schema';
 import { createRoom, createShelf } from '../places/places';
 import { newBook, newCopy } from '../scan/session';
-import { addCopy, deleteBook, moveCopy, removeCopy, setAutoCover, setUserCover, updateBook } from './books';
+import { addCopy, deleteBook, moveCopy, removeCopy, setAutoCover, setUserCover, updateBook, updateReading } from './books';
 import { addQuote, bookQuotes, deleteQuote, updateQuote } from './quotes';
 import { addTag, removeTag, suggestTags, usedTags, withTag } from './tags';
 
@@ -27,10 +27,10 @@ afterEach(async () => {
 
 describe('fiche ouvrage', () => {
   it('retire un champ facultatif laissé vide', async () => {
-    await updateBook(book.id, { publisher: undefined, status: 'read' }, database);
+    await updateBook(book.id, { publisher: undefined, year: 1972 }, database);
     const updated = await database.books.get(book.id);
     expect(updated?.publisher).toBeUndefined();
-    expect(updated?.status).toBe('read');
+    expect(updated?.year).toBe(1972);
   });
 
   it('remplace la couverture automatique par la photographie, sans laisser d’image orpheline', async () => {
@@ -52,21 +52,26 @@ describe('fiche ouvrage', () => {
     expect(await removeCopy(copies[0]?.id ?? '', database)).toBe(false);
   });
 
-  it('supprime la notice avec ses exemplaires, sa couverture et ses citations', async () => {
+  it('supprime la notice avec ses exemplaires, sa couverture, sa lecture et ses citations', async () => {
     await setUserCover(book.id, new Blob(['photo']), database);
     await addQuote(book.id, { photo: new Blob(['passage']) }, database);
+    await updateReading(book.id, { status: 'read' }, database);
     await deleteBook(book.id, database);
     expect(await database.books.count()).toBe(0);
+    expect(await database.readings.count()).toBe(0);
     expect(await database.copies.count()).toBe(0);
     expect(await database.quotes.count()).toBe(0);
     expect(await database.blobs.count()).toBe(0);
   });
 
-  it('enregistre la note et l’avis', async () => {
-    await updateBook(book.id, { rating: 4, review: 'D’une force intacte.' }, database);
-    const updated = await database.books.get(book.id);
-    expect(updated?.rating).toBe(4);
-    expect(updated?.review).toBe('D’une force intacte.');
+  it('enregistre le statut, la note et l’avis à part de la notice', async () => {
+    expect(await database.readings.get(book.id)).toBeUndefined();
+    await updateReading(book.id, { rating: 4 }, database);
+    await updateReading(book.id, { review: 'D’une force intacte.' }, database);
+    expect(await database.readings.get(book.id)).toMatchObject({ status: 'toread', rating: 4, review: 'D’une force intacte.' });
+    await updateReading(book.id, { status: 'read' }, database);
+    expect(await database.readings.get(book.id)).toMatchObject({ status: 'read', rating: 4, review: 'D’une force intacte.' });
+    expect(await database.books.get(book.id)).toEqual(book);
   });
 });
 

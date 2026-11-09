@@ -1,5 +1,6 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { updateReading } from '../books/books';
 import { LibraryDatabase } from '../db/db';
 import { newId } from '../db/ids';
 import type { Shelf } from '../db/schema';
@@ -95,13 +96,12 @@ describe('export puis import', () => {
       year: 1972,
       seriesName: 'Folio',
       seriesIndex: 42,
-      status: 'read',
-      rating: 4,
-      review: 'Un « grand » livre,\nrelu en 2026',
       tags: ['Classique', 'Dédicacé'],
     });
     const carnet = newBook({ title: 'Carnet sans code', authors: [] });
     await database.books.bulkAdd([peste, carnet]);
+    const reading = { status: 'read', rating: 4, review: 'Un « grand » livre,\nrelu en 2026' } as const;
+    await updateReading(peste.id, reading, database);
     const copies = [newCopy(peste.id, salon.id), { ...newCopy(peste.id, haut.id), note: 'Abîmé' }, newCopy(carnet.id, bureau.id)];
     await database.copies.bulkAdd(copies);
 
@@ -122,7 +122,9 @@ describe('export puis import', () => {
       expect(result.copies).toBe(3);
       const restored = await target.books.where('isbn13').equals('9782070360420').first();
       const { id: _id, createdAt: _createdAt, updatedAt: _updatedAt, ...fields } = peste;
-      expect(restored).toMatchObject(fields);
+      expect(restored).toEqual(expect.objectContaining(fields));
+      expect(await target.readings.get(restored?.id ?? '')).toMatchObject(reading);
+      expect(await target.readings.count()).toBe(1);
       const places = await loadPlaces(target);
       const labels = (await target.copies.toArray()).map((copy) => places.byShelfId.get(copy.shelfId)?.label).sort();
       expect(labels).toEqual(['Bureau · Haut', 'Bureau · Étagère 1', 'Salon · Étagère 1']);

@@ -1,4 +1,5 @@
-import type { Book, Copy, Id, Loan, ReadingStatus } from '../db/schema';
+import { NO_READING, readingsByBook, type ReadingFields } from '../books/readings';
+import type { Book, Copy, Id, Loan, Reading, ReadingStatus } from '../db/schema';
 
 /** « Éléphant » → « elephant »: comparisons ignore case and accents. */
 export function foldText(text: string): string {
@@ -20,6 +21,7 @@ export function sortKey(title: string): string {
 /** A notice with what the list shows of its copies. */
 export interface LibraryEntry {
   book: Book;
+  reading: ReadingFields;
   copies: Copy[];
   /** Loans in progress of its copies, the earliest first. */
   loans: Loan[];
@@ -29,7 +31,13 @@ export interface LibraryEntry {
 }
 
 /** Loans given back are left out by the caller or here: only those in progress count. */
-export function toEntries(books: readonly Book[], copies: readonly Copy[], loans: readonly Loan[] = []): LibraryEntry[] {
+export function toEntries(
+  books: readonly Book[],
+  copies: readonly Copy[],
+  loans: readonly Loan[] = [],
+  readings: readonly Reading[] = [],
+): LibraryEntry[] {
+  const readingOf = readingsByBook(readings);
   const byBook = new Map<Id, Copy[]>();
   const bookOfCopy = new Map<Id, Id>();
   for (const copy of copies) {
@@ -49,6 +57,7 @@ export function toEntries(books: readonly Book[], copies: readonly Copy[], loans
   return books
     .map((book) => ({
       book,
+      reading: readingOf.get(book.id) ?? NO_READING,
       copies: (byBook.get(book.id) ?? []).sort((a, b) => a.addedAt - b.addedAt),
       loans: loansByBook.get(book.id) ?? [],
       // A series read from the title is already in the title.
@@ -96,4 +105,4 @@ export function matchesPlace(entry: LibraryEntry, place: PlaceFilter): boolean {
 export type StatusFilter = 'all' | ReadingStatus | 'lent';
 
 export const matchesStatus = (entry: LibraryEntry, status: StatusFilter): boolean =>
-  status === 'all' || (status === 'lent' ? entry.loans.length > 0 : entry.book.status === status);
+  status === 'all' || (status === 'lent' ? entry.loans.length > 0 : entry.reading.status === status);

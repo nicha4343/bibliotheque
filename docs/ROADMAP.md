@@ -2,7 +2,7 @@
 
 Un lot à la fois. Cocher chaque case à la fin de l'étape ; un lot n'est terminé qu'après un essai sur un vrai téléphone. Le détail de chaque écran est dans [SPEC.md](SPEC.md).
 
-**Aucun lot en cours** : les lots 0 et 1 sont terminés le 1er novembre 2026, le lot 2 le 2 novembre 2026, les lots 3 à 8 le 3 novembre 2026, les lots 9 à 11 le 5 novembre 2026. Le suivant est à choisir par l'utilisateur dans « Plus tard ».
+**Lot 12 en cours** (essai sur téléphone) : « Ma lecture » propre à chaque personne, deuxième étape des lieux partagés en famille. Les lots 0 et 1 sont terminés le 1er novembre 2026, le lot 2 le 2 novembre 2026, les lots 3 à 8 le 3 novembre 2026, les lots 9 à 11 le 5 novembre 2026.
 
 ## Lot 0 — Socle
 - [x] Projet Vite + TypeScript strict + Preact, ESLint, Vitest
@@ -158,12 +158,19 @@ Demandé par l'utilisateur le 5 novembre 2026, à l'essai du lot 10 : sur Androi
 - [x] Vérifié dans le navigateur de l'ordinateur, à la largeur d'un téléphone, avec deux lieux et quatre pièces : lieu, pièce, étagère (fenêtre fermée), nombres, liste mise à jour, croix ; avec un seul lieu, les pièces d'emblée
 - [x] Essai sur téléphone, validé le 5 novembre 2026 (« lot 11 validé »)
 
+## Lot 12 — « Ma lecture » propre à chaque personne
+Choisi par l'utilisateur le 9 novembre 2026 (« Partage en famille ») : deuxième étape des lieux partagés en famille (voir « Plus tard »), sans changement visible. « Lu », la note et l'avis quittent la notice, qu'un lieu partagé rendra commune.
+- [x] Données : table `readings` (statut, note, avis, date de modification), clé `bookId`, version 7 du schéma (`src/db/db.ts`) ; la mise à niveau tire la lecture des notices existantes, un ouvrage « À lire », non noté et sans avis n'ayant pas d'enregistrement ; `src/books/readings.ts` (`readingFrom`, `splitReading`, `NO_READING`) et `updateReading` (`src/books/books.ts`) ; la lecture part avec la notice supprimée. Testé, y compris la mise à niveau d'une base version 6
+- [x] Fiche (« Ma lecture »), liste et filtre « À lire » / « Lus » de la bibliothèque, export et import CSV (colonnes inchangées), sauvegarde Google Drive au format 5 (`readings` ; une sauvegarde plus ancienne tire les lectures de ses fiches)
+- [x] Vérifié dans le navigateur de l'ordinateur, à la largeur d'un téléphone, sur une base version 6 fabriquée (deux lieux, cinq ouvrages lus, notés ou commentés) : mise à niveau sans perte, compteurs « À lire » et « Lus », fiche ; lecture modifiée puis enregistrée à part de la notice, avis compris en quittant la fiche aussitôt
+- [ ] Essai sur téléphone : après la mise à jour, « Lu », notes et avis intacts
+
 ## Plus tard
 - Synchronisation entre appareils (piste : Google Drive ; même mécanisme que l'écriture à plusieurs dans un lieu partagé)
 - Photographie d'une étagère entière : lecture des tranches par IA
 - Lieux partagés en famille (décisions du 1er novembre 2026, détail dans SPEC.md, « Lieux partagés en famille »), dans cet ordre :
   - niveau « Lieu » au-dessus des pièces, utile sans partage : fait au lot 10 ;
-  - séparation de « Lu », de la note et de l'avis, propres à chaque personne (nouvelle version du schéma) ;
+  - séparation de « Lu », de la note et de l'avis, propres à chaque personne (nouvelle version du schéma) : fait au lot 12 ;
   - partage d'un lieu en consultation avec plusieurs personnes (Google Drive, après la sauvegarde du lot 2) ;
   - ajout et déplacement d'exemplaires par les invités, seulement si cela reste simple.
 

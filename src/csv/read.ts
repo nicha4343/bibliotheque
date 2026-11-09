@@ -1,3 +1,4 @@
+import type { ReadingFields } from '../books/readings';
 import type { Book, Timestamp } from '../db/schema';
 import { cleanIsbn, isValidIsbn10, toIsbn13 } from '../isbn/isbn';
 import { foldText } from '../library/filter';
@@ -18,7 +19,9 @@ export interface ImportedCopy {
   note?: string;
 }
 
-export type ImportedFields = Pick<Book, 'title' | 'authors' | 'status' | 'rating' | 'review' | 'tags'> &
+/** The notice and, apart from it, the reading (« Ma lecture ») given by the row. */
+export type ImportedFields = Pick<Book, 'title' | 'authors' | 'tags'> &
+  ReadingFields &
   Partial<Pick<Book, 'isbn13' | 'isbn10' | 'publisher' | 'year' | 'language' | 'seriesName' | 'seriesIndex' | 'price'>>;
 
 export interface ImportedBook {

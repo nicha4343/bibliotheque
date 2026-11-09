@@ -12,6 +12,7 @@ import {
   type BookChanges,
 } from '../books/books';
 import { QuotesSection } from '../books/QuotesSection';
+import { NO_READING, type ReadingFields } from '../books/readings';
 import { ReadingSection } from '../books/ReadingSection';
 import { TagsSection } from '../books/TagsSection';
 import { BackAnchor } from '../components/BackLink';
@@ -41,6 +42,7 @@ import { formatDate, formatNearDate, formatPrice, fr } from '../textes/fr';
 
 interface BookData {
   book: Book | undefined;
+  reading: ReadingFields;
   copies: Copy[];
   places: PlaceIndex;
   /** Position of each copy on its shelf, when the order is remembered and known. */
@@ -50,8 +52,9 @@ interface BookData {
 }
 
 async function loadBook(bookId: string): Promise<BookData> {
-  const [book, copies, places, settings] = await Promise.all([
+  const [book, reading, copies, places, settings] = await Promise.all([
     db.books.get(bookId),
+    db.readings.get(bookId),
     db.copies.where('bookId').equals(bookId).sortBy('addedAt'),
     loadPlaces(),
     getSettings(),
@@ -73,7 +76,7 @@ async function loadBook(bookId: string): Promise<BookData> {
       if (isActive(loan)) loans.set(loan.copyId, loan);
     }
   }
-  return { book, copies, places, ranks, loans };
+  return { book, reading: reading ?? NO_READING, copies, places, ranks, loans };
 }
 
 type Dialog =
@@ -299,7 +302,7 @@ export function BookScreen({ bookId }: { bookId: string }) {
           </ul>
         </section>
 
-        <ReadingSection book={book} />
+        <ReadingSection bookId={book.id} reading={data.reading} />
         <TagsSection book={book} />
         <QuotesSection bookId={book.id} onMessage={setMessage} />
 

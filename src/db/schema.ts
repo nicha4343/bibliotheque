@@ -70,12 +70,21 @@ export interface Book {
   /** Prix d’achat of one copy, in euros (lot 5, insurance inventory). */
   price?: number;
   cover?: Cover;
+  tags: string[];
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/**
+ * « Ma lecture » of a notice (lot 12): kept apart from the notice, which a place shared with the family
+ * holds in common, whereas each person keeps their own reading. No record: to read, not rated, no review.
+ */
+export interface Reading {
+  bookId: Id;
   status: ReadingStatus;
   /** 0 = not rated, otherwise 1 to 5. */
   rating: number;
   review: string;
-  tags: string[];
-  createdAt: Timestamp;
   updatedAt: Timestamp;
 }
 

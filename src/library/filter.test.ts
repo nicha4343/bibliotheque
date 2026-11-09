@@ -6,9 +6,6 @@ const book = (id: string, title: string, authors: string[], extra: Partial<Book>
   id,
   title,
   authors,
-  status: 'toread',
-  rating: 0,
-  review: '',
   tags: [],
   createdAt: 0,
   updatedAt: 0,
@@ -17,11 +14,16 @@ const book = (id: string, title: string, authors: string[], extra: Partial<Book>
 const copy = (id: string, bookId: string, shelfId: string, addedAt = 0): Copy => ({ id, bookId, shelfId, addedAt });
 
 const books = [
-  book('a', 'L’Étranger', ['Albert Camus'], { isbn13: '9782070360024', status: 'read' }),
+  book('a', 'L’Étranger', ['Albert Camus'], { isbn13: '9782070360024' }),
   book('b', 'Les Misérables', ['Victor Hugo']),
   book('c', 'Belle du Seigneur', ['Albert Cohen'], { tags: ['Dédicacé', 'Format poche'] }),
 ];
-const entries = toEntries(books, [copy('1', 'a', 'salon-1'), copy('2', 'a', 'chambre-1', 5), copy('3', 'b', 'salon-2')]);
+const entries = toEntries(
+  books,
+  [copy('1', 'a', 'salon-1'), copy('2', 'a', 'chambre-1', 5), copy('3', 'b', 'salon-2')],
+  [],
+  [{ bookId: 'a', status: 'read', rating: 0, review: '', updatedAt: 0 }],
+);
 const find = (id: string) => entries.find((entry) => entry.book.id === id);
 
 describe('recherche dans la bibliothèque', () => {

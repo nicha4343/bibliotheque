@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setUserCover } from '../books/books';
+import { setUserCover, updateReading } from '../books/books';
 import { addQuote } from '../books/quotes';
 import { LibraryDatabase } from '../db/db';
 import { newId } from '../db/ids';
@@ -80,6 +80,7 @@ beforeEach(async () => {
   await database.copies.add(newCopy(book.id, shelf.id));
   await setUserCover(book.id, new Blob(['couverture']), database);
   await addQuote(book.id, { text: 'Le bacille de la peste ne meurt ni ne disparaît jamais.' }, database);
+  await updateReading(book.id, { status: 'read', rating: 5 }, database);
   await database.loans.add({ id: 'pret', copyId: 'exemplaire', borrower: 'Sam', lentAt: 1, dueAt: 2 });
   await saveClient('client.apps.googleusercontent.com', 'secret', database);
   await updateBackupState({ refreshToken: 'refresh' }, database);
@@ -91,8 +92,9 @@ afterEach(async () => {
 });
 
 describe('contenu d’une sauvegarde', () => {
-  it('restaure à l’identique les fiches, exemplaires, prêts, citations et photographies', async () => {
+  it('restaure à l’identique les fiches, lectures, exemplaires, prêts, citations et photographies', async () => {
     const snapshot = await buildSnapshot(database);
+    expect(snapshot.readings).toHaveLength(1);
     const other = new LibraryDatabase(`test-${newId()}`);
     await other.blobs.bulkAdd([...(await database.blobs.toArray()), { id: 'orpheline', blob: new Blob(['x']), createdAt: 0 }]);
     await restoreSnapshot(snapshot, other);
@@ -105,7 +107,7 @@ describe('contenu d’une sauvegarde', () => {
     const text = JSON.stringify(await buildSnapshot(database));
     expect(parseSnapshot(text)?.books).toHaveLength(1);
     expect(parseSnapshot('{"format":"autre"}')).toBeUndefined();
-    expect(parseSnapshot(text.replace('"version":4', '"version":99'))).toBeUndefined();
+    expect(parseSnapshot(text.replace('"version":5', '"version":99'))).toBeUndefined();
     expect(parseSnapshot('pas du JSON')).toBeUndefined();
     // A backup made before the loans (lot 4), or before the wishes and series (lot 5), is still read.
     const before = JSON.parse(text) as Record<string, unknown>;
@@ -120,6 +122,23 @@ describe('contenu d’une sauvegarde', () => {
     delete before.sites;
     expect(parseSnapshot(JSON.stringify({ ...before, loans: [], wishes: [], series: [], version: 3 }))).toMatchObject({ sites: [] });
     expect(parseSnapshot(JSON.stringify({ ...before, loans: [], wishes: [], series: [], version: 4 }))).toBeUndefined();
+  });
+
+  it('sort des notices d’une sauvegarde antérieure au lot 12 leur statut, leur note et leur avis', async () => {
+    const { readings: _readings, ...snapshot } = await buildSnapshot(database);
+    expect(parseSnapshot(JSON.stringify({ ...snapshot, version: 5 }))).toBeUndefined();
+    const [notice] = snapshot.books;
+    if (!notice) throw new Error('no notice');
+    const books = [{ ...notice, status: 'read', rating: 4, review: 'Relu en 2026' }];
+    const old = parseSnapshot(JSON.stringify({ ...snapshot, version: 4, books }));
+    if (!old) throw new Error('backup refused');
+    expect(old.books).toEqual([notice]);
+    const other = new LibraryDatabase(`test-${newId()}`);
+    await restoreSnapshot(old, other);
+    expect(await other.readings.toArray()).toEqual([
+      { bookId: notice.id, status: 'read', rating: 4, review: 'Relu en 2026', updatedAt: notice.updatedAt },
+    ]);
+    await other.delete();
   });
 
   it('range les pièces d’une sauvegarde antérieure aux lieux dans un premier lieu', async () => {
@@ -154,7 +173,7 @@ describe('contenu d’une sauvegarde', () => {
     await database.wishes.add({ id: 'souhait', title: 'Les Choses', source: 'manual', createdAt: 1 });
     await database.series.put({ id: 'asterix', total: 39 });
     const snapshot = await buildSnapshot(database);
-    expect(snapshot.version).toBe(4);
+    expect(snapshot.version).toBe(5);
     const other = new LibraryDatabase(`test-${newId()}`);
     await restoreSnapshot(snapshot, other);
     expect(await other.wishes.toArray()).toEqual([{ id: 'souhait', title: 'Les Choses', source: 'manual', createdAt: 1 }]);

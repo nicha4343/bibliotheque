@@ -1,5 +1,6 @@
+import { NO_READING, readingsByBook, type ReadingFields } from '../books/readings';
 import { db, type LibraryDatabase } from '../db/db';
-import type { Book, Copy, Id, ReadingStatus, Timestamp } from '../db/schema';
+import type { Book, Copy, Id, Reading, ReadingStatus, Timestamp } from '../db/schema';
 import { sortKey } from '../library/filter';
 import { joinAuthors } from '../pending/pending';
 import { loadPlaces, type PlaceIndex } from '../places/places';
@@ -45,7 +46,7 @@ export function isoDate(timestamp: Timestamp): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-function rowOf(book: Book, copy: Copy | undefined, places: PlaceIndex): string[] {
+function rowOf(book: Book, reading: ReadingFields, copy: Copy | undefined, places: PlaceIndex): string[] {
   const place = copy ? places.byShelfId.get(copy.shelfId) : undefined;
   const values: Record<Column, string> = {
     title: book.title,
@@ -60,9 +61,9 @@ function rowOf(book: Book, copy: Copy | undefined, places: PlaceIndex): string[]
     site: place?.site.name ?? '',
     room: place?.room.name ?? '',
     shelf: place?.shelf.name ?? '',
-    status: STATUS_TEXTS[book.status],
-    rating: book.rating > 0 ? String(book.rating) : '',
-    review: book.review,
+    status: STATUS_TEXTS[reading.status],
+    rating: reading.rating > 0 ? String(reading.rating) : '',
+    review: reading.review,
     tags: book.tags.join(', '),
     addedAt: isoDate(copy?.addedAt ?? book.createdAt),
     note: copy?.note ?? '',
@@ -72,7 +73,13 @@ function rowOf(book: Book, copy: Copy | undefined, places: PlaceIndex): string[]
 }
 
 /** Header, then the copies by place, room, shelf and title, as the library lists them. */
-export function exportRows(books: readonly Book[], copies: readonly Copy[], places: PlaceIndex): string[][] {
+export function exportRows(
+  books: readonly Book[],
+  copies: readonly Copy[],
+  places: PlaceIndex,
+  readings: readonly Reading[] = [],
+): string[][] {
+  const readingOf = readingsByBook(readings);
   const shelfRank = new Map<Id, number>();
   for (const room of places.rooms) {
     for (const shelf of places.shelvesByRoom.get(room.id) ?? []) shelfRank.set(shelf.id, shelfRank.size);
@@ -88,7 +95,7 @@ export function exportRows(books: readonly Book[], copies: readonly Copy[], plac
       rank: copy ? (shelfRank.get(copy.shelfId) ?? Number.MAX_SAFE_INTEGER) : Number.MAX_SAFE_INTEGER,
       key: sortKey(book.title),
       addedAt: copy?.addedAt ?? book.createdAt,
-      cells: rowOf(book, copy, places),
+      cells: rowOf(book, readingOf.get(book.id) ?? NO_READING, copy, places),
     }));
   });
   lines.sort((a, b) => a.rank - b.rank || a.key.localeCompare(b.key, 'fr') || a.addedAt - b.addedAt);
@@ -102,8 +109,13 @@ export interface ExportResult {
 }
 
 export async function exportLibrary(database: LibraryDatabase = db): Promise<ExportResult> {
-  const [books, copies, places] = await Promise.all([database.books.toArray(), database.copies.toArray(), loadPlaces(database)]);
-  return { text: toCsv(exportRows(books, copies, places)), books: books.length, copies: copies.length };
+  const [books, copies, places, readings] = await Promise.all([
+    database.books.toArray(),
+    database.copies.toArray(),
+    loadPlaces(database),
+    database.readings.toArray(),
+  ]);
+  return { text: toCsv(exportRows(books, copies, places, readings)), books: books.length, copies: copies.length };
 }
 
 /** Saves the text as a file through the browser (« Téléchargements » on Android). */

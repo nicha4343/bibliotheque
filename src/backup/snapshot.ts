@@ -1,5 +1,20 @@
+import { splitReading } from '../books/readings';
 import { db, firstSite, type LibraryDatabase } from '../db/db';
-import type { Book, Copy, Id, Loan, PendingItem, Quote, Room, SeriesRecord, SettingsRecord, Shelf, Site, Wish } from '../db/schema';
+import type {
+  Book,
+  Copy,
+  Id,
+  Loan,
+  PendingItem,
+  Quote,
+  Reading,
+  Room,
+  SeriesRecord,
+  SettingsRecord,
+  Shelf,
+  Site,
+  Wish,
+} from '../db/schema';
 
 // Contents of a backup: every record the user made, the photographs being saved as separate files.
 // Left out: the metadata cache, the scan sessions and the shelf checks (rebuilt or short-lived), the
@@ -7,10 +22,11 @@ import type { Book, Copy, Id, Loan, PendingItem, Quote, Room, SeriesRecord, Sett
 
 export const SNAPSHOT_FORMAT = 'ma-bibliotheque';
 /**
- * 2: loans (lot 4); 3: wishes and series (lot 5); 4: places (lot 10). An older backup is read as having
- * none of them, its rooms joining a first place.
+ * 2: loans (lot 4); 3: wishes and series (lot 5); 4: places (lot 10); 5: readings apart from the notices
+ * (lot 12). An older backup is read as having none of them, its rooms joining a first place and the
+ * readings leaving its notices.
  */
-export const SNAPSHOT_VERSION = 4;
+export const SNAPSHOT_VERSION = 5;
 
 export interface Snapshot {
   format: typeof SNAPSHOT_FORMAT;
@@ -20,6 +36,7 @@ export interface Snapshot {
   rooms: Room[];
   shelves: Shelf[];
   books: Book[];
+  readings: Reading[];
   copies: Copy[];
   pendingItems: PendingItem[];
   quotes: Quote[];
@@ -41,6 +58,7 @@ export async function buildSnapshot(database: LibraryDatabase = db, now = Date.n
       database.rooms,
       database.shelves,
       database.books,
+      database.readings,
       database.copies,
       database.pendingItems,
       database.quotes,
@@ -58,6 +76,7 @@ export async function buildSnapshot(database: LibraryDatabase = db, now = Date.n
       rooms: byId(await database.rooms.toArray()),
       shelves: byId(await database.shelves.toArray()),
       books: byId(await database.books.toArray()),
+      readings: (await database.readings.toArray()).sort((a, b) => (a.bookId < b.bookId ? -1 : a.bookId > b.bookId ? 1 : 0)),
       copies: byId(await database.copies.toArray()),
       pendingItems: byId(await database.pendingItems.toArray()),
       quotes: byId(await database.quotes.toArray()),
@@ -77,7 +96,7 @@ export async function snapshotHash(snapshot: Snapshot): Promise<string> {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-const LISTS = ['sites', 'rooms', 'shelves', 'books', 'copies', 'pendingItems', 'quotes', 'loans', 'wishes', 'series', 'settings', 'blobIds'] as const;
+const LISTS = ['sites', 'rooms', 'shelves', 'books', 'readings', 'copies', 'pendingItems', 'quotes', 'loans', 'wishes', 'series', 'settings', 'blobIds'] as const;
 
 /** A file read from Drive, checked before it replaces anything. */
 export function parseSnapshot(text: string): Snapshot | undefined {
@@ -89,6 +108,17 @@ export function parseSnapshot(text: string): Snapshot | undefined {
       value.series ??= [];
     }
     if (typeof value?.version === 'number' && value.version < 4) value.sites ??= [];
+    if (typeof value?.version === 'number' && value.version < 5) {
+      const readings: Reading[] = [];
+      if (Array.isArray(value.books)) {
+        value.books = value.books.map((stored) => {
+          const { book, reading } = splitReading(stored);
+          if (reading) readings.push(reading);
+          return book;
+        });
+      }
+      value.readings ??= readings;
+    }
     if (value?.format !== SNAPSHOT_FORMAT || typeof value.version !== 'number' || value.version > SNAPSHOT_VERSION)
       return undefined;
     if (typeof value.createdAt !== 'number' || !LISTS.every((key) => Array.isArray(value[key]))) return undefined;
@@ -116,6 +146,7 @@ export async function restoreSnapshot(snapshot: Snapshot, database: LibraryDatab
     database.rooms,
     database.shelves,
     database.books,
+    database.readings,
     database.copies,
     database.pendingItems,
     database.quotes,
@@ -140,6 +171,8 @@ export async function restoreSnapshot(snapshot: Snapshot, database: LibraryDatab
     await database.shelves.bulkAdd(snapshot.shelves);
     await database.books.clear();
     await database.books.bulkAdd(snapshot.books);
+    await database.readings.clear();
+    await database.readings.bulkAdd(snapshot.readings);
     await database.copies.clear();
     await database.copies.bulkAdd(snapshot.copies);
     await database.pendingItems.clear();

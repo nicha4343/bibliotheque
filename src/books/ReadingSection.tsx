@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { StarIcon } from '../components/icons';
-import type { Book, Id, ReadingStatus } from '../db/schema';
+import type { Id, ReadingStatus } from '../db/schema';
 import { fr } from '../textes/fr';
-import { updateBook } from './books';
+import { updateReading } from './books';
+import type { ReadingFields } from './readings';
 
-/** « Ma lecture » (screen 6): reading status, rating out of 5 and review. */
-export function ReadingSection({ book }: { book: Book }) {
+/** « Ma lecture » (screen 6): reading status, rating out of 5 and review, those of the person using the device. */
+export function ReadingSection({ bookId, reading }: { bookId: Id; reading: ReadingFields }) {
   const setStatus = (status: ReadingStatus) => {
-    void updateBook(book.id, { status });
+    void updateReading(bookId, { status });
   };
 
   return (
@@ -20,7 +21,7 @@ export function ReadingSection({ book }: { book: Book }) {
           <button
             type="button"
             class="segmented__option"
-            aria-pressed={book.status === 'toread'}
+            aria-pressed={reading.status === 'toread'}
             onClick={() => {
               setStatus('toread');
             }}
@@ -30,7 +31,7 @@ export function ReadingSection({ book }: { book: Book }) {
           <button
             type="button"
             class="segmented__option"
-            aria-pressed={book.status === 'read'}
+            aria-pressed={reading.status === 'read'}
             onClick={() => {
               setStatus('read');
             }}
@@ -39,12 +40,12 @@ export function ReadingSection({ book }: { book: Book }) {
           </button>
         </div>
         <StarRating
-          value={book.rating}
+          value={reading.rating}
           onChange={(rating) => {
-            void updateBook(book.id, { rating });
+            void updateReading(bookId, { rating });
           }}
         />
-        <ReviewField key={book.id} bookId={book.id} initial={book.review} />
+        <ReviewField key={bookId} bookId={bookId} initial={reading.review} />
       </div>
     </section>
   );
@@ -87,7 +88,7 @@ function ReviewField({ bookId, initial }: { bookId: Id; initial: string }) {
     const review = latest.current.trim();
     if (review === saved.current) return;
     saved.current = review;
-    void updateBook(bookId, { review });
+    void updateReading(bookId, { review });
   };
 
   // Whatever is typed is kept when the sheet is left before the pause.

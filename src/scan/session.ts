@@ -145,7 +145,7 @@ export async function answerDuplicate(entryId: Id, addCopy: boolean, database: L
 export async function deleteEntry(entry: ScanEntry, database: LibraryDatabase = db): Promise<void> {
   await database.transaction(
     'rw',
-    [database.scanEntries, database.copies, database.books, database.pendingItems, database.blobs],
+    [database.scanEntries, database.copies, database.books, database.readings, database.pendingItems, database.blobs],
     async () => {
       if (entry.copyId) await database.copies.delete(entry.copyId);
       if (entry.createdBook && entry.bookId) {
@@ -153,6 +153,7 @@ export async function deleteEntry(entry: ScanEntry, database: LibraryDatabase = 
         if (remaining === 0) {
           const book = await database.books.get(entry.bookId);
           if (book?.cover?.blobId) await database.blobs.delete(book.cover.blobId);
+          await database.readings.delete(entry.bookId);
           await database.books.delete(entry.bookId);
         }
       }
@@ -203,5 +204,5 @@ export async function endSession(sessionId: Id, database: LibraryDatabase = db):
 /** Notice created from a read once its metadata is known. */
 export function newBook(fields: Pick<Book, 'title' | 'authors'> & Partial<Book>): Book {
   const now = Date.now();
-  return { id: newId(), status: 'toread', rating: 0, review: '', tags: [], createdAt: now, updatedAt: now, ...fields };
+  return { id: newId(), tags: [], createdAt: now, updatedAt: now, ...fields };
 }

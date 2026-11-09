@@ -7,16 +7,25 @@ import { openLibraryCoverUrl } from '../metadata/sources';
 import { attachAutoCover } from '../scan/lookups';
 import { newCopy } from '../scan/session';
 import { deleteBookQuotes } from './quotes';
+import { NO_READING, type ReadingFields } from './readings';
 
 // Changes made on the book sheet (screen 6).
 
 export type BookChanges = Partial<
-  Pick<Book, 'title' | 'authors' | 'publisher' | 'year' | 'status' | 'rating' | 'review' | 'seriesName' | 'seriesIndex' | 'price'>
+  Pick<Book, 'title' | 'authors' | 'publisher' | 'year' | 'seriesName' | 'seriesIndex' | 'price'>
 >;
 
 /** An empty optional field is removed from the notice. */
 export async function updateBook(bookId: Id, changes: BookChanges, database: LibraryDatabase = db): Promise<void> {
   await database.books.update(bookId, { ...changes, updatedAt: Date.now() });
+}
+
+/** « Ma lecture »: its record is made at the first change. */
+export async function updateReading(bookId: Id, changes: Partial<ReadingFields>, database: LibraryDatabase = db): Promise<void> {
+  await database.transaction('rw', database.readings, async () => {
+    const current = await database.readings.get(bookId);
+    await database.readings.put({ ...NO_READING, ...current, ...changes, bookId, updatedAt: Date.now() });
+  });
 }
 
 async function replaceCover(bookId: Id, cover: Cover | undefined, database: LibraryDatabase): Promise<void> {
@@ -100,14 +109,16 @@ export async function removeCopy(copyId: Id, database: LibraryDatabase = db): Pr
   });
 }
 
-/** « Supprimer de ma bibliothèque »: the notice, its copies and their loans, its cover and its quotes. */
+/** « Supprimer de ma bibliothèque »: the notice, its copies and their loans, its cover, its reading and its quotes. */
 export async function deleteBook(bookId: Id, database: LibraryDatabase = db): Promise<void> {
-  await database.transaction('rw', [database.books, database.copies, database.loans, database.quotes, database.blobs], async () => {
+  const tables = [database.books, database.readings, database.copies, database.loans, database.quotes, database.blobs];
+  await database.transaction('rw', tables, async () => {
     const book = await database.books.get(bookId);
     if (book?.cover?.blobId) await database.blobs.delete(book.cover.blobId);
     await deleteLoansOf(await database.copies.where('bookId').equals(bookId).primaryKeys(), database);
     await database.copies.where('bookId').equals(bookId).delete();
     await deleteBookQuotes(bookId, database);
+    await database.readings.delete(bookId);
     await database.books.delete(bookId);
   });
 }

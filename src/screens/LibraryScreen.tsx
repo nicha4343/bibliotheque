@@ -50,12 +50,18 @@ interface Reminder {
 }
 
 async function loadLibrary(): Promise<LibraryData> {
-  const [books, copies, places, loans] = await Promise.all([db.books.toArray(), db.copies.toArray(), loadPlaces(), db.loans.toArray()]);
+  const [books, copies, places, loans, readings] = await Promise.all([
+    db.books.toArray(),
+    db.copies.toArray(),
+    loadPlaces(),
+    db.loans.toArray(),
+    db.readings.toArray(),
+  ]);
   const now = new Date();
   const titles = new Map(books.map((book) => [book.id, book.title]));
   const bookOfCopy = new Map(copies.map((copy) => [copy.id, copy.bookId]));
   return {
-    entries: toEntries(books, copies, loans),
+    entries: toEntries(books, copies, loans, readings),
     places,
     due: dueLoans(loans, now).length,
     reminders: unseenDueLoans(loans, now).map((loan) => ({
@@ -338,11 +344,11 @@ function PlaceFilterText({ site, main }: { site?: string | undefined; main: stri
 }
 
 function BookRow({ entry, places }: { entry: LibraryEntry; places: PlaceIndex }) {
-  const { book, copies, loans } = entry;
+  const { book, reading, copies, loans } = entry;
   const first = firstPresentCopy(entry);
   const place = first ? places.byShelfId.get(first.shelfId)?.label : copies.length > 0 ? fr.library.lost : undefined;
   const lentTo = loans[0]?.borrower;
-  const read = book.status === 'read';
+  const read = reading.status === 'read';
   return (
     <li>
       <a class="book-row" href={routeHref('book', book.id)}>

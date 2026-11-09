@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable, type Transaction } from 'dexie';
+import { splitReading } from '../books/readings';
 import { fr } from '../textes/fr';
 import { newId } from './ids';
 import type {
@@ -9,6 +10,7 @@ import type {
   MetadataCacheEntry,
   PendingItem,
   Quote,
+  Reading,
   Room,
   ScanEntry,
   ScanSession,
@@ -33,11 +35,26 @@ async function addFirstSite(tx: Transaction): Promise<void> {
   await tx.table('rooms').toCollection().modify({ siteId: site.id });
 }
 
+/** Lot 12: status, rating and review leave the notices; only a reading worth keeping gets a record. */
+async function moveReadings(tx: Transaction): Promise<void> {
+  const readings: Reading[] = [];
+  await tx
+    .table<Book>('books')
+    .toCollection()
+    .modify((stored, ref) => {
+      const { book, reading } = splitReading(stored);
+      ref.value = book;
+      if (reading) readings.push(reading);
+    });
+  await tx.table('readings').bulkAdd(readings);
+}
+
 export class LibraryDatabase extends Dexie {
   sites!: EntityTable<Site, 'id'>;
   rooms!: EntityTable<Room, 'id'>;
   shelves!: EntityTable<Shelf, 'id'>;
   books!: EntityTable<Book, 'id'>;
+  readings!: EntityTable<Reading, 'bookId'>;
   copies!: EntityTable<Copy, 'id'>;
   pendingItems!: EntityTable<PendingItem, 'id'>;
   scanSessions!: EntityTable<ScanSession, 'id'>;
@@ -92,6 +109,13 @@ export class LibraryDatabase extends Dexie {
         rooms: 'id, order, siteId',
       })
       .upgrade(addFirstSite);
+    // Lot 12: « Ma lecture » apart from the notice, each person keeping their own in a shared place.
+    this.version(7)
+      .stores({
+        books: 'id, &isbn13, createdAt, *tags',
+        readings: 'bookId',
+      })
+      .upgrade(moveReadings);
     // A new library also starts with its first place.
     this.on('populate', (tx) => addFirstSite(tx));
   }
