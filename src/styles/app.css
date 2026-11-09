@@ -9,9 +9,15 @@
   /* Never wider than the screen, whatever a long title asks for (it is cut by an ellipsis). */
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr) auto auto;
+  /* Nothing may stick out of the app: the whole page would then move under the finger, menu included
+     (seen on the book sheet on 9 November 2026). clip, unlike hidden, cannot be scrolled by the browser. */
+  overflow: clip;
 }
 
+/* A scrolling area is positioned so that what it holds in absolute position (.visually-hidden labels)
+   stays in it: placed against the page instead, the « Nouvelle étiquette » label lay below the window. */
 .screen {
+  position: relative;
   overflow-y: auto;
   padding: calc(var(--space-6) + env(safe-area-inset-top)) var(--space-5) var(--space-5);
 }

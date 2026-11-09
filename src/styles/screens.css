@@ -364,6 +364,7 @@ a.scan__round-button {
 }
 
 .scan__rows {
+  position: relative;
   max-height: min(240px, 28dvh);
   margin: 0;
   padding: 0;
@@ -526,6 +527,7 @@ a.scan__round-button {
 
 /* Screen 2 · End of shelf */
 .recap {
+  position: relative;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -883,6 +885,7 @@ a.scan__round-button {
 
 /* Screen 4 · Series entry (full screen) */
 .entry {
+  position: relative;
   overflow-y: auto;
   padding: calc(var(--space-3) + env(safe-area-inset-top)) var(--space-5) calc(var(--space-6) + env(safe-area-inset-bottom));
   display: flex;

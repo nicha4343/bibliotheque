@@ -85,6 +85,7 @@ Node 24. Installer les dépendances une fois : `npm install`.
 - **Service worker** : le nôtre, `src/sw/sw.ts` (Workbox, mode `injectManifest`, vérifié par `tsconfig.sw.json`) : cache hors connexion et rappels des prêts. Il lit la base sans Dexie (`src/sw/reminders.ts`) et ne doit jamais la créer ni la mettre à niveau. Absent en développement (`npm run dev`) : essayer avec `npm run preview`.
 - **Mises à jour** : jamais de rechargement automatique (il interromprait un scan) ; un bandeau propose « Mettre à jour » ou « Reporter ».
 - **Hauteur de l'application** : `100svh`, jamais `100dvh` ni `100vh` seul (`.app`, `src/styles/app.css`). Après une actualisation, Chrome sur Android donnait à l'application installée un `100dvh` plus haut que sa fenêtre, de la hauteur des boutons du téléphone, et le menu passait dessous ; `100svh` et `innerHeight` restaient justes.
+- **Rien ne dépasse de l'application** (`.app`, `overflow: clip`) et toute zone qui défile est `position: relative` : un élément en position absolue (libellé `.visually-hidden`) placé par rapport à la page allongeait celle-ci, qui glissait alors tout entière sous le doigt, menu compris (9 novembre 2026).
 - **Polices** embarquées (Fontsource), pas de Google Fonts : rendu identique hors connexion.
 - TypeScript reste en 6.x et ESLint en 9.x tant que typescript-eslint et eslint-plugin-jsx-a11y ne prennent pas en charge TypeScript 7 et ESLint 10.
 
