@@ -179,6 +179,13 @@ Demandé par l'utilisateur le 9 novembre 2026 (« commençons le lot 13 ») : tr
 - [ ] Préparation du projet Google Cloud par l'utilisateur : API « Google Picker » activée, autorisation `drive.file` déclarée
 - [ ] Essai sur deux téléphones (propriétaire et invité, deux comptes Google) : connexion avec les deux autorisations, partage de « Malzaure », invitation, ouverture par le sélecteur de Google, consultation hors connexion, mise à jour après un changement, retrait de l'invité
 
+## Lot 14 — Supprimer un lieu, une pièce ou une étagère pleine
+Demandé par l'utilisateur le 9 novembre 2026 (« il faut ajouter cette option avec un gros warning ») : jusque-là, seuls un lieu, une pièce ou une étagère vides se supprimaient.
+- [x] Données : `deleteSite`, `deleteRoom` et `deleteShelf` remplacent les fonctions « …IfEmpty » (`src/places/places.ts`) : exemplaires et leurs prêts, notices sans exemplaire ailleurs (`deleteBooks`, `src/books/books.ts` : couverture, lecture, citations), éléments à compléter et leurs photographies, vérifications d'étagère, codes lus pas encore enregistrés (recherche ou question en attente, qui auraient rangé un exemplaire sur l'étagère disparue) ; session de scan ouverte sur une étagère supprimée terminée. `placeContents` compte ce qui partira. Testé (`places.test.ts`)
+- [x] « Pièces et étagères » : corbeille sur toute étagère et sur tout lieu non partagé ; vide, la question habituelle ; plein, avertissement encadré de rouge (exemplaires, ouvrages qui quittent la bibliothèque, ouvrages qui restent, prêts, ouvrages scannés en attente ; déplacer la pièce pour les conserver), case « Je comprends que cette suppression est définitive », bouton rouge « Supprimer définitivement »
+- [x] Vérifié dans le navigateur de l'ordinateur, à la largeur d'un téléphone : pièce de trois exemplaires (un prêté, un ouvrage rangé aussi ailleurs) supprimée, ouvrage rangé ailleurs conservé, prêt effacé ; avertissement d'un lieu plein ; lieu vide supprimé par la simple question ; corbeille absente d'un lieu partagé
+- [ ] Essai sur téléphone
+
 ## Plus tard
 - Synchronisation entre appareils (piste : Google Drive ; même mécanisme que l'écriture à plusieurs dans un lieu partagé)
 - Photographie d'une étagère entière : lecture des tranches par IA

@@ -39,9 +39,9 @@ export async function deleteQuote(quoteId: Id, database: LibraryDatabase = db): 
   });
 }
 
-/** Every quote of a book and their photographs; called within deleteBook's transaction. */
-export async function deleteBookQuotes(bookId: Id, database: LibraryDatabase): Promise<void> {
-  const quotes = await database.quotes.where('bookId').equals(bookId).toArray();
+/** Every quote of these books and their photographs; called within deleteBooks's transaction. */
+export async function deleteBookQuotes(bookIds: readonly Id[], database: LibraryDatabase): Promise<void> {
+  const quotes = await database.quotes.where('bookId').anyOf([...bookIds]).toArray();
   await database.blobs.bulkDelete(quotes.flatMap((quote) => (quote.photoBlobId ? [quote.photoBlobId] : [])));
   await database.quotes.bulkDelete(quotes.map((quote) => quote.id));
 }

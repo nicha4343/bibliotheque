@@ -3,17 +3,22 @@ import Dexie from 'dexie';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LibraryDatabase } from '../db/db';
 import { newId } from '../db/ids';
-import type { Room, Shelf, Site } from '../db/schema';
-import { newBook, newCopy } from '../scan/session';
+import { addQuote } from '../books/quotes';
+import type { Room, ScanEntry, Shelf, Site } from '../db/schema';
+import { lastShelfId, newBook, newCopy, startSession } from '../scan/session';
 import {
   createRoom,
   createShelf,
   createSite,
-  deleteSiteIfEmpty,
+  deleteRoom,
+  deleteShelf,
+  deleteSite,
   findOrCreateShelf,
   indexPlaces,
+  isEmptyPlace,
   loadPlaces,
   moveRoom,
+  placeContents,
 } from './places';
 
 let database: LibraryDatabase;
@@ -116,25 +121,88 @@ describe('lieux', () => {
     expect(places.byShelfId.get(shelf.id)?.site.name).toBe('Maison');
   });
 
-  it('ne supprime ni le dernier lieu ni un lieu qui contient des ouvrages', async () => {
+  it('ne supprime jamais le dernier lieu ; un autre part avec ses pièces, ses étagères et leurs ouvrages', async () => {
     const [maison] = await database.sites.toArray();
-    expect(await deleteSiteIfEmpty(maison?.id ?? '', database)).toBe(false);
+    expect(await deleteSite(maison?.id ?? '', database)).toBe(false);
 
     const campagne = await createSite('Maison de campagne', database);
-    const { shelf } = await createRoom('Séjour', database, campagne.id);
+    const { room, shelf } = await createRoom('Séjour', database, campagne.id);
+    await createShelf(room.id, 'Haut', database);
     const peste = newBook({ title: 'La Peste', authors: ['Albert Camus'] });
     await database.books.add(peste);
-    const copy = newCopy(peste.id, shelf.id);
-    await database.copies.add(copy);
-    expect(await deleteSiteIfEmpty(campagne.id, database)).toBe(false);
-    expect(await database.sites.count()).toBe(2);
+    await database.copies.add(newCopy(peste.id, shelf.id));
+    expect(await placeContents('site', campagne.id, database)).toEqual({ copies: 1, books: 1, kept: 0, lent: 0, waiting: 0 });
 
-    await database.copies.delete(copy.id);
-    await createShelf((await database.rooms.toArray())[0]?.id ?? '', 'Haut', database);
-    expect(await deleteSiteIfEmpty(campagne.id, database)).toBe(true);
+    expect(await deleteSite(campagne.id, database)).toBe(true);
     expect(await database.sites.count()).toBe(1);
     expect(await database.rooms.count()).toBe(0);
     expect(await database.shelves.count()).toBe(0);
+    expect(await database.books.count()).toBe(0);
+    expect(await deleteSite(maison?.id ?? '', database)).toBe(false);
+  });
+
+  it('supprime une pièce vide avec ses étagères, sans avertissement', async () => {
+    const { room } = await createRoom('Grenier', database);
+    await createShelf(room.id, 'Cartons', database);
+    expect(isEmptyPlace(await placeContents('room', room.id, database))).toBe(true);
+    await deleteRoom(room.id, database);
+    expect(await database.rooms.count()).toBe(0);
+    expect(await database.shelves.count()).toBe(0);
+  });
+
+  it('supprime une étagère pleine avec tout ce qui s’y trouve, et seulement cela', async () => {
+    const { room, shelf } = await createRoom('Salon', database);
+    const other = await createShelf(room.id, 'Haut', database);
+    // Only here: the notice leaves the library with its photograph, reading and quotes.
+    const peste = newBook({ title: 'La Peste', authors: ['Albert Camus'], cover: { source: 'user', blobId: 'photo-peste' } });
+    // Also on the other shelf: the notice stays, with that copy.
+    const etranger = newBook({ title: 'L’Étranger', authors: ['Albert Camus'] });
+    await database.books.bulkAdd([peste, etranger]);
+    await database.blobs.add({ id: 'photo-peste', blob: new Blob(['photo']), createdAt: 0 });
+    await database.readings.add({ bookId: peste.id, status: 'read', rating: 4, review: '', updatedAt: 0 });
+    await addQuote(peste.id, { text: 'Il y a dans les hommes plus de choses à admirer que de choses à mépriser.' }, database);
+    const pesteHere = newCopy(peste.id, shelf.id);
+    const etrangerHere = newCopy(etranger.id, shelf.id);
+    const etrangerThere = newCopy(etranger.id, other.id);
+    await database.copies.bulkAdd([pesteHere, etrangerHere, etrangerThere]);
+    await database.loans.add({ id: 'pret', copyId: etrangerHere.id, borrower: 'Sam', lentAt: 0, dueAt: 1 });
+    await database.blobs.add({ id: 'photo-inconnu', blob: new Blob(['x']), createdAt: 0 });
+    await database.pendingItems.add({
+      id: 'inconnu',
+      kind: 'noBarcode',
+      photoBlobId: 'photo-inconnu',
+      shelfId: shelf.id,
+      sessionId: 'ancienne',
+      createdAt: 0,
+    });
+    const session = await startSession(shelf.id, database);
+    const read = (id: string, shelfId: string): ScanEntry => ({
+      id,
+      sessionId: session.id,
+      shelfId,
+      kind: 'isbn',
+      isbn13: '9782070360024',
+      status: 'searching',
+      createdAt: 0,
+    });
+    await database.scanEntries.bulkAdd([read('ici', shelf.id), read('ailleurs', other.id)]);
+
+    expect(await placeContents('shelf', shelf.id, database)).toEqual({ copies: 2, books: 1, kept: 1, lent: 1, waiting: 2 });
+    await deleteShelf(shelf.id, database);
+
+    expect(await database.shelves.get(shelf.id)).toBeUndefined();
+    expect((await database.books.toArray()).map((book) => book.title)).toEqual(['L’Étranger']);
+    expect((await database.copies.toArray()).map((copy) => copy.id)).toEqual([etrangerThere.id]);
+    expect(await database.readings.count()).toBe(0);
+    expect(await database.quotes.count()).toBe(0);
+    expect(await database.loans.count()).toBe(0);
+    expect(await database.pendingItems.count()).toBe(0);
+    expect(await database.blobs.count()).toBe(0);
+    // The read waiting for the other shelf goes on; the session open on this one is over, and the next
+    // scan asks where to put the books.
+    expect((await database.scanEntries.toArray()).map((entry) => entry.id)).toEqual(['ailleurs']);
+    expect((await database.scanSessions.get(session.id))?.endedAt).toBeDefined();
+    expect(await lastShelfId(database)).toBeUndefined();
   });
 
   it('retrouve ou crée la pièce d’un fichier importé dans le lieu nommé', async () => {

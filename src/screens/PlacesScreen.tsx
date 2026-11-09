@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks';
 import { BackAnchor } from '../components/BackLink';
 import { ConfirmSheet } from '../components/ConfirmSheet';
-import { PencilIcon, PlusIcon, QrIcon, ShareIcon, TrashIcon } from '../components/icons';
+import { PencilIcon, PlusIcon, QrIcon, ShareIcon, TrashIcon, WarningIcon } from '../components/icons';
 import { Screen } from '../components/Screen';
 import { Sheet } from '../components/Sheet';
 import { db } from '../db/db';
@@ -10,26 +10,29 @@ import { useLiveQuery } from '../db/useLiveQuery';
 import {
   createRoom,
   createShelf,
-  deleteRoomIfEmpty,
-  deleteShelfIfEmpty,
-  deleteSiteIfEmpty,
+  deleteRoom,
+  deleteShelf,
+  deleteSite,
+  isEmptyPlace,
   loadPlaces,
   moveRoom,
   noteCreatedShelf,
+  placeContents,
   rememberShownSite,
   renameRoom,
   renameShelf,
   renameSite,
   shownSiteOf,
+  type PlaceContents,
   type PlaceIndex,
 } from '../places/places';
-import { NewSiteSheet, shelvesOfSite, SiteChips } from '../places/SiteChips';
+import { NewSiteSheet, SiteChips } from '../places/SiteChips';
 import { routeHref } from '../router';
 import { fr } from '../textes/fr';
 
 interface PlacesData {
   places: PlaceIndex;
-  /** Copies and items to complete per shelf: a shelf in use cannot be deleted. */
+  /** Copies and items to complete per shelf. */
   usage: Map<Id, number>;
 }
 
@@ -41,10 +44,15 @@ async function loadData(): Promise<PlacesData> {
 }
 
 type Target = { kind: 'site'; site: Site } | { kind: 'room'; room: Room } | { kind: 'shelf'; shelf: Shelf };
-type Dialog = { action: 'rename' | 'delete'; target: Target } | { action: 'newSite' };
+type Dialog =
+  | { action: 'rename'; target: Target }
+  | { action: 'delete'; target: Target; contents: PlaceContents }
+  | { action: 'newSite' };
 
 const nameOf = (target: Target) =>
   target.kind === 'site' ? target.site.name : target.kind === 'room' ? target.room.name : target.shelf.name;
+
+const idOf = (target: Target) => (target.kind === 'site' ? target.site.id : target.kind === 'room' ? target.room.id : target.shelf.id);
 
 const DELETE_TEXTS = {
   site: { title: fr.sites.deleteTitle, text: fr.sites.deleteText },
@@ -52,17 +60,15 @@ const DELETE_TEXTS = {
   shelf: { title: fr.places.deleteShelfTitle, text: fr.places.deleteShelfText },
 };
 
-/** Places, rooms and shelves: create, rename, delete when empty; with several places, one at a time. */
+/** Places, rooms and shelves: create, rename, delete (with their books, after a warning); with several places, one at a time. */
 export function PlacesScreen() {
   const data = useLiveQuery<PlacesData | undefined>(() => loadData(), [], undefined);
   const [dialog, setDialog] = useState<Dialog>();
-  const [message, setMessage] = useState('');
   const [draft, setDraft] = useState('');
   const [siteId, setSiteId] = useState<Id>();
   const places = data?.places;
   const site = places && (places.sites.find((s) => s.id === siteId) ?? shownSiteOf(places));
   const rooms = (site && places.roomsBySite.get(site.id)) ?? [];
-  const siteUsed = Boolean(site && shelvesOfSite(data.places, site.id).some((shelf) => (data.usage.get(shelf.id) ?? 0) > 0));
 
   const close = () => {
     setDialog(undefined);
@@ -71,18 +77,18 @@ export function PlacesScreen() {
   const show = (chosen: Site) => {
     rememberShownSite(chosen.id);
     setSiteId(chosen.id);
-    setMessage('');
+  };
+
+  // What the deletion takes with it is counted first: an empty one asks once, a full one warns.
+  const askDelete = async (target: Target) => {
+    setDialog({ action: 'delete', target, contents: await placeContents(target.kind, idOf(target)) });
   };
 
   const remove = async (target: Target) => {
     close();
-    const done =
-      target.kind === 'site'
-        ? await deleteSiteIfEmpty(target.site.id)
-        : target.kind === 'room'
-          ? await deleteRoomIfEmpty(target.room.id)
-          : await deleteShelfIfEmpty(target.shelf.id);
-    setMessage(done ? '' : target.kind === 'site' ? fr.sites.notEmpty : fr.places.notEmpty);
+    if (target.kind === 'site') await deleteSite(target.site.id);
+    else if (target.kind === 'room') await deleteRoom(target.room.id);
+    else await deleteShelf(target.shelf.id);
   };
 
   // « Étagères » points out the shelf created here when the user comes back to it.
@@ -132,14 +138,12 @@ export function PlacesScreen() {
             <PencilIcon size={16} />
             {fr.sites.rename(site.name)}
           </button>
-          {!siteUsed && !site.share && (
+          {!site.share && (
             <button
               type="button"
               class="icon-button place__delete"
               aria-label={fr.sites.delete(site.name)}
-              onClick={() => {
-                setDialog({ action: 'delete', target: { kind: 'site', site } });
-              }}
+              onClick={() => void askDelete({ kind: 'site', site })}
             >
               <TrashIcon size={18} />
             </button>
@@ -154,10 +158,6 @@ export function PlacesScreen() {
           </a>
         </div>
       )}
-
-      <p class="status-line status-line--warn" role="status">
-        {message}
-      </p>
 
       {places && rooms.length === 0 && <p class="screen__intro">{places.severalSites ? fr.sites.noRooms : fr.places.noRooms}</p>}
 
@@ -182,9 +182,7 @@ export function PlacesScreen() {
                   type="button"
                   class="icon-button place__delete"
                   aria-label={fr.places.deleteRoom(room.name)}
-                  onClick={() => {
-                    setDialog({ action: 'delete', target: { kind: 'room', room } });
-                  }}
+                  onClick={() => void askDelete({ kind: 'room', room })}
                 >
                   <TrashIcon size={18} />
                 </button>
@@ -205,18 +203,14 @@ export function PlacesScreen() {
                         <span>{shelf.name}</span>
                         <span class="place-shelf__count">{fr.places.copies(used)}</span>
                       </button>
-                      {used === 0 && (
-                        <button
-                          type="button"
-                          class="icon-button place__delete"
-                          aria-label={fr.places.deleteShelf(shelf.name)}
-                          onClick={() => {
-                            setDialog({ action: 'delete', target: { kind: 'shelf', shelf } });
-                          }}
-                        >
-                          <TrashIcon size={18} />
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        class="icon-button place__delete"
+                        aria-label={fr.places.deleteShelf(shelf.name)}
+                        onClick={() => void askDelete({ kind: 'shelf', shelf })}
+                      >
+                        <TrashIcon size={18} />
+                      </button>
                     </li>
                   );
                 })}
@@ -281,16 +275,87 @@ export function PlacesScreen() {
         />
       )}
       {dialog?.action === 'rename' && places && <RenameSheet target={dialog.target} places={places} onClose={close} />}
-      {dialog?.action === 'delete' && (
-        <ConfirmSheet
-          title={DELETE_TEXTS[dialog.target.kind].title}
-          text={DELETE_TEXTS[dialog.target.kind].text(nameOf(dialog.target))}
-          confirm={fr.places.deleteConfirm}
+      {dialog?.action === 'delete' && places && (
+        <DeleteSheet
+          target={dialog.target}
+          contents={dialog.contents}
+          severalSites={places.severalSites}
           onConfirm={() => void remove(dialog.target)}
           onClose={close}
         />
       )}
     </Screen>
+  );
+}
+
+interface DeleteSheetProps {
+  target: Target;
+  contents: PlaceContents;
+  severalSites: boolean;
+  onConfirm: () => void;
+  onClose: () => void;
+}
+
+/** An empty place, room or shelf: one question. One that holds books: a warning, to be acknowledged. */
+function DeleteSheet({ target, contents, severalSites, onConfirm, onClose }: DeleteSheetProps) {
+  const [understood, setUnderstood] = useState(false);
+  const name = nameOf(target);
+  if (isEmptyPlace(contents)) {
+    const { title, text } = DELETE_TEXTS[target.kind];
+    return <ConfirmSheet title={title} text={text(name)} confirm={fr.places.deleteConfirm} onConfirm={onConfirm} onClose={onClose} />;
+  }
+
+  const texts = fr.places.full;
+  const { copies, books, kept, lent, waiting } = contents;
+  const details =
+    copies > 0
+      ? [
+          books > 0 && texts.books(books),
+          kept > 0 && texts.kept(kept),
+          lent > 0 && texts.lent(lent),
+          waiting > 0 && texts.alsoWaiting(waiting),
+        ].filter((detail) => typeof detail === 'string')
+      : [];
+  const keep = target.kind === 'site' ? texts.keepSite : target.kind === 'room' && severalSites ? texts.keepRoom : undefined;
+
+  return (
+    <Sheet title={texts.title[target.kind]} onClose={onClose}>
+      <div class="danger-box">
+        <p class="danger-box__headline">
+          <WarningIcon size={24} />
+          <span>{texts.headline(texts.place[target.kind](name), copies > 0 ? texts.copies(copies) : texts.waiting(waiting))}</span>
+        </p>
+        <p class="danger-box__final">{texts.final(copies > 0 ? copies : waiting)}</p>
+        {details.length > 0 && (
+          <ul class="danger-box__list">
+            {details.map((detail) => (
+              <li key={detail}>{detail}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+      {keep && <p class="sheet__hint">{keep}</p>}
+      <label class="danger-check">
+        <input
+          type="checkbox"
+          class="danger-check__box"
+          checked={understood}
+          onChange={(event) => {
+            setUnderstood(event.currentTarget.checked);
+          }}
+        />
+        {texts.understood}
+      </label>
+      <div class="sheet__actions">
+        <button type="button" class="button button--danger-solid button--large" disabled={!understood} onClick={onConfirm}>
+          <TrashIcon size={18} />
+          {texts.confirm}
+        </button>
+        <button type="button" class="button button--secondary button--large" onClick={onClose}>
+          {fr.common.cancel}
+        </button>
+      </div>
+    </Sheet>
   );
 }
 

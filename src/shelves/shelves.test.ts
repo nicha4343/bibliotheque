@@ -5,7 +5,7 @@ import { LibraryDatabase } from '../db/db';
 import { newId } from '../db/ids';
 import type { Book, CheckRead, Copy, Shelf } from '../db/schema';
 import { updateSettings } from '../db/settings';
-import { createRoom, createShelf, deleteShelfIfEmpty } from '../places/places';
+import { createRoom, createShelf, deleteShelf } from '../places/places';
 import { newBook, newCopy, recordIsbn, startSession } from '../scan/session';
 import {
   answerCheck,
@@ -232,8 +232,7 @@ describe('vérification enregistrée', () => {
     expect(second.id).not.toBe(first.id);
     await endCheck(second.id, database);
     expect(await database.shelfChecks.where('shelfId').equals(other.id).count()).toBe(1);
-    await database.copies.where('shelfId').equals(other.id).delete();
-    expect(await deleteShelfIfEmpty(other.id, database)).toBe(true);
+    await deleteShelf(other.id, database);
     expect(await database.shelfChecks.count()).toBe(0);
   });
 });

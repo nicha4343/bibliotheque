@@ -111,14 +111,22 @@ export async function removeCopy(copyId: Id, database: LibraryDatabase = db): Pr
 
 /** « Supprimer de ma bibliothèque »: the notice, its copies and their loans, its cover, its reading and its quotes. */
 export async function deleteBook(bookId: Id, database: LibraryDatabase = db): Promise<void> {
+  await deleteBooks([bookId], database);
+}
+
+/** deleteBook for many notices at once: those of a full place, room or shelf being deleted. */
+export async function deleteBooks(bookIds: readonly Id[], database: LibraryDatabase = db): Promise<void> {
+  if (bookIds.length === 0) return;
+  const ids = [...bookIds];
   const tables = [database.books, database.readings, database.copies, database.loans, database.quotes, database.blobs];
   await database.transaction('rw', tables, async () => {
-    const book = await database.books.get(bookId);
-    if (book?.cover?.blobId) await database.blobs.delete(book.cover.blobId);
-    await deleteLoansOf(await database.copies.where('bookId').equals(bookId).primaryKeys(), database);
-    await database.copies.where('bookId').equals(bookId).delete();
-    await deleteBookQuotes(bookId, database);
-    await database.readings.delete(bookId);
-    await database.books.delete(bookId);
+    const books = await database.books.bulkGet(ids);
+    await database.blobs.bulkDelete(books.flatMap((book) => (book?.cover?.blobId ? [book.cover.blobId] : [])));
+    const copyIds = await database.copies.where('bookId').anyOf(ids).primaryKeys();
+    await deleteLoansOf(copyIds, database);
+    await database.copies.bulkDelete(copyIds);
+    await deleteBookQuotes(ids, database);
+    await database.readings.bulkDelete(ids);
+    await database.books.bulkDelete(ids);
   });
 }

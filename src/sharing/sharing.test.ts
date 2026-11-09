@@ -4,7 +4,7 @@ import { saveClient, UnknownAccount, updateBackupState, DRIVE_FILE_SCOPE, DRIVE_
 import { LibraryDatabase } from '../db/db';
 import { newId } from '../db/ids';
 import type { Book, Room, Shelf, Site } from '../db/schema';
-import { createRoom, createSite, deleteSiteIfEmpty } from '../places/places';
+import { createRoom, createSite, deleteSite } from '../places/places';
 import { newBook, newCopy } from '../scan/session';
 import { cacheCovers, completeOpening, leaveSharedPlace, openInvitation, refreshSharedPlaces, sharedPhotoKey } from './guest';
 import { decodeInvitation, encodeInvitation, type Invitation } from './invitation';
@@ -250,11 +250,11 @@ describe('partage d’un lieu', () => {
   it('ne supprime pas un lieu partagé, et cesse de le partager en supprimant son fichier', async () => {
     await owner.copies.clear();
     await sharePlace(country.id, owner, keep);
-    expect(await deleteSiteIfEmpty(country.id, owner)).toBe(false);
+    expect(await deleteSite(country.id, owner)).toBe(false);
     await stopSharing(country.id, owner);
     expect(drive.files.size).toBe(0);
     expect((await owner.sites.get(country.id))?.share).toBeUndefined();
-    expect(await deleteSiteIfEmpty(country.id, owner)).toBe(true);
+    expect(await deleteSite(country.id, owner)).toBe(true);
   });
 });
 

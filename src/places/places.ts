@@ -1,6 +1,10 @@
+import { deleteBooks } from '../books/books';
 import { db, type LibraryDatabase } from '../db/db';
 import { newId } from '../db/ids';
-import type { Id, Room, Shelf, Site } from '../db/schema';
+import type { Copy, Id, Room, ScanEntry, Shelf, Site } from '../db/schema';
+import { isActive } from '../loans/dates';
+import { deleteLoansOf } from '../loans/loans';
+import { endSession } from '../scan/session';
 import { fr } from '../textes/fr';
 
 /** Random token printed in a shelf's QR code (URL-safe, 16 characters). */
@@ -137,55 +141,129 @@ export async function renameShelf(id: Id, name: string, database: LibraryDatabas
   if (name.trim()) await database.shelves.update(id, { name: name.trim() });
 }
 
-/** Removes a shelf only when no copy, pending item or read refers to it; its checks go with it. */
-export async function deleteShelfIfEmpty(id: Id, database: LibraryDatabase = db): Promise<boolean> {
-  return database.transaction('rw', [database.shelves, database.copies, database.pendingItems, database.shelfChecks], async () => {
-    const used =
-      (await database.copies.where('shelfId').equals(id).count()) +
-      (await database.pendingItems.where('shelfId').equals(id).count());
-    if (used > 0) return false;
-    await database.shelfChecks.where('shelfId').equals(id).delete();
-    await database.shelves.delete(id);
-    return true;
+/** A place, a room or a shelf, as deleted from « Pièces et étagères ». */
+export type PlaceKind = 'site' | 'room' | 'shelf';
+
+/** What deleting a place, a room or a shelf takes with it, told before (a warning when it is not empty). */
+export interface PlaceContents {
+  /** Copies on its shelves. */
+  copies: number;
+  /** Notices whose every copy is there: they leave the library. */
+  books: number;
+  /** Notices that keep a copy elsewhere. */
+  kept: number;
+  /** Copies lent at the moment: their loans go with them. */
+  lent: number;
+  /** Read but not recorded yet: items to complete, codes being searched or awaiting an answer. */
+  waiting: number;
+}
+
+export const isEmptyPlace = (contents: PlaceContents): boolean => contents.copies + contents.waiting === 0;
+
+async function shelfIdsOf(kind: PlaceKind, id: Id, database: LibraryDatabase): Promise<Id[]> {
+  if (kind === 'shelf') return [id];
+  const roomIds = kind === 'room' ? [id] : await database.rooms.where('siteId').equals(id).primaryKeys();
+  return database.shelves.where('roomId').anyOf(roomIds).primaryKeys();
+}
+
+// Codes read on these shelves and not recorded yet: their search, or the answer awaited, would put a copy there.
+async function waitingEntries(shelfIds: readonly Id[], database: LibraryDatabase): Promise<ScanEntry[]> {
+  const shelves = new Set(shelfIds);
+  const entries = await database.scanEntries.where('status').anyOf(['searching', 'asking']).toArray();
+  return entries.filter((entry) => shelves.has(entry.shelfId));
+}
+
+/** The copies of these shelves, and the notices among theirs that have no copy anywhere else. */
+async function copiesOn(shelfIds: readonly Id[], database: LibraryDatabase): Promise<{ copies: Copy[]; leaving: Set<Id> }> {
+  const copies = await database.copies.where('shelfId').anyOf([...shelfIds]).toArray();
+  const here = new Set(copies.map((copy) => copy.id));
+  const leaving = new Set(copies.map((copy) => copy.bookId));
+  const all = await database.copies.where('bookId').anyOf([...leaving]).toArray();
+  for (const copy of all) if (!here.has(copy.id)) leaving.delete(copy.bookId);
+  return { copies, leaving };
+}
+
+export async function placeContents(kind: PlaceKind, id: Id, database: LibraryDatabase = db): Promise<PlaceContents> {
+  const tables = [database.rooms, database.shelves, database.copies, database.loans, database.pendingItems, database.scanEntries];
+  return database.transaction('r', tables, async () => {
+    const shelfIds = await shelfIdsOf(kind, id, database);
+    const { copies, leaving } = await copiesOn(shelfIds, database);
+    const loans = await database.loans.where('copyId').anyOf(copies.map((copy) => copy.id)).toArray();
+    return {
+      copies: copies.length,
+      books: leaving.size,
+      kept: new Set(copies.map((copy) => copy.bookId)).size - leaving.size,
+      lent: new Set(loans.filter(isActive).map((loan) => loan.copyId)).size,
+      waiting:
+        (await database.pendingItems.where('shelfId').anyOf(shelfIds).count()) + (await waitingEntries(shelfIds, database)).length,
+    };
   });
 }
 
-/** Removes the rooms and their shelves when none of them holds a copy or an item to complete. */
-async function deleteRoomsIfEmpty(roomIds: readonly Id[], database: LibraryDatabase): Promise<boolean> {
-  const shelfIds = (await database.shelves.where('roomId').anyOf(roomIds).toArray()).map((shelf) => shelf.id);
-  const used =
-    (await database.copies.where('shelfId').anyOf(shelfIds).count()) +
-    (await database.pendingItems.where('shelfId').anyOf(shelfIds).count());
-  if (used > 0) return false;
-  await database.shelfChecks.where('shelfId').anyOf(shelfIds).delete();
-  await database.shelves.bulkDelete(shelfIds);
-  await database.rooms.bulkDelete([...roomIds]);
-  return true;
+const deletionTables = (database: LibraryDatabase) => [
+  database.sites,
+  database.rooms,
+  database.shelves,
+  database.books,
+  database.readings,
+  database.copies,
+  database.loans,
+  database.quotes,
+  database.blobs,
+  database.pendingItems,
+  database.scanSessions,
+  database.scanEntries,
+  database.shelfChecks,
+];
+
+/**
+ * Removes shelves with everything on them: their copies and their loans (a notice whose every copy was
+ * there leaves the library, see deleteBooks), items to complete, checks, codes read but not recorded.
+ * A scan session open on one of them ends: the next scan asks where to put the books.
+ */
+async function deleteShelves(shelfIds: readonly Id[], database: LibraryDatabase): Promise<void> {
+  const ids = [...shelfIds];
+  const { copies, leaving } = await copiesOn(ids, database);
+  await deleteBooks([...leaving], database);
+  const others = copies.filter((copy) => !leaving.has(copy.bookId)).map((copy) => copy.id);
+  await deleteLoansOf(others, database);
+  await database.copies.bulkDelete(others);
+
+  const items = await database.pendingItems.where('shelfId').anyOf(ids).toArray();
+  await database.blobs.bulkDelete(items.flatMap((item) => (item.photoBlobId ? [item.photoBlobId] : [])));
+  await database.pendingItems.bulkDelete(items.map((item) => item.id));
+  await database.scanEntries.bulkDelete((await waitingEntries(ids, database)).map((entry) => entry.id));
+  for (const session of await database.scanSessions.where('shelfId').anyOf(ids).toArray()) {
+    if (session.endedAt === undefined) await endSession(session.id, database);
+  }
+  await database.shelfChecks.where('shelfId').anyOf(ids).delete();
+  await database.shelves.bulkDelete(ids);
 }
 
-export async function deleteRoomIfEmpty(id: Id, database: LibraryDatabase = db): Promise<boolean> {
-  return database.transaction(
-    'rw',
-    [database.rooms, database.shelves, database.copies, database.pendingItems, database.shelfChecks],
-    () => deleteRoomsIfEmpty([id], database),
-  );
+/** Removes a shelf and everything on it (deleteShelves); its QR label is no longer recognised. */
+export async function deleteShelf(id: Id, database: LibraryDatabase = db): Promise<void> {
+  await database.transaction('rw', deletionTables(database), () => deleteShelves([id], database));
 }
 
-/** Removes a place and its empty rooms, never the last place nor one that still holds books. */
-export async function deleteSiteIfEmpty(id: Id, database: LibraryDatabase = db): Promise<boolean> {
-  return database.transaction(
-    'rw',
-    [database.sites, database.rooms, database.shelves, database.copies, database.pendingItems, database.shelfChecks],
-    async () => {
-      if ((await database.sites.count()) < 2) return false;
-      // Lot 13: a shared place stops being shared first, its Drive file going with it.
-      if ((await database.sites.get(id))?.share) return false;
-      const roomIds = (await database.rooms.where('siteId').equals(id).toArray()).map((room) => room.id);
-      if (!(await deleteRoomsIfEmpty(roomIds, database))) return false;
-      await database.sites.delete(id);
-      return true;
-    },
-  );
+/** Removes a room, its shelves and everything on them. */
+export async function deleteRoom(id: Id, database: LibraryDatabase = db): Promise<void> {
+  await database.transaction('rw', deletionTables(database), async () => {
+    await deleteShelves(await shelfIdsOf('room', id, database), database);
+    await database.rooms.delete(id);
+  });
+}
+
+/** Removes a place, its rooms, their shelves and everything on them; never the last place. */
+export async function deleteSite(id: Id, database: LibraryDatabase = db): Promise<boolean> {
+  return database.transaction('rw', deletionTables(database), async () => {
+    if ((await database.sites.count()) < 2) return false;
+    // Lot 13: a shared place stops being shared first, its Drive file going with it.
+    if ((await database.sites.get(id))?.share) return false;
+    await deleteShelves(await shelfIdsOf('site', id, database), database);
+    await database.rooms.where('siteId').equals(id).delete();
+    await database.sites.delete(id);
+    return true;
+  });
 }
 
 /** The shelf after this one in the same room, created (« Étagère N ») when it is the last. */

@@ -9,6 +9,8 @@
   --color-pending-soft: #fdf0e1;
   --color-pending-text: #8a4207;
   --color-danger: #b42318;
+  --color-danger-soft: #fdeceb; /* warning before deleting books */
+  --color-danger-text: #8f1d14;
   --color-text: #15171c;
   --color-text-muted: #5a606b;
   --color-placeholder: #8a909b;

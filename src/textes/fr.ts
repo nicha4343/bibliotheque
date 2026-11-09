@@ -294,7 +294,7 @@ export const fr = {
     firstRoomHint: 'Commencez par créer une pièce, par exemple « Salon » : sa première étagère est créée avec elle.',
     screenTitle: 'Pièces et étagères',
     back: 'Paramètres',
-    intro: 'Touchez un nom pour le modifier. Une étagère ou une pièce ne peut être supprimée que si elle ne contient aucun ouvrage.',
+    intro: 'Touchez un nom pour le modifier.',
     copies: (value: number) => (value === 0 ? 'Vide' : count(value, 'exemplaire', 'exemplaires')),
     rename: (name: string) => `Renommer « ${name} »`,
     renameTitle: 'Renommer',
@@ -306,7 +306,46 @@ export const fr = {
     deleteShelfTitle: 'Supprimer cette étagère ?',
     deleteShelfText: (name: string) => `L’étagère « ${name} » sera supprimée ; son étiquette QR ne sera plus reconnue.`,
     deleteConfirm: 'Supprimer',
-    notEmpty: 'Elle contient encore des ouvrages : déplacez-les d’abord.',
+    /** Lot 14: a place, a room or a shelf deleted with the books it still holds, after a warning. */
+    full: {
+      title: {
+        site: 'Supprimer ce lieu et ses ouvrages ?',
+        room: 'Supprimer cette pièce et ses ouvrages ?',
+        shelf: 'Supprimer cette étagère et ses ouvrages ?',
+      },
+      place: {
+        site: (name: string) => `le lieu « ${name} »`,
+        room: (name: string) => `la pièce « ${name} »`,
+        shelf: (name: string) => `l’étagère « ${name} »`,
+      },
+      headline: (place: string, what: string) => `Attention : ${place} contient ${what}.`,
+      copies: (value: number) => count(value, 'exemplaire', 'exemplaires'),
+      waiting: (value: number) => count(value, 'ouvrage scanné pas encore enregistré', 'ouvrages scannés pas encore enregistrés'),
+      final: (value: number) =>
+        value < 2
+          ? 'Il sera supprimé définitivement, sans annulation possible.'
+          : 'Tous seront supprimés définitivement, sans annulation possible.',
+      books: (value: number) =>
+        value < 2
+          ? `${count(value, 'ouvrage', 'ouvrages')} quittera votre bibliothèque, avec ses photographies, citations, notes et avis.`
+          : `${count(value, 'ouvrage', 'ouvrages')} quitteront votre bibliothèque, avec leurs photographies, citations, notes et avis.`,
+      kept: (value: number) =>
+        value < 2
+          ? `${count(value, 'ouvrage', 'ouvrages')}, rangé aussi ailleurs, restera dans votre bibliothèque.`
+          : `${count(value, 'ouvrage', 'ouvrages')}, rangés aussi ailleurs, resteront dans votre bibliothèque.`,
+      lent: (value: number) =>
+        value < 2
+          ? `${count(value, 'exemplaire', 'exemplaires')} est prêté en ce moment : son prêt sera effacé.`
+          : `${count(value, 'exemplaire', 'exemplaires')} sont prêtés en ce moment : leurs prêts seront effacés.`,
+      alsoWaiting: (value: number) =>
+        value < 2
+          ? `${count(value, 'ouvrage', 'ouvrages')} scanné pas encore enregistré (à compléter ou en cours de recherche) sera aussi supprimé.`
+          : `${count(value, 'ouvrage', 'ouvrages')} scannés pas encore enregistrés (à compléter ou en cours de recherche) seront aussi supprimés.`,
+      keepRoom: 'Pour conserver ces ouvrages, déplacez plutôt la pièce vers un autre lieu : touchez son nom.',
+      keepSite: 'Pour conserver ces ouvrages, déplacez d’abord ses pièces vers un autre lieu : touchez le nom de chacune.',
+      understood: 'Je comprends que cette suppression est définitive',
+      confirm: 'Supprimer définitivement',
+    },
     noRooms: 'Aucune pièce pour le moment. Créez la première ci-dessous.',
   },
 
@@ -328,7 +367,6 @@ export const fr = {
     delete: (name: string) => `Supprimer le lieu « ${name} »`,
     deleteTitle: 'Supprimer ce lieu ?',
     deleteText: (name: string) => `Le lieu « ${name} » et ses pièces vides seront supprimés.`,
-    notEmpty: 'Il contient encore des ouvrages : déplacez-les d’abord.',
     noRooms: 'Aucune pièce dans ce lieu pour le moment. Créez la première ci-dessous.',
     noShelves: 'Aucune pièce dans ce lieu pour le moment. Créez-en une dans l’écran',
     newRoomIn: (site: string) => `Nouvelle pièce dans ${site}`,

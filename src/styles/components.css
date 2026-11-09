@@ -81,6 +81,17 @@
   color: var(--color-danger);
 }
 
+/* Irreversible deletion of books, once the warning is acknowledged */
+.button--danger-solid {
+  border: 0;
+  background: var(--color-danger);
+  color: var(--color-on-accent);
+}
+
+.button--danger-solid:hover:not(:disabled) {
+  background: var(--color-danger-text);
+}
+
 .text-button {
   min-height: var(--touch-target);
   padding: 0 var(--space-1);
@@ -812,4 +823,59 @@ button.link-row {
 button.link-row:disabled {
   cursor: default;
   opacity: 0.6;
+}
+
+/* Warning before deleting a place, a room or a shelf that still holds books */
+.danger-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1.5px solid var(--color-danger);
+  border-radius: var(--radius-card);
+  background: var(--color-danger-soft);
+  color: var(--color-danger-text);
+  font-size: var(--text-body);
+  line-height: 1.45;
+}
+
+.danger-box__headline {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.danger-box__headline svg {
+  flex-shrink: 0;
+  color: var(--color-danger);
+}
+
+.danger-box__final {
+  font-weight: 700;
+}
+
+.danger-box__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-left: var(--space-5);
+  color: var(--color-text);
+}
+
+.danger-check {
+  min-height: var(--touch-target);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-body);
+  font-weight: 600;
+}
+
+.danger-check__box {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  accent-color: var(--color-danger);
 }
