@@ -47,6 +47,31 @@ export class RepeatFilter {
   }
 }
 
+/**
+ * A barcode counts only once decoded the same on two frames close in time: a blurred frame may give a
+ * wrong code whose check digit still holds, two wrong digits cancelling out (« 978-2-543861706 » read
+ * for « 978-2-383861706 », seen on 9 November 2026), and the book would be declared unknown. The
+ * frames being read ten times a second, the confirmation costs about a tenth of a second. Every
+ * sighting after the confirmation counts too, as before (see RepeatFilter).
+ */
+export class ReadConfirmation {
+  private readonly seen = new Map<string, { count: number; at: number }>();
+  private readonly needed: number;
+  private readonly windowMs: number;
+
+  constructor(needed = 2, windowMs = 1000) {
+    this.needed = needed;
+    this.windowMs = windowMs;
+  }
+
+  confirm(code: string, now: number): boolean {
+    for (const [other, seen] of this.seen) if (now - seen.at > this.windowMs) this.seen.delete(other);
+    const count = (this.seen.get(code)?.count ?? 0) + 1;
+    this.seen.set(code, { count, at: now });
+    return count >= this.needed;
+  }
+}
+
 export interface Size {
   width: number;
   height: number;

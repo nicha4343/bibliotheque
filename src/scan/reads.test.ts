@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aimAreaInVideo, classifyCode, isInAimArea, RepeatFilter, shelfQrContent } from './reads';
+import { aimAreaInVideo, classifyCode, isInAimArea, ReadConfirmation, RepeatFilter, shelfQrContent } from './reads';
 
 describe('classifyCode', () => {
   it('reconnaît un ISBN', () => {
@@ -20,6 +20,29 @@ describe('classifyCode', () => {
       kind: 'shelf',
       token: 'Ab3_x-9Zk2',
     });
+  });
+});
+
+describe('ReadConfirmation', () => {
+  it('ne retient un code qu’une fois lu deux fois de suite, puis à chaque lecture', () => {
+    const confirmation = new ReadConfirmation();
+    expect(confirmation.confirm('9782383861706', 0)).toBe(false);
+    expect(confirmation.confirm('9782383861706', 100)).toBe(true);
+    expect(confirmation.confirm('9782383861706', 200)).toBe(true);
+  });
+
+  it('écarte un code mal lu sur une seule image', () => {
+    const confirmation = new ReadConfirmation();
+    expect(confirmation.confirm('9782383861706', 0)).toBe(false);
+    expect(confirmation.confirm('9782543861706', 100)).toBe(false);
+    expect(confirmation.confirm('9782383861706', 200)).toBe(true);
+  });
+
+  it('oublie une lecture trop ancienne', () => {
+    const confirmation = new ReadConfirmation();
+    expect(confirmation.confirm('A', 0)).toBe(false);
+    expect(confirmation.confirm('A', 1500)).toBe(false);
+    expect(confirmation.confirm('A', 1600)).toBe(true);
   });
 });
 

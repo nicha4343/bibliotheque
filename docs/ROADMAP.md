@@ -193,7 +193,9 @@ Signalé par l'utilisateur le 9 novembre 2026 (« beaucoup d'ISBN n'ont pas ét�
 - [x] BnF et Open Library redemandées après un refus momentané, comme Google Books ; texte de la clé Google Books : « Indispensable »
 - [x] L'utilisateur a une clé Google Books, la même sur ses deux téléphones (9 novembre 2026) : leur quota du jour est commun
 - [x] Réparation : un ISBN n'est plus déclaré inconnu parce qu'une source s'est tue. Refus de Google Books distingués (rafale ou quota du jour, `googleBooksPause`, `nextPacificMidnight` dans `src/metadata/search.ts`) ; quota du jour épuisé : Google Books n'est plus interrogé avant minuit, heure du Pacifique, ni par la recherche par le titre ; sources muettes et heure de la prochaine recherche notées sur l'élément (`silentSources`, `retryAt`, `retries`, champs non indexés, sans nouvelle version du schéma ; `src/pending/retrySchedule.ts`) ; recherche reprise d'elle-même (`src/pending/autoRetry.ts`, jamais pendant un scan) ; carte « Recherche à reprendre » et textes honnêtes (« À compléter », saisie, scan). Testé (`autoRetry.test.ts`, `lookups.test.ts`, `metadata.test.ts`) ; cartes vérifiées dans le navigateur, avec et sans clé
-- [ ] Essai sur téléphone : « À compléter » (cartes, recherches reprises d'elles-mêmes), scan d'ouvrages récents d'un petit éditeur
+- [x] Les 13 « ISBN inconnus » de l'utilisateur, après la réparation : 11 portent huit titres récents, parus pour la plupart en octobre 2026, que nul catalogue ne connaît encore (BnF, Google Livres, Open Library), dont un lu quatre fois ; 2 sont des codes mal lus par le scanner, à la clé de contrôle pourtant valide (deux chiffres faux qui se compensent)
+- [x] Lecture confirmée : un code-barres ne compte qu'une fois lu à l'identique sur deux images (`ReadConfirmation`, `src/scan/reads.ts`, employée par `useCodeDetection`) ; testé
+- [ ] Essai sur téléphone : « À compléter » (cartes, recherches reprises d'elles-mêmes), scan d'ouvrages récents d'un petit éditeur, rapidité du scan avec la lecture confirmée
 
 ## Plus tard
 - Synchronisation entre appareils (piste : Google Drive ; même mécanisme que l'écriture à plusieurs dans un lieu partagé)

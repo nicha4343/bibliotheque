@@ -16,7 +16,7 @@ import {
   type CameraError,
 } from './camera';
 import { createDetector, type CodeDetector, type DetectedCode } from './detector';
-import { isInAimArea } from './reads';
+import { isInAimArea, ReadConfirmation } from './reads';
 
 /** Why the camera shown changed: the user's button, or a camera filming in black and white left. */
 export type CameraChange = 'user' | 'monochrome';
@@ -187,7 +187,8 @@ const DETECTION_INTERVAL_MS = 100;
 
 /**
  * Reads the codes visible in the aiming frame, about ten times per second, and hands each one to
- * onCode. Returns false when no detector could be started.
+ * onCode; a barcode only once read the same on two frames (ReadConfirmation), a QR code at once (its
+ * error correction leaves no wrong reading). Returns false when no detector could be started.
  */
 export function useCodeDetection(
   enabled: boolean,
@@ -209,6 +210,7 @@ export function useCodeDetection(
     // Read through a function: the flag changes while detect() awaits.
     const isStopped = () => stopped;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    const confirmation = new ReadConfirmation();
     detectorRef.current ??= createDetector();
     detectorRef.current
       .then((detector) => {
@@ -222,8 +224,10 @@ export function useCodeDetection(
               const codes = await detector.detect(video);
               const videoSize = { width: video.videoWidth, height: video.videoHeight };
               const aimRect = { x: aim.left - view.left, y: aim.top - view.top, width: aim.width, height: aim.height };
+              const now = Date.now();
               for (const code of codes) {
-                if (!isStopped() && isInAimArea(code.boundingBox, videoSize, view, aimRect)) onCodeRef.current(code);
+                if (isStopped() || !isInAimArea(code.boundingBox, videoSize, view, aimRect)) continue;
+                if (code.format === 'qr_code' || confirmation.confirm(code.rawValue, now)) onCodeRef.current(code);
               }
             } catch {
               // A frame that cannot be read (camera starting): try the next one.
