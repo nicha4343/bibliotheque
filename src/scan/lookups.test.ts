@@ -4,6 +4,7 @@ import { LibraryDatabase } from '../db/db';
 import { newId } from '../db/ids';
 import bnfXml from '../metadata/fixtures/bnf.xml?raw';
 import { createRoom } from '../places/places';
+import { googleBooksPause, setSourcePacing } from '../metadata/search';
 import { findMetadata, processEntry } from './lookups';
 import { recordIsbn, startSession } from './session';
 
@@ -65,6 +66,43 @@ describe('ISBN introuvable pendant qu’une source se tait', () => {
 
     expect(await processEntry((await database.scanEntries.get(entry.id)) ?? entry, database)).toBe(true);
     expect((await database.scanEntries.get(entry.id))?.status).toBe('pending');
-    expect(await database.pendingItems.count()).toBe(1);
+    // Not declared unknown: Google Books did not answer, it is searched again by itself.
+    const item = await database.pendingItems.toCollection().first();
+    expect(item?.silentSources).toEqual(['googleBooks']);
+    expect(item?.retryAt).toBeGreaterThan(Date.now());
+  });
+
+  it('est mis de côté dès la première recherche quand Google Books a épuisé son quota du jour', async () => {
+    vi.stubGlobal('fetch', (input: string | URL | Request) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      if (url.includes('googleapis')) return Promise.resolve(new Response("limit 'Queries per day'", { status: 429 }));
+      return Promise.resolve(new Response(url.includes('bnf') ? '<searchRetrieveResponse/>' : '{}'));
+    });
+    const { shelf } = await createRoom('Salon', database);
+    const session = await startSession(shelf.id, database);
+    const entry = await recordIsbn(session, ISBN, { flagOwnedBooks: true }, database);
+    try {
+      expect(await processEntry(entry, database)).toBe(true);
+      const item = await database.pendingItems.toCollection().first();
+      expect(item?.silentSources).toEqual(['googleBooks']);
+      // Searched again only after Google's next midnight.
+      expect(item?.retryAt).toBeGreaterThan(googleBooksPause()?.until ?? Infinity);
+    } finally {
+      setSourcePacing({ spacingMs: 0, retryDelaysMs: [0, 0] });
+    }
+  });
+
+  it('est déclaré inconnu quand toutes les sources ont répondu', async () => {
+    vi.stubGlobal('fetch', (input: string | URL | Request) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      return Promise.resolve(new Response(url.includes('bnf') ? '<searchRetrieveResponse/>' : '{}'));
+    });
+    const { shelf } = await createRoom('Salon', database);
+    const session = await startSession(shelf.id, database);
+    const entry = await recordIsbn(session, ISBN, { flagOwnedBooks: true }, database);
+    expect(await processEntry(entry, database)).toBe(true);
+    const item = await database.pendingItems.toCollection().first();
+    expect(item?.silentSources).toBeUndefined();
+    expect(item?.retryAt).toBeUndefined();
   });
 });

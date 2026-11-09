@@ -1,7 +1,7 @@
 import type { MetadataProvider } from '../db/schema';
 import { toIsbn13 } from '../isbn/isbn';
 import { foldText } from '../library/filter';
-import { waitGoogleBooksTurn } from './search';
+import { googleBooksPause, waitGoogleBooksTurn } from './search';
 import { bnfRecord, googleBooksVolume, unimarcRecords, unimarcValue, type SourceRecord } from './sources';
 
 // Search of a book by its title and author, dictated or typed (screen 4, lot 6): an item without a
@@ -165,6 +165,8 @@ export async function searchEditions(query: string, options: EditionSearchOption
   const ask = async (provider: MetadataProvider): Promise<FoundEdition[] | undefined> => {
     try {
       if (provider === 'googleBooks') {
+        // Refused until its quota starts again (see search.ts).
+        if (googleBooksPause()) return undefined;
         await waitGoogleBooksTurn(signal);
         const response = await fetchImpl(googleBooksSearchUrl(query, options.googleBooksKey), { signal });
         return response.ok ? parseGoogleBooksResults(await response.json()) : undefined;

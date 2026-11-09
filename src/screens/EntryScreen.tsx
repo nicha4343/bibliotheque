@@ -168,7 +168,9 @@ export function EntryScreen({ itemId }: { itemId?: string | undefined }) {
   const caption = tookPhoto
     ? fr.entry.takenHere
     : item?.kind === 'unknownIsbn'
-      ? fr.entry.unknownCaption
+      ? item.silentSources?.length
+        ? fr.entry.waitingCaption
+        : fr.entry.unknownCaption
       : item?.photoBlobId
         ? fr.entry.photoCaption
         : fr.entry.noPhotoCaption;

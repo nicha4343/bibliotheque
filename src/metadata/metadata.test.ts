@@ -5,7 +5,7 @@ import googleBooksJson from './fixtures/googleBooks.json';
 import openLibraryJson from './fixtures/openLibrary.json';
 import { bookshopCandidates } from './covers';
 import { completeBook, mergeRecords } from './merge';
-import { SearchUnavailable, searchMetadata, setSourcePacing } from './search';
+import { googleBooksPause, nextPacificMidnight, SearchUnavailable, searchMetadata, setSourcePacing } from './search';
 import { parseBnf, parseGoogleBooks, parseOpenLibrary, sourceUrl, type SourceRecord } from './sources';
 
 const ISBN = '9782070360420';
@@ -214,6 +214,36 @@ describe('recherche simultanée', () => {
     expect(calls).toBe(2);
     expect(metadata.providers).toEqual(['bnf']);
     expect(metadata.incomplete).toBeUndefined();
+  });
+
+  it('cesse d’interroger Google Books jusqu’au renouvellement de son quota du jour', async () => {
+    const daily = JSON.stringify({ error: { code: 429, message: "Quota exceeded for quota metric 'Queries' and limit 'Queries per day'" } });
+    let calls = 0;
+    const options = {
+      sources: allSources,
+      googleBooksKey: 'clé',
+      fetchImpl: fakeFetch((host) => {
+        if (host !== 'googleapis') return new Response(host === 'bnf' ? '<x/>' : '{}');
+        calls += 1;
+        return new Response(daily, { status: 429 });
+      }),
+    };
+    try {
+      const metadata = await searchMetadata(ISBN, options);
+      expect(calls).toBe(1);
+      expect(metadata.silent).toEqual(['googleBooks']);
+      expect(googleBooksPause()).toMatchObject({ keyless: false });
+      expect(googleBooksPause()?.until).toBeGreaterThan(Date.now());
+      await searchMetadata(ISBN, options);
+      expect(calls).toBe(1);
+    } finally {
+      setSourcePacing({ spacingMs: 0, retryDelaysMs: [0, 0] });
+    }
+  });
+
+  it('situe le renouvellement des quotas de Google à minuit, heure du Pacifique', () => {
+    // 9 November 2026, 20 h in Paris (11 h in California): the next day starts at 9 h in Paris.
+    expect(nextPacificMidnight(Date.UTC(2026, 10, 9, 19, 0, 0))).toBe(Date.UTC(2026, 10, 10, 8, 0, 0));
   });
 
   it('ne redemande pas avec une clé refusée', async () => {

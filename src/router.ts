@@ -122,6 +122,11 @@ export function parseHash(hash: string): Route {
   return DEFAULT_ROUTE;
 }
 
+/** Screens reading barcodes: the work done in the background waits, so as not to slow them down. */
+const SCANNING_ROUTES: ReadonlySet<RouteId> = new Set<RouteId>(['scan', 'check', 'lend', 'giveBack', 'bookshop']);
+
+export const isScanning = (): boolean => SCANNING_ROUTES.has(parseHash(window.location.hash).id);
+
 export function navigate(id: RouteId, param?: string, detail?: string): void {
   window.location.hash = routeHref(id, param, detail);
 }

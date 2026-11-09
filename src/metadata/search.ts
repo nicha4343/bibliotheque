@@ -17,12 +17,47 @@ type Answer = { status: 'found'; record: SourceRecord } | { status: 'notFound' }
 
 type SourceOptions = { signal: AbortSignal; fetchImpl: typeof fetch; googleBooksKey: string | undefined };
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Google's daily quotas start again at midnight, Pacific time (9 h in Paris). */
+export function nextPacificMidnight(now: number): number {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', hourCycle: 'h23', hour: 'numeric', minute: 'numeric', second: 'numeric' })
+      .formatToParts(now)
+      .map((part) => [part.type, part.value]),
+  );
+  const elapsed = (Number(parts.hour) * 3600 + Number(parts.minute) * 60 + Number(parts.second)) * 1000 + (now % 1000);
+  return now - elapsed + DAY_MS;
+}
+
+/**
+ * Google Books refuses everything until its quota starts again: its daily quota is spent (shared
+ * by every device using the key), or there is no key, the quota of
+ * requests without a key being nil (seen on 9 November 2026). It is then not asked again before.
+ */
+export interface GoogleBooksPause {
+  until: number;
+  /** No key: the next day will be refused as well. */
+  keyless: boolean;
+}
+
+let googleBooksDayOver: GoogleBooksPause | undefined;
+
+export const googleBooksPause = (now = Date.now()): GoogleBooksPause | undefined =>
+  googleBooksDayOver && googleBooksDayOver.until > now ? googleBooksDayOver : undefined;
+
 async function askSource(provider: MetadataProvider, isbn13: string, options: SourceOptions): Promise<Answer> {
   try {
     const response = await options.fetchImpl(sourceUrl(provider, isbn13, options.googleBooksKey), {
       signal: options.signal,
     });
-    // 429: Google Books quota exhausted, or a burst refused; not a sign that the book is unknown.
+    // « Queries per day » (the quota of the day) and « Queries per minute per user » (a burst) both answer
+    // 429 « rateLimitExceeded »: only the message tells them apart.
+    if (provider === 'googleBooks' && response.status === 429 && /per day/i.test(await response.text())) {
+      googleBooksDayOver = { until: nextPacificMidnight(Date.now()), keyless: !options.googleBooksKey?.trim() };
+      return { status: 'failed', retry: false };
+    }
+    // 429: a burst refused; not a sign that the book is unknown.
     if (!response.ok) return { status: 'failed', retry: response.status === 429 || response.status >= 500 };
     const record =
       provider === 'bnf'
@@ -50,10 +85,11 @@ export interface SourcePacing {
 let pacing: SourcePacing = { spacingMs: 1000, retryDelaysMs: [1500, 3500] };
 let googleBooksFreeAt = 0;
 
-/** Unit tests do without the pauses. */
+/** Unit tests do without the pauses, and start with a Google Books that answers. */
 export function setSourcePacing(value: SourcePacing): void {
   pacing = value;
   googleBooksFreeAt = 0;
+  googleBooksDayOver = undefined;
 }
 
 /** Waits, unless the search is abandoned meanwhile. */
@@ -85,6 +121,7 @@ export async function waitGoogleBooksTurn(signal: AbortSignal): Promise<void> {
 
 /** A source, asked again while it refuses for a moment; Google Books waits for its turn. */
 async function askAgain(provider: MetadataProvider, isbn13: string, options: SourceOptions): Promise<Answer> {
+  if (provider === 'googleBooks' && googleBooksPause()) return { status: 'failed', retry: false };
   for (let attempt = 0; ; attempt += 1) {
     if (provider === 'googleBooks') await waitGoogleBooksTurn(options.signal);
     const answer = await askSource(provider, isbn13, options);
@@ -116,7 +153,7 @@ export async function searchMetadata(isbn13: string, options: SearchOptions): Pr
     controller.abort();
   }, options.timeoutMs ?? SEARCH_TIMEOUT_MS);
   const records: SourceRecord[] = [];
-  let answered = 0;
+  const answered = new Set<MetadataProvider>();
 
   try {
     await Promise.all(
@@ -124,7 +161,7 @@ export async function searchMetadata(isbn13: string, options: SearchOptions): Pr
         const sourceOptions = { signal: controller.signal, fetchImpl, googleBooksKey: options.googleBooksKey };
         const answer = await askAgain(provider, isbn13, sourceOptions);
         if (answer.status === 'failed') return;
-        answered += 1;
+        answered.add(provider);
         if (answer.status === 'found') {
           records.push(answer.record);
           options.onProgress?.(mergeRecords(isbn13, records));
@@ -135,8 +172,12 @@ export async function searchMetadata(isbn13: string, options: SearchOptions): Pr
     clearTimeout(timer);
   }
 
-  if (records.length === 0 && answered === 0) throw new SearchUnavailable();
+  if (records.length === 0 && answered.size === 0) throw new SearchUnavailable();
   const metadata = mergeRecords(isbn13, records);
-  if (answered < providers.length) metadata.incomplete = true;
+  const silent = providers.filter((provider) => !answered.has(provider));
+  if (silent.length > 0) {
+    metadata.incomplete = true;
+    metadata.silent = silent;
+  }
   return metadata;
 }

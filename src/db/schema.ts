@@ -128,6 +128,13 @@ export interface PendingItem {
   position?: number;
   /** What OpenRouter read on the photograph (lot 6); not indexed, no new version of the schema. */
   coverReading?: CoverReading;
+  /**
+   * Unknown ISBN: the sources that did not answer (Google Books over its quota…). The item is then
+   * searched again by itself at retryAt, retries counting those searches (lot 15; not indexed).
+   */
+  silentSources?: MetadataProvider[];
+  retryAt?: Timestamp;
+  retries?: number;
 }
 
 /** Title, authors and publisher read by OpenRouter on the photograph of an item (lot 6). */
@@ -317,6 +324,8 @@ export interface BookMetadata {
   providers: MetadataProvider[];
   /** An enabled source did not answer (network, quota, timeout): fields or covers may be missing. Never cached. */
   incomplete?: boolean;
+  /** The sources that did not answer, when incomplete. */
+  silent?: MetadataProvider[];
 }
 
 export interface MetadataCacheEntry {

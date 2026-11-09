@@ -1,10 +1,11 @@
 import { db, type LibraryDatabase } from '../db/db';
 import { newId } from '../db/ids';
-import type { BookMetadata, Cover, Id, PendingItem, ScanEntry } from '../db/schema';
+import type { BookMetadata, Cover, Id, MetadataProvider, PendingItem, ScanEntry } from '../db/schema';
 import { getSettings } from '../db/settings';
 import { downloadCover } from '../metadata/covers';
 import { bookFieldsFromMetadata, completeBook } from '../metadata/merge';
-import { SearchUnavailable, searchMetadata } from '../metadata/search';
+import { googleBooksPause, SearchUnavailable, searchMetadata } from '../metadata/search';
+import { nextSearchAt } from '../pending/retrySchedule';
 import { newBook, newCopy } from './session';
 
 // Background search of the codes read (status searching), whatever the screen shown. The queue lives
@@ -35,8 +36,11 @@ export async function resolveFound(entryId: Id, metadata: BookMetadata, database
   });
 }
 
-/** ISBN known nowhere: the read goes to « À compléter ». */
-export async function resolveUnknown(entryId: Id, database: LibraryDatabase = db): Promise<void> {
+/**
+ * ISBN unknown to the sources that answered: the read goes to « À compléter ». When some did not answer
+ * (silent), it is searched again there by itself.
+ */
+export async function resolveUnknown(entryId: Id, database: LibraryDatabase = db, silent: readonly MetadataProvider[] = []): Promise<void> {
   await database.transaction('rw', [database.scanEntries, database.pendingItems], async () => {
     const entry = await database.scanEntries.get(entryId);
     if (entry?.status !== 'searching' || !entry.isbn13) return;
@@ -49,6 +53,10 @@ export async function resolveUnknown(entryId: Id, database: LibraryDatabase = db
       createdAt: Date.now(),
     };
     if (entry.position !== undefined) item.position = entry.position;
+    if (silent.length > 0) {
+      item.silentSources = [...silent];
+      item.retryAt = nextSearchAt(0, silent);
+    }
     await database.pendingItems.add(item);
     await database.scanEntries.update(entryId, { status: 'pending', pendingItemId: item.id });
   });
@@ -129,13 +137,16 @@ export async function processEntry(entry: ScanEntry, database: LibraryDatabase =
   if (!metadata) return false;
   if (metadata.providers.length === 0) {
     // Unknown to the sources that answered, but one did not (Google Books refusing a burst, for
-    // instance), and it may be the only one to know the book: searched again a little later.
+    // instance), and it may be the only one to know the book: searched again a little later, then
+    // in « À compléter », by itself. Google Books over its daily quota answers no sooner than its next
+    // day: put aside at once.
     const attempts = (entry.attempts ?? 0) + 1;
-    if (metadata.incomplete && attempts < INCOMPLETE_ATTEMPTS) {
+    const dayOver = Boolean(metadata.silent?.includes('googleBooks') && googleBooksPause());
+    if (metadata.incomplete && attempts < INCOMPLETE_ATTEMPTS && !dayOver) {
       await database.scanEntries.update(entry.id, { attempts, retryAt: Date.now() + RETRY_DELAY_MS });
       return false;
     }
-    await resolveUnknown(entry.id, database);
+    await resolveUnknown(entry.id, database, metadata.silent);
     return true;
   }
   if (bookId) {

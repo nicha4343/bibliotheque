@@ -3,14 +3,12 @@ import { db, type LibraryDatabase } from '../db/db';
 import type { CoverReading, Id, PendingItem } from '../db/schema';
 import { getSettings } from '../db/settings';
 import { readCoverWithOpenRouter, type ReadOutcome } from '../metadata/openRouter';
-import { parseHash, type RouteId } from '../router';
+import { isScanning } from '../router';
 
 // The photographs of « À compléter » are read by OpenRouter in the background, one after the other,
 // whatever the screen shown (lot 6): their title, author and publisher wait on the item (screens 3
 // and 4). Never during a scan, which must not slow down; online only, with the user's key.
 
-/** Screens reading barcodes. */
-const SCANNING_ROUTES: ReadonlySet<RouteId> = new Set<RouteId>(['scan', 'check', 'lend', 'giveBack', 'bookshop']);
 /** The free models allow 20 requests a minute: one photograph at a time, unhurried. */
 const SPACING_MS = 4000;
 /** Over a limit, service or network unavailable, privacy settings to change: asked again after this delay. */
@@ -85,7 +83,6 @@ let retryTimer: ReturnType<typeof setTimeout> | undefined;
 /** The item shown by the series entry (screen 4) is read before the others. */
 let preferred: Id | undefined;
 
-const scanning = (): boolean => SCANNING_ROUTES.has(parseHash(window.location.hash).id);
 const wait = (milliseconds: number) =>
   new Promise((resolve) => {
     setTimeout(resolve, milliseconds);
@@ -109,14 +106,14 @@ function wakeCoverReading(database: LibraryDatabase = db): void {
       do {
         wakeAgain = false;
         for (;;) {
-          if (scanning() || !navigator.onLine) break;
+          if (isScanning() || !navigator.onLine) break;
           const key = (await getSettings(database)).openRouterKey.trim();
           if (!key || coverKeyRefused(key)) break;
           const waiting = (await database.pendingItems.orderBy('createdAt').toArray()).filter((item) => awaitsReading(item, key));
           const item = waiting.find((candidate) => candidate.id === preferred) ?? waiting[0];
           if (!item?.photoBlobId) break;
           await wait(Math.max(0, lastRequestAt + SPACING_MS - Date.now()));
-          if (scanning()) break;
+          if (isScanning()) break;
           lastRequestAt = Date.now();
           const outcome = await readItemCover(item.id, key, database).catch((error: unknown): ReadOutcome => {
             console.error(error);

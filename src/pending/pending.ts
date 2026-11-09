@@ -5,6 +5,7 @@ import { getSettings } from '../db/settings';
 import { bookFieldsFromMetadata } from '../metadata/merge';
 import { attachAutoCover, completeFromMetadata, findMetadata } from '../scan/lookups';
 import { newBook, newCopy } from '../scan/session';
+import { nextSearchAt } from './retrySchedule';
 
 // The « À compléter » box (screens 3 and 4): unknown ISBNs and books without a barcode.
 
@@ -119,14 +120,41 @@ export type RetryOutcome =
   /** Unknown to the sources that answered, but one did not: it may know the book. */
   | { status: 'incomplete' };
 
-/** « Rechercher de nouveau »: an unknown ISBN may have been catalogued since, or a source was down. */
+/**
+ * Unknown everywhere: the item waits for its notice. A source silent again: searched again later, by
+ * itself (see retrySchedule.ts).
+ */
+async function noteUnknown(itemId: Id, metadata: BookMetadata, database: LibraryDatabase): Promise<void> {
+  await database.transaction('rw', database.pendingItems, async () => {
+    const item = await database.pendingItems.get(itemId);
+    if (!item) return;
+    if (!metadata.silent?.length) {
+      await database.pendingItems.update(itemId, { silentSources: undefined, retryAt: undefined, retries: undefined });
+      return;
+    }
+    const retries = (item.retries ?? 0) + 1;
+    await database.pendingItems.update(itemId, {
+      silentSources: metadata.silent,
+      retries,
+      retryAt: nextSearchAt(retries, metadata.silent),
+    });
+  });
+}
+
+/**
+ * « Rechercher de nouveau », or the automatic search of an item whose sources were silent: an unknown
+ * ISBN may have been catalogued since, or a source was down.
+ */
 export async function retryItem(itemId: Id, database: LibraryDatabase = db): Promise<RetryOutcome> {
   const item = await database.pendingItems.get(itemId);
   if (!item?.isbn) return { status: 'unknown' };
   const isbn13 = item.isbn;
   const metadata: BookMetadata | undefined = await findMetadata(isbn13, () => Promise.resolve(), database);
   if (!metadata) return { status: 'unavailable' };
-  if (metadata.providers.length === 0) return { status: metadata.incomplete ? 'incomplete' : 'unknown' };
+  if (metadata.providers.length === 0) {
+    await noteUnknown(itemId, metadata, database);
+    return { status: metadata.incomplete ? 'incomplete' : 'unknown' };
+  }
   // The item may have been completed by hand during the search.
   const current = await database.pendingItems.get(itemId);
   if (!current) return { status: 'unknown' };

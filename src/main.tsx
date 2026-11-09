@@ -15,6 +15,7 @@ import { takeGoogleReturn } from './backup/google';
 import { requestPersistentStorage } from './db/storage';
 import { startHistoryTracking } from './router';
 import { refreshLoanNotifications } from './loans/reminders';
+import { startPendingRetries } from './pending/autoRetry';
 import { startCoverReading } from './pending/coverReading';
 import { unlockAudio } from './scan/feedback';
 import { startLookups } from './scan/lookups';
@@ -33,6 +34,8 @@ startLookups();
 startSeriesCompletion();
 // Photographs of « À compléter » read by OpenRouter in the background, never during a scan (lot 6).
 startCoverReading();
+// ISBNs of « À compléter » put aside while a source did not answer, searched again at their time (lot 15).
+startPendingRetries();
 // « Notification à l’échéance »: the daily check of the loans is registered again.
 void refreshLoanNotifications();
 // Browsers only allow sound after a touch.

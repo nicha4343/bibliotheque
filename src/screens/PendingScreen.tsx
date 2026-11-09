@@ -182,6 +182,7 @@ export function PendingScreen() {
                 place={places?.byShelfId.get(item.shelfId)?.label}
                 searching={searching.has(item.id)}
                 reading={awaitsReading(item, settings.openRouterKey)}
+                keyless={!settings.googleBooksKey.trim()}
                 onRetry={() => void retry(item)}
                 onConfirm={() => void confirm(item)}
                 onPhotograph={() => {
@@ -233,15 +234,28 @@ interface PendingCardProps {
   searching: boolean;
   /** OpenRouter has yet to read the photograph (lot 6). */
   reading: boolean;
+  /** No Google Books key: Google Books answers nothing. */
+  keyless: boolean;
   onRetry: () => void;
   onConfirm: () => void;
   onPhotograph: () => void;
   onRemove: () => void;
 }
 
-function PendingCard({ item, place, searching, reading, onRetry, onConfirm, onPhotograph, onRemove }: PendingCardProps) {
+const listFormat = new Intl.ListFormat('fr', { type: 'conjunction' });
+
+/** Unknown to the sources that answered, while others did not (lot 15): why, and when it is searched again. */
+function waitingText(item: PendingItem, keyless: boolean): string {
+  const silent = item.silentSources ?? [];
+  if (keyless && silent.includes('googleBooks')) return fr.pending.keylessText;
+  const names = listFormat.format(silent.map((provider) => fr.entry.pickedFrom[provider]));
+  return fr.pending.waitingText(names, silent.length > 1, fr.pending.waitingWhen(item.retryAt ?? Date.now(), Date.now()));
+}
+
+function PendingCard({ item, place, searching, reading, keyless, onRetry, onConfirm, onPhotograph, onRemove }: PendingCardProps) {
   const unknown = item.kind === 'unknownIsbn';
-  const kind = unknown ? fr.pending.kindUnknown : fr.pending.kindNoBarcode;
+  const waiting = unknown && (item.silentSources?.length ?? 0) > 0;
+  const kind = waiting ? fr.pending.kindWaiting : unknown ? fr.pending.kindUnknown : fr.pending.kindNoBarcode;
   const read = currentReading(item);
   const suggestion = read?.title ? read : undefined;
   const details = suggestion
@@ -278,7 +292,11 @@ function PendingCard({ item, place, searching, reading, onRetry, onConfirm, onPh
           <>
             {(unknown || (!reading && !read)) && (
               <p class="pending-card__text">
-                {unknown ? fr.pending.unknownText : fr.pending.noBarcodeText(formatDate(new Date(item.createdAt)))}
+                {waiting
+                  ? waitingText(item, keyless)
+                  : unknown
+                    ? fr.pending.unknownText
+                    : fr.pending.noBarcodeText(formatDate(new Date(item.createdAt)))}
               </p>
             )}
             {reading && (

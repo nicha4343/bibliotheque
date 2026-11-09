@@ -527,7 +527,7 @@ export const fr = {
     ready: 'Présentez le code-barres d’un ouvrage dans le cadre',
     read: (isbn: string) => `Code lu · ${isbn}`,
     added: (title: string) => `${title} — ajouté à votre bibliothèque`,
-    unknown: 'ISBN inconnu : ouvrage mis de côté, la lecture se poursuit',
+    unknown: 'Ouvrage non trouvé : mis de côté, la lecture se poursuit',
     alreadyOwned: (title: string) => `${title} — déjà dans votre bibliothèque`,
     extraCopyAdded: (ordinal: string, place: string) => `${ordinal} exemplaire ajouté · ${place}`,
     notAdded: (title: string) => `${title} — non ajouté, la lecture se poursuit`,
@@ -549,7 +549,7 @@ export const fr = {
     rowCopy: (ordinal: string) => `${ordinal} exemplaire`,
     rowNotAdded: 'Non ajouté',
     rowAlreadyInLibrary: 'Déjà dans votre bibliothèque',
-    rowUnknown: 'ISBN inconnu',
+    rowUnknown: 'Ouvrage non trouvé',
     rowToComplete: 'À compléter',
     rowNoBarcode: 'Ouvrage sans code-barres',
     rowPhotographed: 'Couverture photographiée',
@@ -728,6 +728,21 @@ export const fr = {
     kindUnknown: 'ISBN inconnu',
     kindNoBarcode: 'Sans code-barres',
     unknownText: 'Ce code n’est référencé dans aucune source.',
+    kindWaiting: 'Recherche à reprendre',
+    /** « Google Books », « Google Books et la BnF »; when: « dans quelques minutes », « demain à 9 h 01 ». */
+    waitingText: (sources: string, several: boolean, when: string) =>
+      `Inconnu des autres sources ; ${sources} ${several ? 'n’ont' : 'n’a'} pas répondu. Nouvelle recherche automatique ${when}.`,
+    keylessText: 'Inconnu des autres sources ; Google Books ne répond plus sans clé : saisissez la vôtre dans les Paramètres.',
+    /** at, now: timestamps. */
+    waitingWhen: (at: number, now: number) => {
+      const date = new Date(at);
+      const today = new Date(now);
+      const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+      if (at - now < 15 * 60 * 1000) return 'dans quelques minutes';
+      if (date.toDateString() === today.toDateString()) return `aujourd’hui à ${formatTime(date)}`;
+      if (date.toDateString() === tomorrow.toDateString()) return `demain à ${formatTime(date)}`;
+      return `le ${formatDateTime(date)}`;
+    },
     noBarcodeText: (date: string) => `Photographié le ${date}`,
     readingLabel: 'Relevé sur la couverture',
     reading: 'Lecture de la couverture…',
@@ -758,7 +773,7 @@ export const fr = {
     unavailable: 'Les sources n’ont pu être jointes : réessayez lorsque le réseau sera disponible.',
     completeSeries: (value: number) => `Compléter en série · ${formatNumber(value)}`,
     incomplete:
-      'Les sources qui ont répondu ne connaissent pas ce code, mais une autre n’a pu être jointe : réessayez dans quelques instants.',
+      'Les sources qui ont répondu ne connaissent pas ce code, mais une autre n’a pu être jointe : la recherche reprendra d’elle-même.',
     retryAll: (value: number) =>
       value === 1 ? 'Rechercher de nouveau l’ISBN inconnu' : `Rechercher de nouveau les ${formatNumber(value)} ISBN inconnus`,
     retryingAll: (done: number, total: number) =>
@@ -773,8 +788,8 @@ export const fr = {
         unavailable === 0
           ? ''
           : unavailable === 1
-            ? '1 n’a pu être recherché dans toutes les sources : réessayez dans quelques instants.'
-            : `${formatNumber(unavailable)} n’ont pu être recherchés dans toutes les sources : réessayez dans quelques instants.`,
+            ? '1 n’a pu être recherché dans toutes les sources : sa recherche reprendra d’elle-même.'
+            : `${formatNumber(unavailable)} n’ont pu être recherchés dans toutes les sources : leur recherche reprendra d’elle-même.`,
       ]
         .filter(Boolean)
         .join(' '),
@@ -791,6 +806,8 @@ export const fr = {
     takenHere: 'Photographie prise ici même, sans quitter l’application.',
     unknownCaption:
       'Ce code n’est référencé dans aucune source. Saisissez le titre et l’auteur ; vous pouvez aussi photographier la couverture.',
+    waitingCaption:
+      'Les sources qui ont répondu ne connaissent pas ce code, et une autre n’a pas répondu : sa recherche reprendra d’elle-même. Vous pouvez aussi saisir le titre et l’auteur, ou photographier la couverture.',
     noPhotoCaption: 'Aucune photographie : saisissez le titre et l’auteur.',
     readingPending: 'Lecture de la couverture…',
     readingDone: 'Titre et auteur lus sur la couverture : vérifiez-les, puis enregistrez.',
